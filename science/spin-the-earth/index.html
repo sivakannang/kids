@@ -51,27 +51,9 @@
   .now-text .part { font-size: 16px; color: var(--muted); margin-top: 2px; }
 
   /* ---------- Kuyil challenges ---------- */
-  .mascot { display: flex; align-items: center; gap: 12px; }
-  .mascot .bird { font-size: 62px; animation: bob 2.4s ease-in-out infinite; display: inline-block; }
-  .bubble { background: #f1e9ff; border-radius: 22px; padding: 12px 16px; font-size: 20px; font-weight: 500; position: relative; flex: 1; }
-  .bubble::before { content: ''; position: absolute; left: -12px; top: 50%; margin-top: -10px; border: 10px solid transparent; border-right-color: #f1e9ff; border-left: 0; }
-  .bubble.done { background: #d3f8e2; }
-  .bubble.done::before { border-right-color: #d3f8e2; }
-  .dots { display: flex; gap: 6px; justify-content: center; margin: 12px 0 6px; }
-  .dots span { width: 14px; height: 14px; border-radius: 50%; background: #e5e0f5; }
-  .dots span.ok { background: var(--green); }
-  .dots span.cur { background: var(--orange); }
   .hint { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
   .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
 
-  /* ---------- learn cards ---------- */
-  .learn { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; }
-  .lcard { border-radius: 24px; padding: 16px 18px; font-size: 18px; line-height: 1.45; position: relative; }
-  .lcard h3 { margin: 0 0 8px; font-size: 20px; }
-  .lcard p { margin: 0 0 8px; }
-  .lcard .say { position: absolute; top: 12px; right: 12px; border: none; background: rgba(255,255,255,.7); border-radius: 999px; width: 40px; height: 40px; font-size: 20px; cursor: pointer; }
-  .why { background: #fff3c4; } .imagine { background: #e8defe; } .wow { background: #d3f8e2; } .talk { background: #ffe1ec; }
-  .talk ul { margin: 0; padding-left: 20px; }
 </style>
 </head>
 <body>
@@ -625,16 +607,6 @@ $('#hintBtn').addEventListener('click', () => {
   Kids.speak(c.hint, true);
 });
 $('#skipBtn').addEventListener('click', () => { Kids.sfx.pop(); nextChallenge(); });
-
-/* =========================================================
-   Read-aloud cards
-   ========================================================= */
-document.querySelectorAll('[data-say]').forEach(card => {
-  card.querySelector('.say').addEventListener('click', () => {
-    const text = [...card.querySelectorAll('h3, p, li')].map(e => e.textContent).join('. ');
-    Kids.speak(Kids.forSpeech(text), true);
-  });
-});
 
 /* =========================================================
    Go!

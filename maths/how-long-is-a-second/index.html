@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Long Is a Second?</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  main { max-width: 1100px; margin: 0 auto; padding: 0 18px 18px; display: flex; flex-direction: column; gap: 18px; }
+  .panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: center; }
+  @media (max-width: 820px) { .panel { grid-template-columns: 1fr; } }
+  .center { text-align: center; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  .pick { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0 12px; }
+  .pick button { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 7px 16px; font-size: 18px; font-weight: 600; cursor: pointer; }
+  .pick button.active { border-color: var(--orange); background: #fff4e0; }
+  .big-num { font-size: 64px; font-weight: 700; color: var(--purple); line-height: 1; }
+  .label { font-size: 18px; color: var(--muted); }
+  .result { font-size: 22px; font-weight: 600; min-height: 64px; margin-top: 12px; border-radius: 18px; padding: 10px; }
+  .result.good { background: #d3f8e2; color: #036b4f; }
+  .result.hint { background: #fff3c4; color: #7a5600; }
+
+  /* stopwatch */
+  #watch { width: 100%; max-width: 340px; display: block; margin: 0 auto; }
+  .elephant { font-size: 40px; font-weight: 700; color: var(--blue); min-height: 54px; }
+  .heart { font-size: 70px; display: inline-block; }
+  .heart.beat { animation: beat 1s ease-in-out infinite; }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+
+  /* guess */
+  .hide-box { margin: 0 auto; width: 240px; height: 240px; border-radius: 50%; background: #f1e9ff; display: flex; align-items: center; justify-content: center; font-size: 110px; }
+  .hide-box.waiting { animation: bob 2.4s ease-in-out infinite; }
+  .tries { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .try { display: grid; grid-template-columns: 70px 1fr 70px; align-items: center; gap: 8px; font-size: 16px; }
+  .bar { height: 22px; border-radius: 11px; background: #eee; position: relative; overflow: visible; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 11px; background: var(--blue); }
+  .bar b { position: absolute; top: -4px; bottom: -4px; width: 4px; background: var(--red); border-radius: 2px; }
+
+  /* tap race */
+  .tap {
+    width: 230px; height: 230px; border-radius: 50%; border: none; font-size: 40px; font-weight: 700; color: #fff; cursor: pointer;
+    background: radial-gradient(circle at 35% 30%, #ff8fb1, #ef476f); box-shadow: 0 10px 0 #b8264d; touch-action: manipulation;
+    -webkit-user-select: none; user-select: none; transition: transform .05s, box-shadow .05s;
+  }
+  .tap:active { transform: translateY(8px); box-shadow: 0 2px 0 #b8264d; }
+  .tap:disabled { filter: grayscale(.6); cursor: default; }
+  .timebar { height: 18px; border-radius: 9px; background: #eee; overflow: hidden; margin: 14px auto 0; max-width: 360px; }
+  .timebar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), var(--yellow), var(--red)); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 16px; }
+  .fact { background: #eef6ff; border-radius: 18px; padding: 12px; font-size: 16px; text-align: center; }
+  .fact .e { font-size: 36px; display: block; }
+
+  /* jars */
+  .jars { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .jar { border: 4px solid #d6e9ff; border-radius: 10px 10px 34px 34px; padding: 12px; background: #f8fbff; text-align: center; }
+  .jar h3 { margin: 0 0 8px; font-size: 20px; }
+  .grid { display: grid; gap: 5px; justify-content: center; }
+  .grid.g60 { grid-template-columns: repeat(10, 16px); }
+  .grid.g24 { grid-template-columns: repeat(6, 26px); }
+  .grid span { width: 16px; height: 16px; border-radius: 50%; background: #e2e6f0; transition: background .2s, transform .2s; }
+  .grid.g24 span { width: 26px; height: 26px; font-size: 16px; line-height: 26px; }
+  .grid.sec span.on { background: var(--orange); transform: scale(1.1); }
+  .grid.min span.on { background: var(--blue); }
+  .grid.hr span.on { background: var(--yellow); }
+  .jar .count { font-size: 30px; font-weight: 700; margin-top: 8px; }
+  .jar .eq { font-size: 15px; color: var(--muted); }
+  .total { text-align: center; font-size: 26px; font-weight: 600; margin-top: 14px; }
+  .speedpick button { font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">⏱️</span>
+    <div><h1>How Long Is a Second?</h1><small>Let's feel time, <b data-kid-name>Kavikuyil</b>! Seconds, minutes and hours.</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="feel">👏 Feel a Second</button>
+  <button class="tab" data-tab="guess">🙈 Guess the Time</button>
+  <button class="tab" data-tab="race">👆 Tap Race</button>
+  <button class="tab" data-tab="jars">🫙 Fill the Jars</button>
+</nav>
+
+<main>
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <!-- 1. Feel a second -->
+  <section class="card" data-panel="feel">
+    <div class="panel">
+      <div>
+        <svg id="watch" viewBox="0 0 300 300" aria-label="Stopwatch"></svg>
+        <div class="row">
+          <button class="btn big green" id="feelStart">▶️ Start</button>
+          <button class="btn big orange" id="feelReset">🔄 Reset</button>
+        </div>
+      </div>
+      <div class="center">
+        <div class="label">Count with me:</div>
+        <div class="elephant" id="elephant">Ready?</div>
+        <div style="margin-top:14px"><span class="heart" id="heart">❤️</span></div>
+        <div class="label" style="max-width:360px;margin:6px auto 0">Put your hand on your chest. Your heart beats about <b>once or twice every second</b>! 💓</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Guess the time -->
+  <section class="card" data-panel="guess" hidden>
+    <div class="center">
+      <div class="label">How many seconds?</div>
+      <div class="pick" id="guessPick">
+        <button data-s="5">5 seconds</button><button data-s="10" class="active">10 seconds</button>
+        <button data-s="20">20 seconds</button><button data-s="30">30 seconds</button>
+      </div>
+      <div class="hide-box" id="hideBox">🐦</div>
+      <div class="row"><button class="btn big green" id="guessBtn">▶️ Start</button></div>
+      <div class="result" id="guessResult"></div>
+      <div class="tries" id="tries"></div>
+    </div>
+  </section>
+
+  <!-- 3. Tap race -->
+  <section class="card" data-panel="race" hidden>
+    <div class="center">
+      <div class="label">How long is the race?</div>
+      <div class="pick" id="racePick">
+        <button data-s="10" class="active">10 seconds</button><button data-s="30">30 seconds</button><button data-s="60">1 minute</button>
+      </div>
+      <button class="tap" id="tapBtn">TAP! 👆</button>
+      <div class="timebar"><i id="timeFill"></i></div>
+      <div style="display:flex;justify-content:center;gap:40px;margin-top:10px">
+        <div><div class="big-num" id="taps">0</div><div class="label">taps</div></div>
+        <div><div class="big-num" id="left">10</div><div class="label">seconds left</div></div>
+      </div>
+      <div class="result" id="raceResult"></div>
+      <div class="label" id="best"></div>
+    </div>
+    <h3 style="margin:18px 0 0">⚡ In just ONE second…</h3>
+    <div class="facts">
+      <div class="fact"><span class="e">🐦</span>A hummingbird flaps its wings about <b>50 times</b></div>
+      <div class="fact"><span class="e">🐆</span>A cheetah runs about <b>30 metres</b></div>
+      <div class="fact"><span class="e">🌍</span>The Earth zooms about <b>30 km</b> around the Sun</div>
+      <div class="fact"><span class="e">💡</span>Light travels around the whole Earth <b>7½ times</b>!</div>
+    </div>
+  </section>
+
+  <!-- 4. Fill the jars -->
+  <section class="card" data-panel="jars" hidden>
+    <div class="center">
+      <div class="pick speedpick" id="speedPick">
+        <button data-x="1" class="active">🐢 Real time</button><button data-x="10">🐇 10× faster</button>
+        <button data-x="60">🚀 60× faster</button><button data-x="600">⚡ 600× faster</button>
+      </div>
+    </div>
+    <div class="jars">
+      <div class="jar"><h3>⏱️ Seconds jar</h3><div class="grid g60 sec" id="secGrid"></div><div class="count" id="secCount">0</div><div class="eq">60 seconds fill it → 1 minute</div></div>
+      <div class="jar"><h3>⏲️ Minutes jar</h3><div class="grid g60 min" id="minGrid"></div><div class="count" id="minCount">0</div><div class="eq">60 minutes fill it → 1 hour</div></div>
+      <div class="jar"><h3>🕐 Hours jar</h3><div class="grid g24 hr" id="hrGrid"></div><div class="count" id="hrCount">0</div><div class="eq">24 hours fill it → 1 day 🌍</div></div>
+    </div>
+    <div class="total" id="total"></div>
+    <div class="row">
+      <button class="btn big green" id="jarPlay">▶️ Start</button>
+      <button class="btn big orange" id="jarReset">🔄 Empty the jars</button>
+    </div>
+  </section>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why 60?</h3>
+    <p>Long, long ago, people in Babylon loved to count in sixties. 60 can be shared fairly in lots of ways: by 2, 3, 4, 5, 6, 10, 12, 15, 20 and 30!</p>
+    <p>We still use their idea: <b>60 seconds make a minute</b> and <b>60 minutes make an hour</b>.</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Close your eyes and count: one-elephant. In that tiny moment, a hummingbird flapped its wings fifty times, and a beam of sunlight zoomed around the whole Earth seven times.</p>
+    <p>One little second is full of amazing things!</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>There are <b>86,400 seconds</b> in one day.</p>
+    <p>If you counted one number every second, without sleeping, it would take you more than <b>11 days</b> to count to one million!</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>What can you do in one second? In one minute?</li>
+      <li>Why does a minute of waiting feel longer than a minute of playing?</li>
+      <li>Who guessed 10 seconds better, you or the grown-up?</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve',
+  'thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty'];
+const numWord = n => n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : '');
+const fmt1 = x => x.toFixed(1);
+function pickGroup(id, cb) {
+  const box = $(id);
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    box.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    Kids.sfx.pop(); cb(b);
+  }));
+}
+
+/* ---------------- tabs + Kuyil ---------------- */
+const SAY = {
+  feel: `Press Start, ${Kids.name}, and clap 👏 every time you hear a tick. Count with me: one-elephant, two-elephant…`,
+  guess: 'Can you feel the time without looking? Press Start, count in your head, and press Stop when you think the time is up! 🙈',
+  race: 'How many times can you tap in 10 seconds? Ready, steady… TAP the big button to start! 👆',
+  jars: 'Watch the seconds fill up the jars. 60 seconds make 1 minute. 60 minutes make 1 hour. 24 hours make 1 day!',
+};
+let tab = 'feel';
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== t);
+  $('#bubble').textContent = SAY[t];
+  $('#bubble').classList.remove('done');
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { Kids.sfx.pop(); setTab(b.dataset.tab); }));
+function kuyil(text, good) { $('#bubble').textContent = text; $('#bubble').classList.toggle('done', !!good); }
+
+/* =========================================================
+   1. Feel a second: stopwatch
+   ========================================================= */
+const W = { svg: $('#watch') };
+(function buildWatch() {
+  const s = W.svg, C = 150;
+  el('rect', { x: 128, y: 2, width: 44, height: 22, rx: 8, fill: '#9b5de5' }, s);
+  el('circle', { cx: C, cy: 158, r: 136, fill: '#9b5de5' }, s);
+  el('circle', { cx: C, cy: 158, r: 124, fill: '#fffdf7' }, s);
+  W.fill = el('path', { fill: '#ffd166', opacity: .55 }, s);
+  for (let i = 0; i < 60; i++) {
+    const a = i * 6 * Math.PI / 180, big = i % 5 === 0;
+    el('line', { x1: C + 120 * Math.sin(a), y1: 158 - 120 * Math.cos(a), x2: C + (big ? 106 : 113) * Math.sin(a), y2: 158 - (big ? 106 : 113) * Math.cos(a),
+      stroke: big ? '#2b2d42' : '#c9c3e6', 'stroke-width': big ? 3 : 1.5, 'stroke-linecap': 'round' }, s);
+    if (big) {
+      el('text', { x: C + 92 * Math.sin(a), y: 158 - 92 * Math.cos(a), 'font-size': 15, 'font-weight': 700, fill: '#6a4c93', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, s)
+        .textContent = i === 0 ? 60 : i;
+    }
+  }
+  W.text = el('text', { x: C, y: 236, 'font-size': 26, 'font-weight': 700, fill: '#2b2d42', 'text-anchor': 'middle' }, s);
+  W.hand = el('line', { x1: C, y1: 175, x2: C, y2: 50, stroke: '#ef476f', 'stroke-width': 5, 'stroke-linecap': 'round' }, s);
+  el('circle', { cx: C, cy: 158, r: 9, fill: '#2b2d42' }, s);
+})();
+function drawWatch(t) {
+  const sec = t % 60, a = sec * 6;
+  W.hand.setAttribute('transform', `rotate(${a} 150 158)`);
+  W.text.textContent = `${fmt1(t)} s`;
+  if (sec < 0.01) { W.fill.setAttribute('d', ''); return; }
+  const r = a * Math.PI / 180, large = a > 180 ? 1 : 0;
+  W.fill.setAttribute('d', `M150 158 L150 38 A120 120 0 ${large} 1 ${150 + 120 * Math.sin(r)} ${158 - 120 * Math.cos(r)} Z`);
+}
+const feel = { running: false, t0: 0, acc: 0, lastWhole: 0, rewarded10: false, rewarded60: false };
+const feelTime = () => feel.acc + (feel.running ? (performance.now() - feel.t0) / 1000 : 0);
+$('#feelStart').addEventListener('click', () => {
+  if (feel.running) { feel.acc = feelTime(); feel.running = false; }
+  else { feel.t0 = performance.now(); feel.running = true; }
+  $('#feelStart').textContent = feel.running ? '⏸️ Stop' : '▶️ Start';
+  $('#heart').classList.toggle('beat', feel.running);
+  Kids.sfx.pop();
+});
+$('#feelReset').addEventListener('click', () => {
+  feel.running = false; feel.acc = 0; feel.lastWhole = 0;
+  $('#feelStart').textContent = '▶️ Start'; $('#heart').classList.remove('beat');
+  $('#elephant').textContent = 'Ready?'; drawWatch(0); Kids.sfx.pop();
+});
+function feelFrame() {
+  const t = feelTime();
+  drawWatch(t);
+  const whole = Math.floor(t);
+  if (feel.running && whole > feel.lastWhole) {
+    feel.lastWhole = whole;
+    whole % 2 ? Kids.sfx.clock() : Kids.sfx.tock();
+    $('#elephant').textContent = whole <= 60 ? `${numWord(whole)}-elephant 🐘` : `${whole} seconds!`;
+    if (whole === 10 && !feel.rewarded10) {
+      feel.rewarded10 = true; Kids.addStar(); Kids.sfx.yay();
+      kuyil(`${Kids.praise()} You felt 10 seconds! Keep going to 60…`, true);
+    }
+    if (whole === 60 && !feel.rewarded60) {
+      feel.rewarded60 = true; Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+      Kids.banner('⏱️ 60 seconds = 1 minute!');
+      kuyil(`Wow, ${Kids.name}! 60 seconds make ONE MINUTE! 🎉`, true);
+      Kids.speak('Sixty seconds make one minute!');
+    }
+  }
+}
+
+/* =========================================================
+   2. Guess the time
+   ========================================================= */
+const guess = { target: 10, running: false, t0: 0, tries: [] };
+pickGroup('#guessPick', b => { guess.target = +b.dataset.s; resetGuess(); });
+function resetGuess() {
+  guess.running = false;
+  $('#guessBtn').textContent = '▶️ Start';
+  $('#hideBox').textContent = '🐦'; $('#hideBox').classList.remove('waiting');
+}
+$('#guessBtn').addEventListener('click', () => {
+  if (!guess.running) {
+    guess.running = true; guess.t0 = performance.now();
+    $('#guessBtn').textContent = `⏹️ Stop at ${guess.target}!`;
+    $('#hideBox').textContent = '🙈'; $('#hideBox').classList.add('waiting');
+    $('#guessResult').textContent = 'Shhh… count in your head: one-elephant, two-elephant…';
+    $('#guessResult').className = 'result';
+    Kids.sfx.pop();
+    return;
+  }
+  const t = (performance.now() - guess.t0) / 1000;
+  resetGuess();
+  const diff = t - guess.target, off = Math.abs(diff);
+  let msg, good = false;
+  if (off <= 0.5) { msg = `🎯 Bullseye! You stopped at ${fmt1(t)} seconds. Only ${fmt1(off)} away!`; good = true; }
+  else if (off <= guess.target * 0.15) { msg = `So close! You stopped at ${fmt1(t)} seconds, just ${fmt1(off)} ${diff < 0 ? 'too early' : 'too late'}. ⭐`; good = true; }
+  else msg = `You stopped at ${fmt1(t)} seconds. That's ${fmt1(off)} seconds ${diff < 0 ? 'too early 🐇: try counting slower' : 'too late 🐢: try counting faster'}!`;
+  $('#hideBox').textContent = good ? '🥳' : '🤔';
+  $('#guessResult').textContent = msg;
+  $('#guessResult').className = 'result ' + (good ? 'good' : 'hint');
+  if (good) { Kids.addStar(); Kids.sfx.yay(); if (off <= 0.5) Kids.confetti(); kuyil(`${Kids.praise()} You can feel ${guess.target} seconds!`, true); }
+  else { Kids.resetStreak(); Kids.sfx.oops(); }
+  Kids.speak(Kids.forSpeech(msg));
+  guess.tries.unshift({ target: guess.target, t });
+  guess.tries = guess.tries.slice(0, 5);
+  renderTries();
+});
+function renderTries() {
+  const max = Math.max(...guess.tries.map(x => Math.max(x.t, x.target))) * 1.1;
+  $('#tries').innerHTML = guess.tries.map(x => `
+    <div class="try"><span>🎯 ${x.target}s</span>
+      <div class="bar"><i style="width:${x.t / max * 100}%"></i><b style="left:${x.target / max * 100}%"></b></div>
+      <span>${fmt1(x.t)}s</span></div>`).join('') +
+    (guess.tries.length ? '<div class="label">Blue = your guess · Red line = the real time</div>' : '');
+}
+
+/* =========================================================
+   3. Tap race
+   ========================================================= */
+const race = { dur: 10, running: false, t0: 0, taps: 0, locked: false };
+pickGroup('#racePick', b => { race.dur = +b.dataset.s; resetRace(); });
+function bestKey() { return 'second.tapBest.' + race.dur; }
+function resetRace() {
+  race.running = false; race.taps = 0;
+  $('#taps').textContent = 0; $('#left').textContent = race.dur; $('#timeFill').style.width = '0';
+  $('#tapBtn').textContent = 'TAP! 👆'; $('#tapBtn').disabled = false;
+  const best = Kids.store.get(bestKey(), 0);
+  $('#best').textContent = best ? `🏆 Your best for ${race.dur} seconds: ${best} taps` : '';
+}
+$('#tapBtn').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (race.locked) return;
+  if (!race.running) { race.running = true; race.t0 = performance.now(); race.taps = 0; $('#raceResult').textContent = ''; $('#raceResult').className = 'result'; }
+  race.taps++;
+  $('#taps').textContent = race.taps;
+  Kids.sfx.clock();
+});
+function raceFrame() {
+  if (!race.running) return;
+  const t = (performance.now() - race.t0) / 1000;
+  $('#left').textContent = Math.max(0, Math.ceil(race.dur - t));
+  $('#timeFill').style.width = Math.min(100, t / race.dur * 100) + '%';
+  if (t < race.dur) return;
+  race.running = false; race.locked = true;
+  $('#tapBtn').disabled = true; $('#tapBtn').textContent = '⏱️ Time!';
+  const perSec = race.taps / race.dur;
+  const best = Kids.store.get(bestKey(), 0);
+  let msg = `You tapped ${race.taps} times in ${race.dur} seconds! That's about ${Math.max(1, Math.round(perSec))} tap${Math.round(perSec) > 1 ? 's' : ''} every second.`;
+  if (race.dur < 60) msg += ` In one whole minute you could tap about ${Math.round(perSec * 60)} times!`;
+  $('#raceResult').textContent = msg;
+  $('#raceResult').className = 'result good';
+  if (race.taps > best) {
+    Kids.store.set(bestKey(), race.taps);
+    Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+    if (best) Kids.banner(`🏆 New record: ${race.taps} taps!`);
+  } else Kids.sfx.pop();
+  Kids.speak(Kids.forSpeech(`You tapped ${race.taps} times in ${race.dur} seconds!`));
+  setTimeout(() => { race.locked = false; const keep = $('#raceResult').textContent; resetRace(); $('#raceResult').textContent = keep; $('#raceResult').className = 'result good'; }, 1500);
+}
+resetRace();
+
+/* =========================================================
+   4. Fill the jars
+   ========================================================= */
+const jar = { t: 0, x: 1, running: false, last: 0, seen: { min: false, hr: false, day: false } };
+function makeGrid(id, n, emoji) {
+  const g = $(id);
+  for (let i = 0; i < n; i++) { const s = document.createElement('span'); if (emoji) s.dataset.e = emoji; g.appendChild(s); }
+  return [...g.children];
+}
+const secDots = makeGrid('#secGrid', 60), minDots = makeGrid('#minGrid', 60), hrDots = makeGrid('#hrGrid', 24);
+let shown = { s: -1, m: -1, h: -1 };
+function setDots(dots, n) { dots.forEach((d, i) => d.classList.toggle('on', i < n)); }
+function renderJars() {
+  const T = Math.floor(jar.t);
+  const s = T % 60, m = Math.floor(T / 60) % 60, h = Math.floor(T / 3600) % 24, d = Math.floor(T / 86400);
+  if (s !== shown.s) { setDots(secDots, s); $('#secCount').textContent = `${s} second${s === 1 ? '' : 's'}`; }
+  if (m !== shown.m) { setDots(minDots, m); $('#minCount').textContent = `${m} minute${m === 1 ? '' : 's'}`; }
+  if (h !== shown.h) { hrDots.forEach((x, i) => { x.classList.toggle('on', i < h); x.textContent = i < h ? '☀️' : ''; }); $('#hrCount').textContent = `${h} hour${h === 1 ? '' : 's'}`; }
+  if (jar.running && m !== shown.m && shown.m !== -1 && m > shown.m && !jar.seen.min) {
+    jar.seen.min = true; Kids.addStar(); Kids.sfx.yay(); Kids.banner('🎉 60 seconds = 1 minute!');
+  } else if (jar.running && m !== shown.m && shown.m !== -1) Kids.sfx.pop();
+  if (jar.running && h !== shown.h && shown.h !== -1 && !jar.seen.hr) {
+    jar.seen.hr = true; Kids.addStar(); Kids.sfx.yay(); Kids.confetti(); Kids.banner('🎉 60 minutes = 1 hour!');
+  }
+  if (jar.running && d >= 1 && !jar.seen.day) {
+    jar.seen.day = true; Kids.addStar(); Kids.confetti(); Kids.banner('🌍 24 hours = 1 day = one spin of the Earth!');
+  }
+  shown = { s, m, h };
+  $('#total').textContent = `${d ? `${d} day${d > 1 ? 's' : ''}, ` : ''}${h} h ${m} min ${s} s` +
+    `  ·  ${T.toLocaleString('en-IN')} seconds altogether`;
+}
+pickGroup('#speedPick', b => { jar.x = +b.dataset.x; });
+$('#jarPlay').addEventListener('click', () => {
+  jar.running = !jar.running; jar.last = performance.now();
+  $('#jarPlay').textContent = jar.running ? '⏸️ Pause' : '▶️ Start';
+  Kids.sfx.pop();
+});
+$('#jarReset').addEventListener('click', () => {
+  jar.t = 0; jar.running = false; $('#jarPlay').textContent = '▶️ Start';
+  shown = { s: -1, m: -1, h: -1 }; renderJars(); Kids.sfx.pop();
+});
+function jarFrame(now) {
+  if (jar.running) { jar.t += (now - jar.last) / 1000 * jar.x; }
+  jar.last = now;
+  if (tab === 'jars') renderJars();
+}
+
+/* ---------------- loop ---------------- */
+function frame(now) {
+  feelFrame(); raceFrame(); jarFrame(now);
+  requestAnimationFrame(frame);
+}
+setTab('feel');
+drawWatch(0);
+renderJars();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

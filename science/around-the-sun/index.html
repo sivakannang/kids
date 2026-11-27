@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Around the Sun</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  main.layout {
+    display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+    gap: 18px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 960px) { main.layout { grid-template-columns: 1fr; padding: 0 12px 16px; } }
+  .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .space-card { background: #0b1033; color: #fff; padding: 14px; }
+  .space-card h2 { margin: 2px 6px 8px; font-size: 22px; }
+  .space-card h2 small { display: block; font-size: 15px; font-weight: 500; opacity: .8; margin-top: 2px; }
+  #orbit { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .mlabel { font-size: 15px; font-weight: 600; fill: #cfd8ff; text-anchor: middle; dominant-baseline: central; }
+  .mlabel.cur { fill: #ffd166; font-size: 18px; }
+  .note { font-size: 14px; fill: #fff; font-weight: 600; paint-order: stroke; stroke: #0b1033; stroke-width: 4px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+  .controls .btn { font-size: 16px; padding: 9px 13px; }
+  .speed { display: inline-flex; background: rgba(255,255,255,.12); border-radius: 18px; padding: 4px; gap: 4px; }
+  .speed button { border: none; background: transparent; color: #fff; font-size: 20px; padding: 6px 10px; border-radius: 14px; cursor: pointer; }
+  .speed button.active { background: #fff; }
+  .counters { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 12px; }
+  .counter { background: rgba(255,255,255,.12); border-radius: 16px; padding: 8px 14px; font-size: 17px; }
+  .counter b { color: #ffd166; font-size: 20px; }
+
+  .date { font-size: 34px; font-weight: 700; color: var(--purple); line-height: 1.1; }
+  .season { font-size: 20px; margin-top: 4px; }
+  .daylen { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .dl-row { font-size: 16px; }
+  .dl-row .bar { height: 22px; border-radius: 11px; background: #1f2a6b; position: relative; overflow: hidden; margin-top: 4px; }
+  .dl-row .bar i { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #ffb347, #ffd166, #ffb347); border-radius: 11px; }
+  .dl-row b { color: var(--purple); }
+  #shadow { width: 100%; height: auto; display: block; border-radius: 18px; margin-top: 12px; }
+  .shadow-cap { font-size: 16px; text-align: center; margin-top: 6px; color: var(--muted); }
+  .hint { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">☀️</span>
+    <div><h1>Around the Sun</h1><small>Why is a year 365 days, <b data-kid-name>Kavikuyil</b>? Why do we have seasons?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="layout">
+  <div class="col">
+    <section class="card space-card">
+      <h2>🚀 The Earth's trip around the Sun
+        <small>Drag the Earth along its path, or press Play. Watch how the Earth's tilted axis always leans the same way.</small></h2>
+      <svg id="orbit" viewBox="0 0 900 560" aria-label="The Earth travelling around the Sun"></svg>
+      <div class="controls">
+        <button class="btn green" id="playBtn">▶️ Play</button>
+        <span class="speed" id="speed">
+          <button data-speed="10" title="10 days every second">🐢</button>
+          <button data-speed="30" class="active" title="1 month every second">🐇</button>
+          <button data-speed="90" title="3 months every second">🚀</button>
+        </span>
+        <button class="btn red" id="todayBtn">📍 Today</button>
+        <button class="btn orange" data-doy="80">🌸 March</button>
+        <button class="btn" data-doy="172">☀️ June</button>
+        <button class="btn pink" data-doy="265">🍂 September</button>
+        <button class="btn purple" data-doy="355">❄️ December</button>
+      </div>
+      <div class="counters">
+        <span class="counter">📅 Days travelled: <b id="days">0</b></span>
+        <span class="counter">🔄 Trips around the Sun: <b id="trips">0</b> = <b id="years">0 years</b></span>
+      </div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <div class="date" id="date"></div>
+      <div class="season" id="season"></div>
+      <div class="daylen">
+        <div class="dl-row">🇮🇳 Daylight in <b>Bangalore</b>: <b id="dlB"></b><div class="bar"><i id="barB"></i></div></div>
+        <div class="dl-row">🇬🇧 Daylight in <b>London</b> (far north): <b id="dlL"></b><div class="bar"><i id="barL"></i></div></div>
+      </div>
+      <svg id="shadow" viewBox="0 0 400 170" aria-label="Your shadow at noon in Bangalore"></svg>
+      <div class="shadow-cap" id="shadowCap"></div>
+    </section>
+
+    <section class="card">
+      <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+      <div class="dots" id="dots"></div>
+      <div class="hint" id="hint"></div>
+      <div class="row">
+        <button class="btn purple" id="hintBtn">💡 Hint</button>
+        <button class="btn orange" id="skipBtn">⏭️ Next challenge</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why?</h3>
+    <p><b>Why 365 days?</b> The Earth travels all the way around the Sun once a year. The trip takes 365 days (and a few hours).</p>
+    <p><b>Why seasons?</b> The Earth is tilted, like a leaning top. When our half leans <b>towards</b> the Sun, days are long and warm. When it leans <b>away</b>, days are short and cool.</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Imagine you are riding on the Earth, like a giant spaceship, going round and round the Sun.</p>
+    <p>Every birthday you have, your spaceship has finished one more trip! How many trips have you done so far?</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>The trip takes 365 days and about 6 hours. Those 6 hours add up: 4 × 6 = 24 hours = one extra day every 4 years! That's why we have <b>29th February</b> in a leap year.</p>
+    <p>Twice a year in Bangalore the Sun is right overhead at noon, and your shadow disappears: <b>Zero Shadow Day</b>!</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>Which season do you like best? Why?</li>
+      <li>Why is it summer in Australia when it is winter in London?</li>
+      <li>How many trips around the Sun have you made? How many has the oldest person you know made?</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const mod = (a, n) => ((a % n) + n) % n;
+const RAD = Math.PI / 180;
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MDAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const MSTART = MDAYS.map((_, i) => MDAYS.slice(0, i).reduce((a, b) => a + b, 0)); // day-of-year (0-based) each month starts
+
+/* ---------- sky maths (simple, good to about a day) ---------- */
+const decl = d => -23.44 * Math.cos(2 * Math.PI / 365 * (d + 10));          // where the Sun is overhead (latitude)
+function dayLength(lat, d) {
+  const x = -Math.tan(lat * RAD) * Math.tan(decl(d) * RAD);
+  return x <= -1 ? 24 : x >= 1 ? 0 : 24 / Math.PI * Math.acos(x);
+}
+const fmtHM = h => `${Math.floor(h)} h ${Math.round((h % 1) * 60)} min`;
+function dateOf(doy) {
+  const d = Math.floor(mod(doy, 365));
+  let m = 11; while (MSTART[m] > d) m--;
+  return { day: d - MSTART[m] + 1, m };
+}
+function todayDoy() {
+  const n = new Date(), start = new Date(n.getFullYear(), 0, 1);
+  return Math.min(364, Math.floor((n - start) / 86400000));
+}
+function indiaSeason(m) {
+  if (m >= 2 && m <= 4) return '☀️ Summer in India: hot and sunny';
+  if (m >= 5 && m <= 8) return '🌧️ Monsoon in India: rainy season';
+  if (m >= 9 && m <= 10) return '🍂 After the monsoon: cooler days';
+  return '❄️ Winter in India: cool mornings';
+}
+
+/* =========================================================
+   Orbit view (seen from a little above)
+   ========================================================= */
+const CX = 450, CY = 285, RX = 330, RY = 175, TILT = 23.4;
+const svg = $('#orbit');
+const O = {};
+// June solstice (day 172) on the left, then the Earth moves towards us, to the right (December), then away (March)
+const angleOf = doy => Math.PI - 2 * Math.PI * (doy - 172) / 365;
+const posOf = doy => { const a = angleOf(doy); return [CX + RX * Math.cos(a), CY + RY * Math.sin(a), a]; };
+function buildOrbit() {
+  const defs = el('defs', {}, svg);
+  defs.innerHTML = `<radialGradient id="sunG"><stop offset="0%" stop-color="#fff7c2"/><stop offset="55%" stop-color="#ffd166"/><stop offset="100%" stop-color="#ff9f1c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="earthG" cx="40%" cy="35%"><stop offset="0%" stop-color="#6fd3ff"/><stop offset="100%" stop-color="#1f6fd1"/></radialGradient>
+    <clipPath id="earthClip"><circle id="earthClipC" r="30"/></clipPath>`;
+  for (let i = 0; i < 110; i++) el('circle', { cx: Math.random() * 900, cy: Math.random() * 560, r: Math.random() * 1.5 + .3, fill: '#fff', opacity: Math.random() * .7 + .2 }, svg);
+  el('ellipse', { cx: CX, cy: CY, rx: RX, ry: RY, fill: 'none', stroke: '#8fa2ff', 'stroke-width': 2, 'stroke-dasharray': '6 8', opacity: .7 }, svg);
+  O.trail = el('path', { fill: 'none', stroke: '#ffd166', 'stroke-width': 4, opacity: .6 }, svg);
+  // month labels
+  O.mlabels = MONTHS.map((m, i) => {
+    const a = angleOf(MSTART[i] + MDAYS[i] / 2);
+    const t = el('text', { x: CX + (RX + 46) * Math.cos(a), y: CY + (RY + 34) * Math.sin(a), class: 'mlabel' }, svg);
+    t.textContent = m.slice(0, 3);
+    return t;
+  });
+  // the Sun
+  el('circle', { cx: CX, cy: CY, r: 120, fill: 'url(#sunG)' }, svg);
+  el('circle', { cx: CX, cy: CY, r: 62, fill: '#ffcf3f' }, svg);
+  el('text', { x: CX, y: CY + 2, 'font-size': 22, 'font-weight': 700, fill: '#b35c00', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, svg).textContent = 'SUN';
+  // the Earth
+  O.earth = el('g', {}, svg);
+  el('circle', { r: 30, fill: 'url(#earthG)' }, O.earth);
+  O.landBlob = el('g', { 'clip-path': 'url(#earthClip)' }, O.earth);
+  el('path', { d: 'M-18 -16 q10 -8 20 -2 q6 6 -2 12 q-8 4 -14 0 z M4 6 q10 -2 14 6 q-4 10 -12 8 z', fill: '#58c46a' }, O.landBlob);
+  O.night = el('path', { fill: '#050822', opacity: .62 }, O.earth);
+  O.axis = el('g', {}, O.earth);
+  el('line', { x1: 0, y1: 46, x2: 0, y2: -46, stroke: '#fff', 'stroke-width': 3, 'stroke-linecap': 'round' }, O.axis);
+  el('text', { x: 0, y: -54, 'font-size': 16, 'font-weight': 700, fill: '#ffd166', 'text-anchor': 'middle' }, O.axis).textContent = 'N';
+  el('line', { x1: -10, y1: 0, x2: 10, y2: 0, stroke: '#ff4d6d', 'stroke-width': 0 }, O.axis);
+  O.note = el('text', { class: 'note', 'text-anchor': 'middle' }, svg);
+  el('text', { x: 20, y: 540, class: 'note' }, svg).textContent = 'N = North Pole. India and London are in the north half.';
+}
+function renderOrbit() {
+  const [x, y, a] = posOf(state.doy);
+  const s = 1.15 + 0.3 * Math.sin(a);              // a bit bigger when nearer to us
+  O.earth.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)}) scale(${s.toFixed(3)})`);
+  O.axis.setAttribute('transform', `rotate(${TILT})`);   // always leans the same way (to the right)
+  // the night half faces away from the Sun
+  const toSun = Math.atan2(CY - y, CX - x) * 180 / Math.PI;
+  O.night.setAttribute('d', 'M0 -30 A30 30 0 0 0 0 30 Z');
+  O.night.setAttribute('transform', `rotate(${toSun})`);
+  const { m } = dateOf(state.doy);
+  O.mlabels.forEach((t, i) => t.classList.toggle('cur', i === m));
+  // note about the lean
+  const dec = decl(state.doy);
+  O.note.setAttribute('x', x); O.note.setAttribute('y', y + (a > 0 && a < Math.PI ? 64 : -66));
+  O.note.textContent = dec > 12 ? '☀️ North half leans TOWARDS the Sun' : dec < -12 ? '❄️ North half leans AWAY from the Sun' : '↔️ Leaning sideways';
+  // trail for the days travelled (up to one year)
+  const span = Math.min(364, Math.max(0, state.tot - state.start));
+  if (span < 1) { O.trail.setAttribute('d', ''); return; }
+  let d = '';
+  for (let k = 0; k <= 60; k++) { const [px, py] = posOf(state.doy - span * (1 - k / 60)); d += (k ? 'L' : 'M') + px.toFixed(1) + ' ' + py.toFixed(1); }
+  O.trail.setAttribute('d', d);
+}
+
+/* =========================================================
+   Right panel: date, daylight, noon shadow
+   ========================================================= */
+const SH = {};
+function buildShadow() {
+  const s = $('#shadow');
+  s.innerHTML = `<defs><linearGradient id="shSky" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#7cc8ff"/><stop offset="100%" stop-color="#d9f0ff"/></linearGradient></defs>`;
+  el('rect', { x: 0, y: 0, width: 400, height: 170, fill: 'url(#shSky)' }, s);
+  el('rect', { x: 0, y: 140, width: 400, height: 30, fill: '#7bd389' }, s);
+  SH.shadow = el('ellipse', { cy: 141, ry: 5, fill: '#2b2d42', opacity: .35 }, s);
+  SH.kid = el('text', { x: 200, y: 142, 'font-size': 56, 'text-anchor': 'middle' }, s); SH.kid.textContent = '👧';
+  SH.sun = el('circle', { r: 16, fill: '#ffd166', stroke: '#ffb703', 'stroke-width': 3 }, s);
+  SH.ray = el('line', { stroke: '#ffb703', 'stroke-width': 2, 'stroke-dasharray': '5 5' }, s);
+}
+function renderPanel() {
+  const { day, m } = dateOf(state.doy);
+  $('#date').textContent = `📅 ${day} ${MONTHS[m]}`;
+  $('#season').textContent = indiaSeason(m);
+  const b = dayLength(12.97, state.doy), l = dayLength(51.5, state.doy);
+  $('#dlB').textContent = fmtHM(b); $('#dlL').textContent = fmtHM(l);
+  const bar = (id, h) => { const w = h / 24 * 100; $(id).style.left = (50 - w / 2) + '%'; $(id).style.width = w + '%'; };
+  bar('#barB', b); bar('#barL', l);
+  // noon in Bangalore: how high is the Sun? (90° = right overhead)
+  const dec = decl(state.doy);
+  const zen = 12.97 - dec;                              // + means the Sun is to the south
+  const alt = 90 - Math.abs(zen);
+  const len = Math.min(170, 46 / Math.tan(Math.max(alt, 5) * RAD));   // shadow of a 46-unit-tall child
+  const side = zen > 0 ? 1 : -1;                        // shadow points away from the Sun
+  SH.shadow.setAttribute('cx', 200 + side * len / 2);
+  SH.shadow.setAttribute('rx', Math.max(len / 2, 3));
+  const sx = 200 - side * 120 * Math.cos(alt * RAD), sy = 140 - 125 * Math.sin(alt * RAD);
+  SH.sun.setAttribute('cx', sx); SH.sun.setAttribute('cy', Math.max(18, sy));
+  SH.ray.setAttribute('x1', sx); SH.ray.setAttribute('y1', Math.max(18, sy)); SH.ray.setAttribute('x2', 200); SH.ray.setAttribute('y2', 100);
+  $('#shadowCap').textContent = Math.abs(zen) < 1.2
+    ? '😮 ZERO SHADOW DAY! The Sun is right overhead at noon in Bangalore.'
+    : `Your shadow at noon in Bangalore. The Sun is ${zen > 0 ? 'to the south' : 'to the north'}.`;
+}
+function renderCounters() {
+  const days = Math.max(0, Math.floor(state.tot - state.start));
+  const trips = Math.floor(days / 365);
+  $('#days').textContent = days.toLocaleString('en-IN');
+  $('#trips').textContent = trips;
+  $('#years').textContent = `${trips} year${trips === 1 ? '' : 's'}`;
+  if (trips > state.bestTrips) {
+    state.bestTrips = trips;
+    Kids.sfx.yay(); Kids.confetti();
+    Kids.banner(trips === 1 ? '🎂 One trip around the Sun = 365 days = 1 year!' : `🎂 ${trips} trips = ${trips} years!`);
+    if (trips <= 2) Kids.addStar();
+  }
+}
+
+/* =========================================================
+   Moving the Earth
+   ========================================================= */
+const state = { tot: todayDoy(), start: 0, playing: false, speed: 30, anim: null, bestTrips: 0 };
+state.start = state.tot;
+Object.defineProperty(state, 'doy', { get() { return mod(this.tot, 365); } });
+
+let drag = null;
+function pointerAngle(e) {
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return Math.atan2((p.y - CY) / RY, (p.x - CX) / RX);
+}
+svg.addEventListener('pointerdown', e => {
+  stopPlay(); state.anim = null;
+  drag = { a: pointerAngle(e) };
+  try { svg.setPointerCapture(e.pointerId); } catch {}
+  // jump the Earth to where she pressed
+  const want = mod(172 + (Math.PI - drag.a) * 365 / (2 * Math.PI), 365);
+  state.tot += mod(want - state.doy + 182.5, 365) - 182.5;
+  e.preventDefault();
+});
+svg.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const a = pointerAngle(e);
+  const da = mod(a - drag.a + Math.PI, 2 * Math.PI) - Math.PI;
+  drag.a = a;
+  const before = dateOf(state.doy).m;
+  state.tot += -da * 365 / (2 * Math.PI);
+  if (dateOf(state.doy).m !== before) Kids.sfx.tick();
+});
+const endDrag = () => { if (drag) { drag = null; checkChallenge(); } };
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+
+function startPlay() { state.playing = true; $('#playBtn').textContent = '⏸️ Pause'; }
+function stopPlay() { if (state.playing) { state.playing = false; $('#playBtn').textContent = '▶️ Play'; } }
+$('#playBtn').addEventListener('click', () => { Kids.sfx.pop(); state.anim = null; if (state.playing) { stopPlay(); checkChallenge(); } else startPlay(); });
+document.querySelectorAll('#speed button').forEach(b => b.addEventListener('click', () => {
+  state.speed = +b.dataset.speed; Kids.sfx.pop();
+  document.querySelectorAll('#speed button').forEach(x => x.classList.toggle('active', x === b));
+}));
+function goTo(doy) {
+  stopPlay();
+  const dist = mod(doy - state.doy, 365);
+  state.anim = { from: state.tot, dist, t0: performance.now(), dur: 400 + dist * 4 };
+  Kids.sfx.whoosh();
+}
+document.querySelectorAll('[data-doy]').forEach(b => b.addEventListener('click', () => goTo(+b.dataset.doy)));
+$('#todayBtn').addEventListener('click', () => goTo(todayDoy()));
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (state.playing) state.tot += state.speed * dt;
+  if (state.anim) {
+    const a = state.anim, k = Math.min(1, (now - a.t0) / a.dur);
+    state.tot = a.from + a.dist * (k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+    if (k >= 1) { state.anim = null; checkChallenge(); }
+  }
+  renderOrbit(); renderPanel(); renderCounters();
+  const c = CH[ch.i]; if (c && c.trip) checkChallenge();
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   Kuyil's challenges
+   ========================================================= */
+const inMonth = m => dateOf(state.doy).m === m;
+const CH = [
+  { ask: 'Move the Earth to JUNE ☀️. Which way is the North Pole leaning?', hint: 'June is on the left side of the Sun.',
+    ok: () => inMonth(5), yay: 'In June the north half of the Earth leans TOWARDS the Sun. Long, warm days in the north! ☀️' },
+  { ask: 'Now move the Earth to DECEMBER ❄️', hint: 'December is on the right side, nearest to us.',
+    ok: () => inMonth(11), yay: 'In December the north half leans AWAY from the Sun. Short days in London! ❄️' },
+  { ask: 'Find a time when London has MORE than 16 hours of daylight ☀️', hint: 'Look at the London daylight bar. Try summer in the north.',
+    ok: () => dayLength(51.5, state.doy) > 16, yay: 'London gets very long days in summer: the Sun sets very late! 🌇' },
+  { ask: 'Find a time when London has LESS than 8 hours of daylight 🌑', hint: 'Try winter in the north, when it leans away from the Sun.',
+    ok: () => dayLength(51.5, state.doy) < 8, yay: 'Brrr! In winter London gets dark very early in the afternoon. 🌑' },
+  { ask: "Find a ZERO SHADOW DAY in Bangalore, when your shadow disappears at noon! 😮", hint: 'Watch the shadow box. Try late April, or August.',
+    ok: () => Math.abs(12.97 - decl(state.doy)) < 1.2, yay: "Zero Shadow Day! The Sun is right above Bangalore at noon. 😮" },
+  { ask: 'Take the Earth ALL the way around the Sun once. How many days is that?', hint: 'Press Play, or keep dragging the Earth round and round!',
+    trip: true, ok: () => state.tot - ch.tripFrom >= 365, yay: 'One trip around the Sun = 365 days = ONE YEAR! 🎂' },
+];
+const ch = { i: 0, done: new Set(), tripFrom: 0 };
+function showChallenge() {
+  ch.tripFrom = state.tot;
+  $('#bubble').textContent = `${Kids.name}, ${CH[ch.i].ask}`;
+  $('#bubble').classList.remove('done');
+  $('#hint').textContent = '';
+  renderDots();
+}
+function renderDots() { $('#dots').innerHTML = CH.map((_, i) => `<span class="${ch.done.has(i) ? 'ok' : i === ch.i ? 'cur' : ''}"></span>`).join(''); }
+let nextTimer;
+function checkChallenge() {
+  const c = CH[ch.i];
+  if (!c || ch.done.has(ch.i) || !c.ok()) return;
+  ch.done.add(ch.i);
+  const msg = `${Kids.praise()} ${c.yay}`;
+  $('#bubble').textContent = msg; $('#bubble').classList.add('done');
+  Kids.addStar(); Kids.sfx.yay(); Kids.confetti(); Kids.speak(Kids.forSpeech(msg));
+  renderDots();
+  clearTimeout(nextTimer); nextTimer = setTimeout(nextChallenge, 4500);
+}
+function nextChallenge() {
+  clearTimeout(nextTimer);
+  if (ch.done.size === CH.length) {
+    $('#bubble').textContent = `🏆 Super, ${Kids.name}! You know why we have years and seasons!`;
+    $('#bubble').classList.add('done'); Kids.banner(`🏆 Seasons Expert: ${Kids.name}!`);
+    ch.done.clear(); ch.i = -1; setTimeout(() => { ch.i = 0; showChallenge(); }, 7000);
+    return;
+  }
+  do { ch.i = (ch.i + 1) % CH.length; } while (ch.done.has(ch.i));
+  showChallenge();
+}
+$('#hintBtn').addEventListener('click', () => { const c = CH[ch.i]; if (!c) return; $('#hint').textContent = '💡 ' + c.hint; Kids.speak(c.hint, true); });
+$('#skipBtn').addEventListener('click', () => { Kids.sfx.pop(); nextChallenge(); });
+
+/* ---------- go ---------- */
+buildOrbit();
+buildShadow();
+showChallenge();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

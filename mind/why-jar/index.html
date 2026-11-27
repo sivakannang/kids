@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why Jar</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  body { background: linear-gradient(160deg, #fff6e0 0%, #e9f5ff 50%, #fdf0ff 100%); background-attachment: fixed; }
+  .ask-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  #q { flex: 1; min-width: 220px; font-size: 20px; padding: 10px 14px; border-radius: 14px; border: 3px solid #e5e0f5; font-family: inherit; }
+  .starters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .starter { border: 2px dashed #c9b6f2; background: #fff; border-radius: 999px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-size: 15px; color: var(--ink); }
+  .jar { position: relative; margin: 26px auto 0; max-width: 380px; min-height: 220px; border: 6px solid #a0d8ef; border-top-width: 14px; border-radius: 30px 30px 60px 60px; background: rgba(160,216,239,.18); padding: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-end; }
+  .jar::before { content: ''; position: absolute; top: -26px; left: 18%; right: 18%; height: 14px; background: #ffd166; border-radius: 8px; }
+  .slip { background: #fff; border-radius: 8px; padding: 4px 8px; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,.12); transform: rotate(var(--r)); max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .explore .bigq { font-size: 28px; font-weight: 700; color: var(--purple); text-align: center; margin: 6px 0 12px; }
+  .explore label { font-weight: 600; font-size: 18px; display: block; margin-top: 12px; }
+  .explore textarea { width: 100%; min-height: 64px; font-size: 18px; padding: 8px 12px; border-radius: 12px; border: 3px solid #e5e0f5; font-family: inherit; }
+  .kuyil-ans { background: #d3f8e2; border-radius: 14px; padding: 10px 12px; font-size: 18px; margin-top: 8px; }
+  .answered { display: flex; flex-direction: column; gap: 8px; }
+  .ans { background: #fff; border-radius: 14px; padding: 10px 12px; border-left: 6px solid var(--green); font-size: 16px; }
+  .ans b { display: block; font-size: 17px; }
+  .counts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">❓</span>
+    <div><h1>Why Jar</h1><small>Every big discovery starts with a question, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+    </section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🤔 I wonder…</h3>
+      <div class="ask-row"><input id="q" maxlength="120" placeholder="Why… How… What if…? (a grown-up can help you type)"><button class="btn big green" id="addBtn">➕ Put it in the jar</button></div>
+      <div class="label" style="font-size:15px">Need an idea? Tap one:</div>
+      <div class="starters" id="starters"></div>
+    </section>
+    <section class="card explore" id="explore" hidden>
+      <div class="bigq" id="eq"></div>
+      <label>1️⃣ What do YOU think? (Guess first. Any idea is a good idea!)</label>
+      <textarea id="guess"></textarea>
+      <label>2️⃣ Let's find out together</label>
+      <div class="hint" style="text-align:left" id="howFind">Ask a grown-up, look in a book, or try an experiment! 🔬</div>
+      <div class="row" style="justify-content:flex-start"><button class="btn purple" id="kuyilBtn" hidden>🐦 What does Kuyil know?</button></div>
+      <div class="kuyil-ans" id="kuyilAns" hidden></div>
+      <label>3️⃣ What did we learn?</label>
+      <textarea id="learned"></textarea>
+      <div class="row"><button class="btn big green" id="doneBtn">💡 We found out!</button><button class="btn orange" id="laterBtn">⏳ Back in the jar</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <div class="counts"><span class="stat">Questions asked<b id="nAsked">0</b></span><span class="stat">Answers found<b id="nFound">0</b></span></div>
+      <div class="jar" id="jar"></div>
+      <div class="row"><button class="btn big" id="pickBtn">🎲 Pick today's question</button></div>
+    </section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">💡 Things we found out</h3>
+      <div class="answered" id="answered"></div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const K = Kids.name;
+const KNOWN = {
+  'Why is the sky blue?': 'Sunlight has all the colours of the rainbow mixed together. When it hits the air, the blue light gets bounced around the sky much more than the other colours, so the whole sky looks blue!',
+  'Where does rain come from?': 'The Sun warms water in seas and lakes, and it rises up as invisible water vapour. High up it cools into tiny drops that make clouds. When the drops join and get heavy, they fall as rain! 🌧️',
+  'Why do we need to sleep?': 'Sleep lets your body grow and fix itself, and helps your brain tidy up and remember everything you learned today. 😴',
+  'How do birds fly?': 'Birds flap their wings to push air down and back, and the special curved shape of their wings helps lift them up. Their bones are light and partly hollow, so they are not too heavy! 🐦',
+  'Why is the sea salty?': 'Rain and rivers wash tiny bits of salt out of rocks and carry them to the sea. The Sun dries up some water, but the salt stays behind, so over millions of years the sea got salty. 🌊',
+  'How does a rainbow happen?': 'When sunlight shines through raindrops, each drop bends the light and splits it into all its colours, like a tiny prism. That\'s why you see rainbows when it\'s sunny AND rainy! 🌈',
+  'Why do we brush our teeth?': 'Tiny germs live in your mouth and love sugar. They can make holes in your teeth. Brushing sweeps them away! 🦷',
+  'Why does the Moon change shape?': 'It doesn\'t really! The Sun always lights up half of the Moon. As the Moon goes around the Earth, we see different amounts of its bright half. Try the Moon Phases game! 🌙',
+  'Why do things fall down?': 'Gravity! The Earth pulls everything towards it, like an invisible magnet for all things. Try the Planet Jump game to see gravity on other worlds! 🪐',
+  'Why can\'t we see stars in the daytime?': 'The stars are still there! But the Sun is so bright that its light fills the sky, and the faint starlight gets hidden. ⭐',
+};
+const KEY = 'whyjar';
+let list = Kids.store.get(KEY, []), cur = null;
+const save = () => Kids.store.set(KEY, list);
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+Object.keys(KNOWN).forEach(q => {
+  const b = document.createElement('button'); b.className = 'starter'; b.textContent = q;
+  b.addEventListener('click', () => { $('#q').value = q; $('#q').focus(); Kids.sfx.pop(); });
+  $('#starters').appendChild(b);
+});
+$('#addBtn').addEventListener('click', add);
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+function add() {
+  let q = $('#q').value.trim();
+  if (q.length < 3) { say(`Type a question first, ${K}! It can start with why, how or what. 🤔`); return; }
+  if (!/[?？]$/.test(q)) q += '?';
+  list.push({ id: Date.now().toString(36), q, date: today(), guess: '', learned: '', done: false });
+  save(); $('#q').value = '';
+  // a star for asking (up to 5 a day), because asking is the most important part!
+  const k = 'whyjar.stars.' + today(), n = Kids.store.get(k, 0);
+  if (n < 5) { Kids.store.set(k, n + 1); Kids.addStar(); }
+  Kids.sfx.yay();
+  say(`${Kids.praise()} What a great question! It's in the jar now. Scientists ask questions all day long! 🧑‍🔬`, true);
+  render();
+}
+$('#pickBtn').addEventListener('click', () => {
+  const open = list.filter(x => !x.done);
+  if (!open.length) { say(`The jar is empty! Put a new question in, ${K}. What are you wondering about?`); return; }
+  cur = open[Kids.rand(open.length)];
+  Kids.sfx.whoosh(); openExplore();
+});
+function openExplore() {
+  $('#explore').hidden = false;
+  $('#eq').textContent = cur.q;
+  $('#guess').value = cur.guess; $('#learned').value = cur.learned;
+  const known = KNOWN[cur.q];
+  $('#kuyilBtn').hidden = !known; $('#kuyilAns').hidden = true;
+  $('#howFind').textContent = known ? 'Ask a grown-up, look in a book… or see what Kuyil knows!' : 'Ask a grown-up, look in a book, or try an experiment! 🔬';
+  say(`Today's question: "${cur.q}" First, what do YOU think? 🤔`);
+  Kids.speak(Kids.forSpeech(`Today's question: ${cur.q}`));
+  $('#explore').scrollIntoView({ behavior: 'smooth' });
+}
+$('#guess').addEventListener('input', () => { if (cur) { cur.guess = $('#guess').value; save(); } });
+$('#learned').addEventListener('input', () => { if (cur) { cur.learned = $('#learned').value; save(); } });
+$('#kuyilBtn').addEventListener('click', () => {
+  $('#kuyilAns').hidden = false; $('#kuyilAns').textContent = '🐦 ' + KNOWN[cur.q];
+  Kids.speak(Kids.forSpeech(KNOWN[cur.q]), true);
+  if (!$('#learned').value) { $('#learned').value = KNOWN[cur.q]; cur.learned = KNOWN[cur.q]; save(); }
+});
+$('#doneBtn').addEventListener('click', () => {
+  if (!cur) return;
+  if (!$('#learned').value.trim()) { say('Write what you found out first. A grown-up can help! ✍️'); return; }
+  cur.done = true; cur.found = today(); save();
+  Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+  say(`${Kids.praise()} You asked a question AND found the answer. That's exactly what scientists do! 🔬`, true);
+  $('#explore').hidden = true; cur = null; render();
+});
+$('#laterBtn').addEventListener('click', () => { $('#explore').hidden = true; cur = null; Kids.sfx.pop(); say('Okay! It\'s back in the jar for another day. ⏳'); });
+
+function render() {
+  const open = list.filter(x => !x.done), done = list.filter(x => x.done);
+  $('#nAsked').textContent = list.length; $('#nFound').textContent = done.length;
+  $('#jar').innerHTML = open.length ? open.map((x, i) => `<div class="slip" style="--r:${((i * 29) % 13) - 6}deg">❓ ${esc(x.q)}</div>`).join('') : '<div class="hint" style="width:100%">The jar is empty. What do you wonder about?</div>';
+  $('#answered').innerHTML = done.length ? done.slice().reverse().map(x => `<div class="ans"><b>💡 ${esc(x.q)}</b>${esc(x.learned)}</div>`).join('') : '<div class="hint">Answers you find will be kept here.</div>';
+}
+
+Kids.learn({
+  why: ['Asking questions is how we learn! Every scientist, inventor and explorer started by wondering "why?"',
+    'There are no silly questions. Even "simple" questions, like why the sky is blue, have amazing answers.'],
+  imagine: ['Imagine your brain is a garden. Every question you ask is a seed. When you find the answer, the seed grows into a flower! 🌻'],
+  wow: ['Children ask LOTS of questions, sometimes hundreds a day! That\'s your brain growing super fast.',
+    'Some questions, like "how big is the universe?", are still being answered by scientists today.'],
+  talk: ['What is the best question you asked this week?', 'What is a question a grown-up doesn\'t know the answer to?', 'How could you find out an answer without asking anyone? (A book? An experiment?)'],
+});
+render();
+say(`Hi ${K}! What are you wondering about today? Type a question and put it in the jar. ❓`);
+</script>
+</body>
+</html>

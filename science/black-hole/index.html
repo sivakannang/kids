@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Black Hole</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .squeeze input[type=range] { width: 100%; accent-color: #9b5de5; height: 30px; }
+  .readout { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .ro { background: rgba(255,255,255,.08); border-radius: 14px; padding: 8px 10px; font-size: 15px; }
+  .ro b { display: block; font-size: 20px; color: #ffd166; }
+  .lightbar { height: 22px; border-radius: 11px; background: rgba(255,255,255,.12); overflow: hidden; margin-top: 8px; position: relative; }
+  .lightbar i { display: block; height: 100%; background: linear-gradient(90deg, #06d6a0, #ffd166, #ef476f); }
+  .lightbar span { position: absolute; right: 8px; top: 1px; font-size: 13px; font-weight: 700; }
+  .bh { font-size: 26px; font-weight: 700; text-align: center; color: #ffd166; min-height: 36px; margin-top: 8px; }
+  .famous { display: grid; gap: 8px; }
+  .fam { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 10px 12px; text-align: left; cursor: pointer; font-family: inherit; font-size: 16px; color: var(--ink); }
+  .fam b { font-size: 18px; }
+  .fam.open { border-color: var(--purple); background: #f6f1ff; }
+  #fall input[type=range] { width: 100%; accent-color: #ef476f; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">⚫</span>
+    <div><h1>Black Hole</h1><small>What if we squeezed the Earth really, really small, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card space-card squeeze">
+      <h2>🤏 Squeeze it! <small>Keep ALL the stuff, but make it smaller and smaller. Watch how fast you'd need to go to escape (like in Rocket Launch!).</small></h2>
+      <div class="pick" id="objPick"><button data-o="earth" class="active">🌍 The Earth</button><button data-o="sun">☀️ The Sun</button></div>
+      <svg id="view" class="svgbox" viewBox="-300 -150 600 300" style="margin-top:10px"></svg>
+      <input type="range" id="sq" min="0" max="1000" value="0">
+      <div class="readout">
+        <div class="ro">📏 Size<b id="size"></b></div>
+        <div class="ro">🚀 Escape speed<b id="esc"></b></div>
+      </div>
+      <div class="lightbar"><i id="lb"></i><span>⚡ speed of light</span></div>
+      <div class="bh" id="bh"></div>
+    </section>
+    <section class="card space-card" id="fall">
+      <h2>🧑‍🚀 Fall towards a black hole <small>Slide the astronaut closer. What happens? (Don't worry, it's pretend!)</small></h2>
+      <svg id="fallView" class="svgbox" viewBox="0 0 600 220"></svg>
+      <input type="range" id="dist" min="0" max="100" value="0">
+      <div class="bh" id="fallText"></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🔭 Real black holes (tap one)</h3>
+      <div class="famous" id="famous"></div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl;
+const G = 6.674e-11, C = 299792.458;                     // C in km/s
+const OBJ = {
+  earth: { n: 'Earth', M: 5.972e24, R: 6371, c: '#3a8ee6', bh: 'a marble' },
+  sun: { n: 'Sun', M: 1.989e30, R: 696000, c: '#ffcf3f', bh: 'a small town' },
+};
+let obj = OBJ.earth, r = obj.R, done = { earth: false, sun: false };
+const rs = o => 2 * G * o.M / (C * 1000) ** 2 / 1000;     // black-hole size (km)
+const esc = (o, rr) => Math.sqrt(2 * G * o.M / (rr * 1000)) / 1000; // km/s
+
+function sizeWords(km) {
+  const m = 2 * km * 1000;   // across, in metres
+  const n = v => Math.round(v).toLocaleString('en-IN');
+  if (m >= 1e8) return `${n(m / 1000)} km across: as big as a star`;
+  if (m >= 1e7) return `${n(m / 1000)} km across: as big as a planet`;
+  if (m >= 2e6) return `${n(m / 1000)} km across: as wide as India 🇮🇳`;
+  if (m >= 3e5) return `${n(m / 1000)} km across: as wide as Karnataka`;
+  if (m >= 2e4) return `${n(m / 1000)} km across: as big as Bangalore 🏙️`;
+  if (m >= 1e3) return `${(m / 1000).toFixed(1)} km across: as big as a small town`;
+  if (m >= 30) return `${n(m)} m across: as big as a building 🏢`;
+  if (m >= 2) return `${m.toFixed(1)} m across: as big as a car 🚗`;
+  if (m >= 0.5) return `${n(m * 100)} cm across: as big as a beach ball 🏖️`;
+  if (m >= 0.12) return `${n(m * 100)} cm across: as big as a football ⚽`;
+  if (m >= 0.04) return `${(m * 100).toFixed(1)} cm across: as big as a lemon 🍋`;
+  if (m >= 0.008) return `${n(m * 1000)} mm across: as big as a marble`;
+  return `${(m * 1000).toFixed(1)} mm across: as small as a peanut 🥜`;
+}
+function update(fromUser) {
+  const lo = Math.log10(rs(obj) * 0.6), hi = Math.log10(obj.R);
+  r = 10 ** (hi - (hi - lo) * (+$('#sq').value / 1000));
+  const v = esc(obj, r), isBH = r <= rs(obj);
+  $('#size').textContent = isBH ? sizeWords(rs(obj)) + ' (black hole)' : sizeWords(r);
+  $('#esc').textContent = isBH ? 'faster than light! ⚡' : `${v < 100 ? v.toFixed(1) : Math.round(v).toLocaleString('en-IN')} km/s`;
+  $('#lb').style.width = Math.min(100, Math.max(1, (Math.log10(v) + 1) / (Math.log10(C) + 1) * 100)) + '%';
+  $('#bh').textContent = isBH ? `⚫ It's a BLACK HOLE! Not even light can escape!` : v > C * 0.5 ? '😮 Almost as fast as light…' : '';
+  drawView(isBH);
+  if (isBH && fromUser && !done[obj === OBJ.earth ? 'earth' : 'sun']) {
+    done[obj === OBJ.earth ? 'earth' : 'sun'] = true;
+    Kids.sfx.boing(); Kids.confetti();
+    Kids.speak(Kids.forSpeech(`The ${obj.n} became a black hole, about the size of ${obj.bh}!`));
+  }
+  ch.check({ obj: obj === OBJ.earth ? 'earth' : 'sun', bh: isBH, r });
+}
+function drawView(isBH) {
+  const s = $('#view'); s.innerHTML = '';
+  for (let k = 0; k < 60; k++) el('circle', { cx: Math.random() * 600 - 300, cy: Math.random() * 300 - 150, r: Math.random() * 1.2 + .3, fill: '#fff', opacity: .5 }, s);
+  const t = (Math.log10(obj.R) - Math.log10(r)) / (Math.log10(obj.R) - Math.log10(rs(obj) * 0.6));
+  const pr = Math.max(6, 120 * (1 - t) + 8);
+  if (isBH) {
+    el('ellipse', { rx: 120, ry: 28, fill: 'none', stroke: '#ff9f1c', 'stroke-width': 10, opacity: .8 }, s);
+    el('circle', { r: 40, fill: '#000', stroke: '#ffb347', 'stroke-width': 3 }, s);
+    for (let k = 0; k < 8; k++) {             // light curving back in
+      const a = k / 8 * Math.PI * 2, x = Math.cos(a) * 90, y = Math.sin(a) * 90;
+      el('path', { d: `M${Math.cos(a) * 44} ${Math.sin(a) * 44} Q${x * 1.1} ${y * 1.1} ${Math.cos(a + .6) * 50} ${Math.sin(a + .6) * 50}`, fill: 'none', stroke: '#ffd166', 'stroke-width': 2, opacity: .8 }, s);
+    }
+  } else {
+    el('circle', { r: pr, fill: obj.c, opacity: 1 - t * 0.5 }, s);
+    for (let k = 0; k < 8; k++) {             // light rays getting out (shorter as it gets squeezed)
+      const a = k / 8 * Math.PI * 2, len = 140 * (1 - t) + 20;
+      el('line', { x1: Math.cos(a) * (pr + 6), y1: Math.sin(a) * (pr + 6), x2: Math.cos(a) * (pr + 6 + len), y2: Math.sin(a) * (pr + 6 + len), stroke: '#ffd166', 'stroke-width': 2, opacity: .7 }, s);
+    }
+  }
+}
+$('#sq').addEventListener('input', () => update(true));
+$('#objPick').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  obj = OBJ[b.dataset.o]; $('#sq').value = 0; Kids.sfx.pop();
+  $('#objPick').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); update(false);
+}));
+
+/* ---------- falling in (spaghetti!) ---------- */
+function drawFall() {
+  const p = +$('#dist').value / 100, s = $('#fallView'); s.innerHTML = '';
+  el('rect', { width: 600, height: 220, fill: '#050822' }, s);
+  el('ellipse', { cx: 520, cy: 110, rx: 70, ry: 18, fill: 'none', stroke: '#ff9f1c', 'stroke-width': 8, opacity: .8 }, s);
+  el('circle', { cx: 520, cy: 110, r: 36, fill: '#000', stroke: '#ffb347', 'stroke-width': 2 }, s);
+  const x = 60 + p * 380, stretch = 1 + p ** 3 * 5, thin = 1 / Math.sqrt(stretch);
+  const g = el('g', { transform: `translate(${x} 110) scale(${stretch.toFixed(2)} ${thin.toFixed(2)})` }, s);
+  el('text', { x: 0, y: 14, 'font-size': 44, 'text-anchor': 'middle' }, g).textContent = '🧑‍🚀';
+  $('#fallText').textContent = p < .4 ? 'Floating safely… 🙂' : p < .75 ? 'Feeling a strong pull! Feet are pulled more than head… 😯' : 'SPAGHETTI! 🍝 Stretched long and thin. Scientists really call this "spaghettification"!';
+  if (p > .9) ch.check({ spaghetti: true });
+}
+$('#dist').addEventListener('input', drawFall);
+
+/* ---------- famous black holes ---------- */
+const FAMOUS = [
+  { id: 'sgr', n: '🌀 Sagittarius A*', t: 'The giant black hole in the MIDDLE of our own galaxy, the Milky Way. It is about 40 lakh times heavier than the Sun, and 26,000 light years away. Scientists took its picture in 2022!' },
+  { id: 'm87', n: '📸 M87*', t: 'The first black hole ever photographed, in 2019! It is in another galaxy, and it is billions of times heavier than our Sun.' },
+  { id: 'small', n: '⭐ Star-sized black holes', t: 'Many black holes are made when very big stars die. They are only a few times heavier than our Sun, and about as wide as a city.' },
+];
+FAMOUS.forEach(f => {
+  const b = document.createElement('button');
+  b.className = 'fam'; b.innerHTML = `<b>${f.n}</b>`;
+  b.addEventListener('click', () => {
+    const open = !b.classList.contains('open');
+    document.querySelectorAll('.fam').forEach(x => { x.classList.remove('open'); x.innerHTML = `<b>${FAMOUS[[...x.parentNode.children].indexOf(x)].n}</b>`; });
+    if (open) { b.classList.add('open'); b.innerHTML = `<b>${f.n}</b><br>${f.t}`; Kids.speak(Kids.forSpeech(f.t)); }
+    Kids.sfx.pop(); ch.check({ famous: f.id });
+  });
+  $('#famous').appendChild(b);
+});
+
+const ch = Kids.challenges([
+  { ask: 'Squeeze the EARTH until it becomes a black hole ⚫', hint: 'Slide the squeeze slider all the way to the right.', ok: c => c.obj === 'earth' && c.bh, yay: 'The whole Earth squeezed to the size of a marble would be a black hole!' },
+  { ask: 'Make the Earth as small as a FOOTBALL ⚽. Is it a black hole yet?', hint: 'Slide slowly and watch the size.', ok: c => c.obj === 'earth' && !c.bh && c.r * 2 < 0.0005 && c.r * 2 >= 0.00012, yay: 'Not yet! Even a football-sized Earth still lets light escape. You must squeeze even more!' },
+  { ask: 'Now squeeze the SUN into a black hole ☀️', hint: 'Pick the Sun, then squeeze!', ok: c => c.obj === 'sun' && c.bh, yay: 'The Sun would have to be squeezed to just 6 km across, smaller than Bangalore!' },
+  { ask: 'Send the astronaut close to the black hole 🧑‍🚀', hint: 'Slide the astronaut all the way to the right.', ok: c => c.spaghetti, yay: 'Spaghettification! 🍝 Luckily, it\'s only pretend.' },
+  { ask: 'Find the black hole in the middle of OUR galaxy 🌀', hint: 'Look at the Real black holes list.', ok: c => c.famous === 'sgr', yay: 'Sagittarius A*: our galaxy\'s giant black hole!' },
+], { title: 'Black Hole Explorer' });
+
+Kids.learn({
+  why: ['Remember Rocket Launch? To escape a planet you need to go super fast. If you squeeze a planet smaller, its pull at the surface gets MUCH stronger.',
+    'Squeeze it enough, and you would need to go faster than light to escape. Nothing can go that fast, so nothing escapes, not even light. That is a <b>black hole</b>! ⚫'],
+  imagine: ['Imagine a whirlpool in space, swirling with glowing gas, round and round, faster and faster… and in the middle, a perfectly black hole where light goes in but never comes out.'],
+  wow: ['If the whole Earth were squeezed to the size of a marble, it would be a black hole!',
+    'Black holes are not holes. They are LOTS of stuff squeezed into a tiny space.'],
+  talk: ['Why do you think it is called a "black" hole?', 'If light can\'t come out, how do you think scientists found black holes?', 'Would you want to visit one? From very far away?'],
+});
+update(false); drawFall();
+</script>
+</body>
+</html>

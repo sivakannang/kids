@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zoom Out!</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<script src="../../shared/vendor/d3.min.js"></script>
+<script src="../../shared/vendor/topojson-client.min.js"></script>
+<script src="../../shared/vendor/countries-110m.js"></script>
+<style>
+  #zoom { background: #050822; touch-action: none; }
+  .zctl input[type=range] { width: 100%; accent-color: #ffd166; height: 30px; }
+  .lvl-name { text-align: center; font-size: 30px; font-weight: 700; color: #ffd166; }
+  .lvl-size { text-align: center; font-size: 18px; color: #cfd8ff; }
+  .lvl-text { font-size: 19px; line-height: 1.5; }
+  .lvl-light { margin-top: 8px; background: #e8defe; border-radius: 14px; padding: 8px 12px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔭</span>
+    <div><h1>Zoom Out!</h1><small>From <b data-kid-name>Kavikuyil</b> all the way out to the whole universe</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card space-card zctl">
+      <svg id="zoom" class="svgbox" viewBox="0 0 800 560"></svg>
+      <div class="lvl-name" id="lName"></div>
+      <div class="lvl-size" id="lSize"></div>
+      <input type="range" id="z" min="0" max="1100" value="0">
+      <div class="row">
+        <button class="btn orange" id="inBtn">🔍 Zoom in</button>
+        <button class="btn big green" id="playBtn">🚀 Zoom all the way out!</button>
+        <button class="btn" id="outBtn">🔭 Zoom out</button>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card"><div class="lvl-text" id="lText"></div><div class="lvl-light" id="lLight"></div></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl, K = Kids.name;
+const LEVELS = [
+  { n: `👧 ${K}`, s: 'about 1 metre', t: `Here you are, ${K}! Let's start zooming out…`, light: 'Light crosses you in a tiny, tiny fraction of a second.' },
+  { n: '🏠 Home', s: 'about 20 metres', t: 'Your home. You are inside, somewhere in the middle.', light: 'Light crosses it in less than a millionth of a second.' },
+  { n: '🌳 Neighbourhood', s: 'about 1 km', t: 'Houses, trees, roads and a park. Your home is a tiny square now.', light: '' },
+  { n: '🏙️ Bangalore', s: 'about 40 km across', t: 'The whole city of Bangalore, with lakhs of homes. Can you still see yours? No!', light: '' },
+  { n: '🇮🇳 India', s: 'about 3,000 km', t: 'Our country, India. Bangalore is the little dot in the south.', light: 'Light crosses India in about 1/100 of a second.' },
+  { n: '🌍 Earth', s: '12,742 km across', t: 'Our home planet, a blue ball floating in space. There are 800 crore people on it!', light: 'Light could go around the Earth 7½ times in one second.' },
+  { n: '🌙 Earth and Moon', s: 'about 7.7 lakh km', t: 'The Moon goes around the Earth. The Earth is now a tiny blue dot.', light: 'Light takes about 1 second to get from the Earth to the Moon.' },
+  { n: '☀️ Solar System', s: 'about 900 crore km', t: 'The Sun and its 8 planets. (We drew the paths closer together so they fit.) The Earth is the 3rd planet.', light: 'Light takes about 8 hours to cross the Solar System.' },
+  { n: '⭐ Our star neighbours', s: 'about 20 light years', t: 'The nearest stars. Our Sun is just one ordinary star among them.', light: 'Light from the nearest star takes more than 4 years to reach us.' },
+  { n: '🌀 The Milky Way galaxy', s: 'about 1 lakh light years', t: 'Our galaxy: a giant spiral of more than 10,000 crore stars. We live out in one of the arms, NOT in the middle!', light: 'Light takes about 1 lakh years to cross it.' },
+  { n: '🌌 Our galaxy neighbours', s: 'about 1 crore light years', t: 'The Milky Way and its neighbours, like the big Andromeda galaxy.', light: 'Light from Andromeda takes 25 lakh years to reach us.' },
+  { n: '✨ The whole universe we can see', s: 'about 9,300 crore light years', t: 'Every tiny dot here is a whole GALAXY, with crores of stars. This is as far as we can see!', light: 'This is the biggest thing we know.' },
+];
+const F = 7;                     // how much bigger each scene is than the one before (on screen)
+const svg = $('#zoom'), scenes = [];
+const stars = (g, n, R = 230, r = 1.4) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, d = Math.sqrt(Math.random()) * R; el('circle', { cx: Math.cos(a) * d, cy: Math.sin(a) * d, r: Math.random() * r + .3, fill: '#fff', opacity: Math.random() * .7 + .3 }, g); } };
+const emo = (g, x, y, size, t) => { const e = el('text', { x, y: y + size * .35, 'font-size': size, 'text-anchor': 'middle' }, g); e.textContent = t; return e; };
+const here = (g, r = 3) => { el('circle', { r, fill: '#ff006e', stroke: '#fff', 'stroke-width': 1 }, g); };
+
+function build() {
+  el('rect', { width: 800, height: 560, fill: '#050822' }, svg);
+  const mk = () => { const g = el('g', {}, svg); scenes.push(g); return g; };
+  // 0 Kavikuyil
+  let g = mk(); el('circle', { r: 150, fill: '#bde0fe' }, g); emo(g, 0, 0, 150, '👧');
+  // 1 home
+  g = mk(); el('rect', { x: -170, y: -170, width: 340, height: 340, fill: '#8fd694' }, g); el('rect', { x: -110, y: -90, width: 220, height: 180, fill: '#ffe8c2', stroke: '#c47b3b', 'stroke-width': 6 }, g);
+  el('path', { d: 'M-130 -90 L0 -170 L130 -90 Z', fill: '#e76f51' }, g); emo(g, 90, 120, 50, '🌳'); emo(g, -120, 130, 40, '🚲'); el('circle', { r: 22, fill: '#bde0fe' }, g); emo(g, 0, 0, 22, '👧');
+  // 2 neighbourhood
+  g = mk(); el('rect', { x: -200, y: -200, width: 400, height: 400, fill: '#a7d99a' }, g);
+  [[-200, -12, 400, 24], [-12, -200, 24, 400]].forEach(([x, y, w, h]) => el('rect', { x, y, width: w, height: h, fill: '#9e9e9e' }, g));
+  for (let i = 0; i < 26; i++) { const x = (Math.random() - .5) * 360, y = (Math.random() - .5) * 360; if (Math.abs(x) < 30 || Math.abs(y) < 30) continue; emo(g, x, y, 24, ['🏠', '🌳', '🏡', '🌳'][i % 4]); }
+  el('rect', { x: -14, y: -14, width: 28, height: 28, fill: '#ffe8c2', stroke: '#c47b3b', 'stroke-width': 2 }, g); emo(g, 110, -110, 50, '🛝');
+  // 3 Bangalore
+  g = mk(); el('circle', { r: 210, fill: '#c9d6a3' }, g);
+  for (let i = 0; i < 9; i++) { const a = i / 9 * 6.28; el('line', { x1: 0, y1: 0, x2: Math.cos(a) * 210, y2: Math.sin(a) * 210, stroke: '#8d8d8d', 'stroke-width': 3 }, g); }
+  [60, 120, 180].forEach(r => el('circle', { r, fill: 'none', stroke: '#8d8d8d', 'stroke-width': 3 }, g));
+  for (let i = 0; i < 40; i++) { const a = Math.random() * 6.28, d = 30 + Math.random() * 170; emo(g, Math.cos(a) * d, Math.sin(a) * d, 18, ['🏢', '🏬', '🏠', '🌳', '🏫'][i % 5]); }
+  emo(g, -120, 90, 34, '🌊'); here(g, 4);
+  // 4 India and 5 Earth (real map shapes)
+  const g4 = mk(), g5 = mk();
+  if (window.d3 && window.topojson && window.WORLD_ATLAS) {
+    const feats = topojson.feature(WORLD_ATLAS, WORLD_ATLAS.objects.countries).features;
+    const india = feats.find(f => String(f.id) === '356');
+    const blr = [77.59, 12.97];
+    const pm = d3.geoMercator().fitSize([420, 420], india);
+    const [bx, by] = pm(blr); pm.translate([pm.translate()[0] - bx, pm.translate()[1] - by]);
+    el('circle', { r: 260, fill: '#1f6fd1', opacity: .6 }, g4);
+    el('path', { d: d3.geoPath(pm)(india), fill: '#ffbe0b', stroke: '#ff7b00', 'stroke-width': 2 }, g4); here(g4, 5);
+    const po = d3.geoOrthographic().rotate([-blr[0], -blr[1]]).scale(200).translate([0, 0]);
+    const path = d3.geoPath(po);
+    el('circle', { r: 200, fill: '#1f6fd1' }, g5);
+    feats.forEach(f => { const d = path(f); if (d) el('path', { d, fill: String(f.id) === '356' ? '#ffbe0b' : '#58c46a', stroke: '#fff', 'stroke-width': .5 }, g5); });
+    here(g5, 3);
+  } else { emo(g4, 0, 0, 200, '🇮🇳'); emo(g5, 0, 0, 300, '🌏'); }
+  // 6 Earth and Moon
+  g = mk(); stars(g, 60); el('circle', { r: 170, fill: 'none', stroke: '#8fa2ff', 'stroke-dasharray': '6 8' }, g);
+  el('circle', { r: 30, fill: '#3a8ee6' }, g); el('circle', { cx: 120, cy: -120, r: 9, fill: '#ddd' }, g);
+  // 7 Solar System (paths squeezed so they fit)
+  g = mk(); stars(g, 50); const sx = -60;
+  el('circle', { cx: sx, r: 16, fill: '#ffcf3f' }, g);
+  [[25, '#9e8a78'], [40, '#e8c16a'], [60, '#3a8ee6'], [82, '#d0542b'], [120, '#c98e5a'], [150, '#e3c78b'], [178, '#8fe3e8'], [200, '#3d5ee0']].forEach(([r, c], i) => {
+    el('circle', { cx: sx, r, fill: 'none', stroke: '#8fa2ff', opacity: .35 }, g);
+    const a = i === 2 ? 0 : i * 1.7; el('circle', { cx: sx + Math.cos(a) * r, cy: Math.sin(a) * r, r: i >= 4 ? 7 : 4, fill: c }, g);
+  });
+  // 8 nearby stars
+  g = mk(); stars(g, 90, 230, 1.8); el('circle', { r: 6, fill: '#ffd166' }, g);
+  [['Proxima Centauri', 70, -40], ['Sirius', -130, 70], ["Barnard's Star", 100, 110]].forEach(([n, x, y]) => {
+    el('circle', { cx: x, cy: y, r: 5, fill: '#fff' }, g); el('text', { x, y: y - 12, fill: '#cfd8ff', 'font-size': 14, 'text-anchor': 'middle' }, g).textContent = n; });
+  el('text', { x: 0, y: 24, fill: '#ffd166', 'font-size': 14, 'text-anchor': 'middle' }, g).textContent = 'our Sun';
+  // 9 Milky Way (we are NOT at the centre)
+  g = mk(); const gc = [-110, 0];
+  el('circle', { cx: gc[0], cy: gc[1], r: 40, fill: '#fff3c4', opacity: .5 }, g);
+  for (let arm = 0; arm < 4; arm++) for (let i = 0; i < 160; i++) {
+    const t = i / 160 * 3.4, a = t + arm * Math.PI / 2, d = 20 + t * 62 + Math.random() * 12;
+    el('circle', { cx: gc[0] + Math.cos(a) * d, cy: gc[1] + Math.sin(a) * d * .9, r: Math.random() * 1.8 + .4, fill: ['#fff', '#cfe3ff', '#ffe0f0'][i % 3], opacity: .8 }, g);
+  }
+  here(g, 5);
+  el('text', { x: 0, y: -14, fill: '#ff8fb1', 'font-size': 14, 'text-anchor': 'middle', 'font-weight': 700 }, g).textContent = 'you are here';
+  // 10 Local Group
+  g = mk(); stars(g, 40, 240, .8);
+  const spiral = (cx, cy, s, c) => { for (let arm = 0; arm < 2; arm++) for (let i = 0; i < 60; i++) { const t = i / 60 * 3, a = t + arm * Math.PI; el('circle', { cx: cx + Math.cos(a) * t * s, cy: cy + Math.sin(a) * t * s * .5, r: .9, fill: c }, g); } };
+  spiral(0, 0, 4, '#cfe3ff'); spiral(150, -70, 7, '#ffe0f0'); spiral(-120, 90, 3, '#fff');
+  el('text', { x: 150, y: -110, fill: '#cfd8ff', 'font-size': 14, 'text-anchor': 'middle' }, g).textContent = 'Andromeda';
+  el('text', { x: 0, y: 24, fill: '#ffd166', 'font-size': 14, 'text-anchor': 'middle' }, g).textContent = 'Milky Way';
+  // 11 the observable universe: a web of galaxies
+  g = mk();
+  for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, d = Math.random() * 230, x = Math.cos(a) * d, y = Math.sin(a) * d;
+    for (let k = 0; k < 40; k++) { const t = Math.random(), b = a + (Math.random() - .5) * 1.4; el('circle', { cx: x + Math.cos(b) * t * 60, cy: y + Math.sin(b) * t * 60, r: .9, fill: ['#cfe3ff', '#ffe0f0', '#fff3c4'][k % 3], opacity: .8 }, g); } }
+  el('circle', { r: 240, fill: 'none', stroke: '#8fa2ff', opacity: .4 }, g);
+}
+
+let z = 0, lastLevel = -1, maxLevel = 0;
+function render() {
+  scenes.forEach((g, k) => {
+    const s = Math.pow(F, k - z);
+    const op = s > 3 ? 0 : s > 1.6 ? (3 - s) / 1.4 : s < 0.04 ? 0 : 1;
+    g.setAttribute('transform', `translate(400 280) scale(${s})`);
+    g.setAttribute('opacity', op.toFixed(3));
+    g.style.display = op <= 0 ? 'none' : '';
+  });
+  const lv = Math.round(z);
+  if (lv !== lastLevel) {
+    lastLevel = lv; maxLevel = Math.max(maxLevel, lv);
+    const L = LEVELS[lv];
+    $('#lName').textContent = L.n; $('#lSize').textContent = `Size: ${L.s}`;
+    $('#lText').textContent = L.t; $('#lLight').textContent = L.light ? '⚡ ' + L.light : '';
+    $('#lLight').hidden = !L.light;
+    Kids.sfx.pop();
+    ch.check({ level: lv, maxLevel });
+  }
+}
+function setZ(v) { z = Math.max(0, Math.min(LEVELS.length - 1, v)); $('#z').value = Math.round(z * 100); render(); }
+$('#z').addEventListener('input', e => { anim = null; setZ(+e.target.value / 100); });
+let anim = null;
+function animateTo(target, speed = 1.2) {
+  anim = { target };
+  let last = performance.now();
+  const step = now => {
+    if (!anim) return;
+    const dt = (now - last) / 1000; last = now;
+    const d = anim.target - z, mv = Math.sign(d) * Math.min(Math.abs(d), speed * dt);
+    setZ(z + mv);
+    if (Math.abs(anim.target - z) > 0.001) requestAnimationFrame(step); else { anim = null; Kids.speak(Kids.forSpeech(LEVELS[Math.round(z)].t)); }
+  };
+  requestAnimationFrame(step);
+}
+$('#outBtn').addEventListener('click', () => animateTo(Math.min(LEVELS.length - 1, Math.round(z) + 1), 2));
+$('#inBtn').addEventListener('click', () => animateTo(Math.max(0, Math.round(z) - 1), 2));
+$('#playBtn').addEventListener('click', () => { Kids.sfx.whoosh(); animateTo(z > LEVELS.length - 1.5 ? 0 : LEVELS.length - 1, 0.7); });
+svg.addEventListener('wheel', e => { e.preventDefault(); anim = null; setZ(z + e.deltaY * 0.002); }, { passive: false });
+
+const ch = Kids.challenges([
+  { ask: 'Zoom out until you can see the WHOLE EARTH 🌍', hint: 'Press Zoom out a few times.', ok: c => c.level === 5, yay: 'The whole Earth, our home planet!' },
+  { ask: 'Zoom out to see the SOLAR SYSTEM ☀️', hint: 'Keep zooming out past the Moon.', ok: c => c.level === 7, yay: 'The Sun and its planets. Can you find the Earth? It\'s the 3rd one!' },
+  { ask: 'Find our GALAXY, the Milky Way 🌀', hint: 'Keep zooming out past the nearby stars.', ok: c => c.level === 9, yay: 'The Milky Way! And we live out in one of its spiral arms.' },
+  { ask: 'Zoom out to the WHOLE universe we can see ✨', hint: 'Press "Zoom all the way out!"', ok: c => c.level === 11, yay: 'Every dot is a galaxy! The universe is SO big.' },
+  { ask: 'Now zoom all the way back HOME to you 👧', hint: 'Use Zoom in, or slide all the way left.', ok: c => c.level === 0 && c.maxLevel >= 5, yay: 'Welcome home! You are a tiny part of a giant universe, and very special. 💖' },
+], { title: 'Universe Zoomer' });
+
+Kids.learn({
+  why: ['The universe is so big that our brains can\'t picture it all at once. Zooming out step by step helps us imagine it.',
+    'Each step is MUCH bigger than the one before: a home, a city, a country, a planet, a star system, a galaxy…'],
+  imagine: ['Imagine you have a magic camera that can zoom out forever. Click: your house. Click: Bangalore. Click: the Earth, a blue marble. Click: the Sun is a tiny star. Click: our galaxy is a swirl of light…',
+    'And somewhere, in the middle of it all, there is you. 💖'],
+  wow: ['Scientists think there may be more stars in the universe than grains of sand on all the beaches on Earth!', 'Our galaxy alone has more than 10,000 crore stars, and there are billions of galaxies.'],
+  talk: ['How does it feel to know the universe is so big?', 'Which zoom step did you like best?', 'Do you think someone in another galaxy is zooming in on us?'],
+});
+build(); render();
+</script>
+</body>
+</html>

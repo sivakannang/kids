@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speed Race</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .racers button { font-size: 16px; }
+  .racers button.active { border-color: var(--green); background: #e3f7ea; }
+  .track { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .lane { position: relative; height: 56px; background: repeating-linear-gradient(90deg, #f4ecdc 0 40px, #efe3cc 40px 80px); border-radius: 14px; overflow: hidden; }
+  .lane .finish { position: absolute; right: 0; top: 0; bottom: 0; width: 14px; background: repeating-linear-gradient(0deg, #2b2d42 0 7px, #fff 7px 14px); }
+  .lane .runner { position: absolute; top: 4px; left: 0; font-size: 40px; line-height: 48px; transform: scaleX(-1); }
+  .lane .runner.noflip { transform: none; }
+  .lane .tag { position: absolute; left: 60px; top: 16px; font-size: 14px; color: var(--muted); font-weight: 600; }
+  .results { width: 100%; border-collapse: collapse; font-size: 17px; margin-top: 10px; }
+  .results td { padding: 6px 8px; border-bottom: 2px solid #f1ecff; }
+  .results b { color: var(--purple); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🏁</span>
+    <div><h1>Speed Race</h1><small>From a snail to the speed of light, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="label center">1. Pick up to 4 racers</div>
+      <div class="pick racers" id="racers"></div>
+      <div class="label center">2. How far is the race?</div>
+      <div class="pick" id="dists"></div>
+      <div class="row"><button class="btn big green" id="goBtn">🏁 Ready, steady, GO!</button></div>
+      <div class="track" id="track"></div>
+      <table class="results" id="results"></table>
+      <div class="hint" id="note"></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const K = Kids.name;
+const RACERS = [
+  { id: 'snail', e: '🐌', n: 'snail', kmh: 0.01 },
+  { id: 'tortoise', e: '🐢', n: 'tortoise', kmh: 0.3 },
+  { id: 'walk', e: '🚶‍♀️', n: `${K} walking`, kmh: 4 },
+  { id: 'run', e: '🏃‍♀️', n: `${K} running`, kmh: 12 },
+  { id: 'cycle', e: '🚲', n: 'bicycle', kmh: 15 },
+  { id: 'horse', e: '🐎', n: 'horse', kmh: 45 },
+  { id: 'car', e: '🚗', n: 'car', kmh: 80 },
+  { id: 'cheetah', e: '🐆', n: 'cheetah', kmh: 100 },
+  { id: 'train', e: '🚄', n: 'Vande Bharat train', kmh: 160 },
+  { id: 'plane', e: '✈️', n: 'aeroplane', kmh: 900 },
+  { id: 'rocket', e: '🚀', n: 'rocket', kmh: 28000 },
+  { id: 'light', e: '⚡', n: 'light', kmh: 1079252849 },
+];
+const DISTS = [
+  { id: '100m', e: '🏃', n: 'school race (100 m)', km: 0.1 },
+  { id: 'mysore', e: '🚗', n: 'Bangalore → Mysore (145 km)', km: 145 },
+  { id: 'earth', e: '🌍', n: 'around the Earth (40,000 km)', km: 40000 },
+  { id: 'moon', e: '🌙', n: 'to the Moon (3,84,400 km)', km: 384400 },
+  { id: 'sun', e: '☀️', n: 'to the Sun (15 crore km)', km: 149600000 },
+];
+let chosen = ['snail', 'cheetah'], dist = DISTS[0], racing = false;
+
+function fmtTime(h) {
+  const s = h * 3600;
+  if (s < 1) return 'less than 1 second! ⚡';
+  if (s < 60) return `${Math.round(s)} second${Math.round(s) === 1 ? '' : 's'}`;
+  if (s < 3600) return `${Math.round(s / 60)} minute${Math.round(s / 60) === 1 ? '' : 's'}`;
+  if (h < 48) return `${Math.floor(h)} hour${Math.floor(h) === 1 ? '' : 's'}${h % 1 > 0.08 ? ` ${Math.round((h % 1) * 60)} min` : ''}`;
+  const d = h / 24;
+  if (d < 365) return `${Math.round(d)} days`;
+  const y = d / 365;
+  return y < 100 ? `${Math.round(y)} years` : `${Math.round(y).toLocaleString('en-IN')} years 😱`;
+}
+function renderPickers() {
+  $('#racers').innerHTML = ''; $('#dists').innerHTML = '';
+  RACERS.forEach(r => {
+    const b = document.createElement('button');
+    b.textContent = `${r.e} ${r.n}`; b.className = chosen.includes(r.id) ? 'active' : '';
+    b.addEventListener('click', () => {
+      if (racing) return;
+      if (chosen.includes(r.id)) chosen = chosen.filter(x => x !== r.id);
+      else { if (chosen.length >= 4) chosen.shift(); chosen.push(r.id); }
+      Kids.sfx.pop(); renderPickers(); buildTrack();
+    });
+    $('#racers').appendChild(b);
+  });
+  DISTS.forEach(d => {
+    const b = document.createElement('button');
+    b.textContent = `${d.e} ${d.n}`; b.className = d === dist ? 'active' : '';
+    b.addEventListener('click', () => { if (racing) return; dist = d; Kids.sfx.pop(); renderPickers(); });
+    $('#dists').appendChild(b);
+  });
+}
+function buildTrack() {
+  $('#track').innerHTML = chosen.map(id => {
+    const r = RACERS.find(x => x.id === id);
+    return `<div class="lane"><div class="finish"></div><span class="tag">${r.n}</span><div class="runner ${r.id === 'light' || r.id === 'rocket' ? 'noflip' : ''}" data-id="${id}">${r.e}</div></div>`;
+  }).join('');
+}
+$('#goBtn').addEventListener('click', () => {
+  if (racing || !chosen.length) return;
+  racing = true; $('#results').innerHTML = ''; $('#note').textContent = '';
+  const racers = chosen.map(id => RACERS.find(x => x.id === id)).map(r => ({ ...r, hours: dist.km / r.kmh }));
+  const fastest = Math.min(...racers.map(r => r.hours));
+  // the fastest racer takes 3 seconds on screen; the others are slower by the real amount (we stop the race after 12 s)
+  const lanes = [...document.querySelectorAll('.runner')];
+  const W = () => $('#track').clientWidth - 60;
+  const t0 = performance.now();
+  Kids.sfx.whoosh();
+  const step = now => {
+    const t = (now - t0) / 1000;
+    racers.forEach((r, i) => {
+      const p = Math.min(1, t / (3 * r.hours / fastest));
+      lanes[i].style.left = (p * W()) + 'px';
+    });
+    if (t < 12 && racers.some(r => t < 3 * r.hours / fastest)) requestAnimationFrame(step);
+    else finish(racers, t);
+  };
+  requestAnimationFrame(step);
+});
+function finish(racers, t) {
+  racing = false;
+  const sorted = [...racers].sort((a, b) => a.hours - b.hours);
+  const medal = ['🥇', '🥈', '🥉', '4️⃣'];
+  $('#results').innerHTML = sorted.map((r, i) => `<tr><td>${medal[i]}</td><td>${r.e} ${r.n}</td><td><b>${fmtTime(r.hours)}</b></td></tr>`).join('');
+  const slow = sorted.filter(r => 3 * r.hours / sorted[0].hours > t);
+  $('#note').textContent = slow.length ? `🐌 We stopped the race. ${slow.map(r => r.n).join(' and ')} would still be going for a long, long time!` : '';
+  Kids.sfx.yay();
+  Kids.speak(Kids.forSpeech(`The winner is the ${sorted[0].n}! It takes ${fmtTime(sorted[0].hours)}.`));
+  ch.check({ dist: dist.id, ids: racers.map(r => r.id), sorted });
+}
+
+const has = (c, ...ids) => ids.every(id => c.ids.includes(id));
+const ch = Kids.challenges([
+  { ask: 'Race the snail 🐌 against the cheetah 🐆 in the school race', hint: 'Pick the snail and the cheetah, and the 100 m race.',
+    ok: c => c.dist === '100m' && has(c, 'snail', 'cheetah'), yay: 'The cheetah wins in 4 seconds. The snail needs about 10 hours!' },
+  { ask: 'How long would it take YOU to WALK to Mysore? 🚶‍♀️', hint: `Pick "${K} walking" and Bangalore → Mysore.`,
+    ok: c => c.dist === 'mysore' && has(c, 'walk'), yay: 'About 36 hours of walking, without stopping! A car takes less than 2 hours.' },
+  { ask: 'Drive a car 🚗 all the way around the Earth', hint: 'Pick the car and "around the Earth".',
+    ok: c => c.dist === 'earth' && has(c, 'car'), yay: 'About 21 days, driving day and night! 🌍' },
+  { ask: 'Fly a rocket 🚀 to the Moon', hint: 'Pick the rocket and "to the Moon".',
+    ok: c => c.dist === 'moon' && has(c, 'rocket'), yay: 'About 14 hours at top speed! Real trips took about 3 days, because rockets don\'t fly in a straight line at full speed.' },
+  { ask: 'Send LIGHT ⚡ to the Sun', hint: 'Pick light and "to the Sun".',
+    ok: c => c.dist === 'sun' && has(c, 'light'), yay: 'Light takes about 8 minutes to reach the Sun. Nothing is faster than light!' },
+  { ask: 'Race an aeroplane ✈️ to the Sun ☀️. How long would it take?', hint: 'Pick the aeroplane and "to the Sun".',
+    ok: c => c.dist === 'sun' && has(c, 'plane'), yay: 'About 19 years of flying! The Sun is VERY far away.' },
+], { title: 'Speed Champion' });
+
+Kids.learn({
+  why: ['<b>Speed</b> tells us how far something goes in some time. Kilometres per hour (km/h) means: how many kilometres in one hour.',
+    'The faster something is, the less time it needs to go the same distance.'],
+  imagine: ['Imagine riding on a beam of light. ⚡ In one second you could zoom around the Earth seven and a half times!',
+    'Now imagine riding on a snail. 🐌 In one second you would move… about as far as a grain of rice.'],
+  wow: ['Light is the fastest thing in the whole universe: about 3 lakh km every SECOND.', 'A cheetah is the fastest runner on land. It can go from 0 to 100 km/h in about 3 seconds!'],
+  talk: ['What is the fastest you have ever gone? In a car? A train? A plane?', 'Would you rather be as fast as a cheetah or as strong as an elephant?', 'Why do you think nothing can go faster than light?'],
+});
+renderPickers();
+buildTrack();
+</script>
+</body>
+</html>

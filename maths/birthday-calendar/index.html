@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Birthday &amp; Calendar</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .cal-head h2 { margin: 0; font-size: 28px; color: var(--purple); }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 12px; }
+  .cal .dow { text-align: center; font-weight: 700; font-size: 15px; color: var(--muted); padding: 4px 0; }
+  .cal .dow.sun { color: var(--red); }
+  .day {
+    position: relative; aspect-ratio: 1; border: 3px solid transparent; border-radius: 14px; background: #f6f3ff; cursor: pointer;
+    font-size: 20px; font-weight: 600; color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0;
+  }
+  .day:hover { background: #ece4ff; }
+  .day.blank { background: transparent; cursor: default; }
+  .day.sun { color: var(--red); }
+  .day.today { border-color: var(--orange); background: #fff4e0; }
+  .day.sel { border-color: var(--purple); background: #e8defe; }
+  .day .em { font-size: 16px; line-height: 1; }
+  .info { font-size: 21px; min-height: 60px; margin-top: 12px; text-align: center; background: #eef6ff; border-radius: 18px; padding: 10px; }
+  .count .big { font-size: 46px; font-weight: 700; color: var(--pink); text-align: center; }
+  .count p { text-align: center; font-size: 18px; margin: 4px 0; }
+  .knuckles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .kn { border-radius: 12px; padding: 6px 2px; text-align: center; font-size: 14px; font-weight: 600; }
+  .kn b { display: block; font-size: 20px; }
+  .kn.k31 { background: #ffe1ec; } .kn.k30 { background: #e3f2ff; } .kn.k28 { background: #fff3c4; }
+  .weekdays { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .weekdays span { background: #f1e9ff; border-radius: 999px; padding: 6px 12px; font-weight: 600; }
+  .weekdays span.today { background: var(--orange); color: #fff; }
+  .setup input { font-size: 18px; padding: 6px 10px; border-radius: 12px; border: 3px solid #e5e0f5; font-family: inherit; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">📅</span>
+    <div><h1>Birthday &amp; Calendar</h1><small>Days, weeks and months, <b data-kid-name>Kavikuyil</b>! When is your birthday?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="cal">📅 My Calendar</button>
+  <button class="tab" data-tab="quiz">❓ Calendar Quiz</button>
+</nav>
+
+<main class="split" data-panel="cal">
+  <div>
+    <section class="card">
+      <div class="cal-head">
+        <button class="btn orange" id="prev">◀</button>
+        <h2 id="monthName"></h2>
+        <button class="btn orange" id="next">▶</button>
+      </div>
+      <div class="cal" id="cal"></div>
+      <div class="info" id="info">Tap any day to find out about it!</div>
+      <div class="row"><button class="btn green" id="todayBtn">📍 Back to today</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+    <section class="card count" id="countCard"></section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🗓️ The 7 days of the week</h3>
+      <div class="weekdays" id="weekdays"></div>
+      <h3 style="margin:16px 0 8px">✊ The knuckle trick: how many days in each month?</h3>
+      <div class="knuckles" id="knuckles"></div>
+      <p class="label" style="font-size:15px">Make two fists. Count the months on your knuckles (bumps) and the dips between them. Knuckle = 31 days, dip = 30 days (February has 28, or 29 in a leap year).</p>
+    </section>
+  </div>
+</main>
+
+<main class="page" data-panel="quiz" hidden>
+  <section class="card" id="quizBox"></section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const DAY = 86400000;
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOWS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const SPECIAL = { '1-1': ['🎆', 'New Year\'s Day'], '1-26': ['🇮🇳', 'Republic Day'], '8-15': ['🇮🇳', 'Independence Day'],
+  '9-5': ['👩‍🏫', "Teachers' Day"], '10-2': ['🕊️', 'Gandhi Jayanti'], '11-14': ['🎈', "Children's Day"], '12-25': ['🎄', 'Christmas'] };
+const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const today = midnight(new Date());
+const sameDay = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+const daysIn = (y, m) => new Date(y, m + 1, 0).getDate();
+let view = { y: today.getFullYear(), m: today.getMonth() }, selected = null;
+let bday = Kids.birthday();
+const isBday = d => bday && d.getMonth() === bday.getMonth() && d.getDate() === bday.getDate();
+
+/* ---------- calendar ---------- */
+function renderCal() {
+  $('#monthName').textContent = `${MONTHS[view.m]} ${view.y}`;
+  const cal = $('#cal'); cal.innerHTML = DOWS.map((d, i) => `<div class="dow ${i === 0 ? 'sun' : ''}">${d.slice(0, 3)}</div>`).join('');
+  const first = new Date(view.y, view.m, 1).getDay();
+  for (let i = 0; i < first; i++) cal.insertAdjacentHTML('beforeend', '<div class="day blank"></div>');
+  for (let d = 1; d <= daysIn(view.y, view.m); d++) {
+    const date = new Date(view.y, view.m, d);
+    const sp = SPECIAL[`${view.m + 1}-${d}`];
+    const b = document.createElement('button');
+    b.className = 'day' + (date.getDay() === 0 ? ' sun' : '') + (sameDay(date, today) ? ' today' : '') + (sameDay(date, selected) ? ' sel' : '');
+    b.innerHTML = `${d}<span class="em">${isBday(date) ? '🎂' : sp ? sp[0] : ''}</span>`;
+    b.addEventListener('click', () => pick(date));
+    cal.appendChild(b);
+  }
+}
+function pick(date) {
+  selected = date; renderCal(); Kids.sfx.pop();
+  const diff = Math.round((date - today) / DAY);
+  const when = diff === 0 ? 'That\'s TODAY! 📍' : diff === 1 ? 'That\'s tomorrow!' : diff === -1 ? 'That was yesterday.' :
+    diff > 0 ? `That's in ${diff} days (${Math.floor(diff / 7)} week${Math.floor(diff / 7) === 1 ? '' : 's'} and ${diff % 7} day${diff % 7 === 1 ? '' : 's'}).` : `That was ${-diff} days ago.`;
+  const sp = SPECIAL[`${date.getMonth() + 1}-${date.getDate()}`];
+  const extra = isBday(date) ? ' 🎂 It\'s your BIRTHDAY!' : sp ? ` ${sp[0]} ${sp[1]}!` : '';
+  const text = `${DOWS[date.getDay()]}, ${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}. ${when}${extra}`;
+  $('#info').textContent = text;
+  Kids.speak(Kids.forSpeech(text));
+  ch.check({ date, diff });
+}
+$('#prev').addEventListener('click', () => { view.m--; if (view.m < 0) { view.m = 11; view.y--; } renderCal(); Kids.sfx.pop(); });
+$('#next').addEventListener('click', () => { view.m++; if (view.m > 11) { view.m = 0; view.y++; } renderCal(); Kids.sfx.pop(); });
+$('#todayBtn').addEventListener('click', () => { view = { y: today.getFullYear(), m: today.getMonth() }; renderCal(); Kids.sfx.pop(); });
+
+/* ---------- birthday countdown ---------- */
+function renderCount() {
+  const box = $('#countCard');
+  if (!bday) {
+    box.innerHTML = `<h3 style="margin:0 0 6px">🎂 For grown-ups: add ${Kids.name}'s birthday</h3>
+      <div class="setup center"><input type="date" id="bdayIn"> <button class="btn green" id="bdaySave">💾 Save</button></div>
+      <p class="label" style="font-size:14px">Saved only in this browser, never sent anywhere.</p>`;
+    $('#bdaySave').addEventListener('click', () => {
+      const v = $('#bdayIn').value; if (!v) return;
+      Kids.setBirthday(v); bday = Kids.birthday(); renderCount(); renderCal(); Kids.sfx.yay();
+    });
+    return;
+  }
+  let nb = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+  if (nb < today) nb.setFullYear(nb.getFullYear() + 1);
+  const n = Math.round((nb - today) / DAY);
+  const age = nb.getFullYear() - bday.getFullYear();
+  box.innerHTML = n === 0
+    ? `<div class="big">🎉 TODAY! 🎉</div><p>Happy birthday, ${Kids.name}! You are ${age} today! 🎂</p>`
+    : `<div class="big">${n}</div><p>🛌 sleeps until your birthday!</p>
+       <p>You will be <b>${age}</b> on <b>${DOWS[nb.getDay()]}, ${nb.getDate()} ${MONTHS[nb.getMonth()]}</b>.</p>
+       <p>That's ${Math.floor(n / 7)} week${Math.floor(n / 7) === 1 ? '' : 's'} and ${n % 7} day${n % 7 === 1 ? '' : 's'}. 🎂</p>`;
+}
+$('#weekdays').innerHTML = DOWS.map((d, i) => `<span class="${i === today.getDay() ? 'today' : ''}">${d}</span>`).join('');
+$('#knuckles').innerHTML = MONTHS.map((m, i) => {
+  const n = i === 1 ? 28 : daysIn(2025, i);
+  return `<div class="kn k${n}">${m.slice(0, 3)}<b>${n}${i === 1 ? '*' : ''}</b></div>`;
+}).join('');
+
+/* ---------- Kuyil's challenges ---------- */
+const ch = Kids.challenges([
+  { ask: 'Tap TODAY on the calendar 📍', hint: 'Today has an orange border.', ok: c => c.diff === 0, yay: () => `Today is ${DOWS[today.getDay()]}!` },
+  { ask: 'Tap the day ONE WEEK from today 🗓️', hint: 'A week is 7 days. Count 7 days forward, or look straight down one row!',
+    ok: c => c.diff === 7, yay: 'One week later is the SAME day of the week, one row down!' },
+  { ask: "Find Children's Day 🎈 and tap it", hint: "Children's Day is on 14 November. Use the arrows to find November.",
+    ok: c => c.date.getMonth() === 10 && c.date.getDate() === 14, yay: "14 November is Children's Day in India! 🎈" },
+  { ask: 'Tap the LAST day of February ❄️', hint: 'Go to February. Is it the 28th or the 29th this year?',
+    ok: c => c.date.getMonth() === 1 && c.date.getDate() === daysIn(c.date.getFullYear(), 1),
+    yay: c => `February ${c.date.getFullYear()} ends on the ${c.date.getDate()}th. ${c.date.getDate() === 29 ? 'A leap year!' : 'Not a leap year.'}` },
+  { ask: 'Tap any SUNDAY ☀️', hint: 'Sundays are in the first column, in red.', ok: c => c.date.getDay() === 0, yay: 'Sunday: a holiday! 🎈' },
+  { ask: 'Find your BIRTHDAY 🎂 and tap it', hint: 'Look for the 🎂 cake. (A grown-up can add your birthday first.)',
+    ok: c => isBday(c.date), yay: 'Happy birthday in advance! 🎂' },
+  { ask: "Find India's Independence Day 🇮🇳", hint: 'It is on 15 August.', ok: c => c.date.getMonth() === 7 && c.date.getDate() === 15,
+    yay: '15 August: Independence Day! 🇮🇳' },
+], { title: 'Calendar Detective' });
+
+/* ---------- quiz ---------- */
+const R = Kids.rand, shuffle = Kids.shuffle;
+function opts(right, pool) { const o = new Set([right]); while (o.size < 4) o.add(pool[R(pool.length)]); return shuffle([...o]); }
+const MAKERS = [
+  () => { const i = R(7); const a = DOWS[(i + 1) % 7];
+    return { q: `Which day comes AFTER ${DOWS[i]}?`, choices: opts(a, DOWS).map(x => ({ label: x, ok: x === a })), yay: `After ${DOWS[i]} comes ${a}.`, hint: 'Say the days in order: Sunday, Monday, Tuesday…' }; },
+  () => { const i = R(7); const a = DOWS[(i + 6) % 7];
+    return { q: `Which day comes BEFORE ${DOWS[i]}?`, choices: opts(a, DOWS).map(x => ({ label: x, ok: x === a })), yay: `Before ${DOWS[i]} comes ${a}.`, hint: 'Count backwards through the days.' }; },
+  () => { const i = R(12); const a = MONTHS[(i + 1) % 12];
+    return { q: `Which month comes after ${MONTHS[i]}?`, choices: opts(a, MONTHS).map(x => ({ label: x, ok: x === a })), yay: `After ${MONTHS[i]} comes ${a}.`, hint: 'January, February, March, April…' }; },
+  () => { const i = R(12); const n = i === 1 ? 28 : daysIn(2025, i);
+    return { q: `How many days are in ${MONTHS[i]}?`, choices: [28, 30, 31, 7].map(x => ({ label: String(x) + (x === 28 ? ' (or 29)' : ''), ok: x === n })),
+      yay: `${MONTHS[i]} has ${n} days${i === 1 ? ' (29 in a leap year)' : ''}.`, hint: 'Try the knuckle trick! ✊' }; },
+  () => ({ q: 'What day is it TODAY?', choices: opts(DOWS[today.getDay()], DOWS).map(x => ({ label: x, ok: x === DOWS[today.getDay()] })),
+      yay: `Today is ${DOWS[today.getDay()]}.`, hint: 'Look at the calendar: today has an orange border.' }),
+  () => { const a = DOWS[(today.getDay() + 1) % 7];
+    return { q: 'What day will it be TOMORROW?', choices: opts(a, DOWS).map(x => ({ label: x, ok: x === a })), yay: `Tomorrow is ${a}.`, hint: 'What comes after today?' }; },
+  () => ({ q: 'How many days are in a week?', choices: [5, 7, 10, 12].map(x => ({ label: String(x), ok: x === 7 })), yay: '7 days in a week!', hint: 'Count: Sunday, Monday…' }),
+  () => ({ q: 'How many months are in a year?', choices: [10, 12, 7, 30].map(x => ({ label: String(x), ok: x === 12 })), yay: '12 months in a year!', hint: 'January to December.' }),
+];
+let quizStarted = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizStarted) { quizStarted = true; Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)]()); }
+}));
+
+Kids.learn({
+  why: ['A <b>day</b> is one spin of the Earth and a <b>month</b> is about one trip of the Moon. Long ago, people made the <b>week</b> 7 days long.',
+    'Months have 30 or 31 days so that 12 of them fit nicely into one year of 365 days.'],
+  imagine: ['Imagine a calendar as a long train. Each carriage is a day, and every 7 carriages there is a big red Sunday carriage.',
+    'Your birthday carriage is somewhere ahead, with balloons on it! 🎈'],
+  wow: ['The same date moves to a different day of the week every year: if your birthday is on a Monday this year, next year it will be on Tuesday (or Wednesday after a leap day)!',
+    'February is the shortest month, with only 28 days.'],
+  talk: ['What is your favourite day of the week? Why?', 'What special day is coming next?', 'How many sleeps until the next holiday?'],
+});
+renderCal();
+renderCount();
+</script>
+</body>
+</html>

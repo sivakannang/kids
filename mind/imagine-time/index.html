@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imagine Time</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .trips { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .trip { border: none; border-radius: 22px; padding: 16px 10px; cursor: pointer; font-family: inherit; font-size: 18px; font-weight: 700; color: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+  .trip .e { display: block; font-size: 50px; }
+  .trip .d { display: block; font-size: 14px; font-weight: 500; opacity: .9; margin-top: 4px; }
+  .theatre { position: relative; border-radius: 26px; overflow: hidden; min-height: 420px; display: flex; align-items: center; justify-content: center; color: #fff; text-align: center; transition: background 1.5s; }
+  .theatre .line { position: relative; z-index: 2; font-size: 30px; font-weight: 600; max-width: 720px; padding: 20px; line-height: 1.5; text-shadow: 0 2px 10px rgba(0,0,0,.4); transition: opacity 1s; }
+  .floaty { position: absolute; bottom: -60px; font-size: 40px; animation: floatUp linear forwards; opacity: .85; z-index: 1; }
+  @keyframes floatUp { to { transform: translateY(-560px) rotate(25deg); opacity: 0; } }
+  .dim { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 1.5s; z-index: 30; }
+  body.dimmed .dim { opacity: .75; }
+  body.dimmed .theatre { z-index: 31; position: relative; }
+  .controls { position: relative; z-index: 32; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌠</span>
+    <div><h1>Imagine Time</h1><small>Close your eyes, listen, and picture it in your mind, <b data-kid-name>Kavikuyil</b></small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card" id="chooser">
+    <h2 style="margin:0 0 10px">Where shall we go today?</h2>
+    <div class="trips" id="trips"></div>
+  </section>
+  <section class="card" id="player" hidden style="padding:10px">
+    <div class="theatre" id="theatre"><div class="line" id="line"></div></div>
+    <div class="row controls">
+      <button class="btn green" id="pauseBtn">⏸️ Pause</button>
+      <button class="btn purple" id="dimBtn">🌙 Eyes closed mode</button>
+      <button class="btn orange" id="stopBtn">⏹️ Stop</button>
+    </div>
+  </section>
+</main>
+<div class="dim"></div>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const K = Kids.name;
+const TRIPS = [
+  { id: 'space', e: '🚀', n: 'Space Ride', d: 'Float past the Moon and stars', bg: ['#050822', '#3a0ca3'], fl: ['⭐', '✨', '🪐', '🌙'], lines: [
+    `Get comfy, ${K}. Close your eyes and take a slow, deep breath in… and out.`,
+    'Imagine you are sitting in a little silver rocket. Your seatbelt clicks. Click!',
+    'Three, two, one… whoosh! You float gently up, above the clouds, above the birds.',
+    'The sky turns dark and full of twinkling stars. Everything is quiet and peaceful.',
+    'Look out of your window. There is the Earth, blue and white, slowly turning below you.',
+    'You float past the Moon. It is grey and bumpy, and it glows softly in the sunlight.',
+    'A shooting star zips past and you make a wish. What do you wish for?',
+    'Slowly, your rocket turns around and floats home. Take a deep breath… and gently open your eyes.' ] },
+  { id: 'sea', e: '🌊', n: 'Under the Sea', d: 'Swim with turtles and fish', bg: ['#023e8a', '#00b4d8'], fl: ['🫧', '🐠', '🐟', '🫧'], lines: [
+    'Close your eyes and breathe in slowly… and out. Feel your body relax.',
+    'Imagine you can breathe under water, like a fish. You dive into a warm, blue sea.',
+    'Tiny bubbles tickle your nose as they float up to the sunlight. 🫧',
+    'A friendly sea turtle swims next to you. It smiles and waves a flipper.',
+    'Below you is a coral reef, full of colours: pink, orange, purple and yellow.',
+    'Little striped fish dart in and out, playing hide and seek.',
+    'You float on your back and watch the sunlight dance on the water above.',
+    'Slowly you swim up, up, to the warm surface. Take a big breath… and open your eyes.' ] },
+  { id: 'forest', e: '🌳', n: 'Magic Forest', d: 'Meet a talking peacock', bg: ['#1b4332', '#52b788'], fl: ['🍃', '🌸', '🦋', '🍂'], lines: [
+    'Close your eyes. Breathe in through your nose… and slowly out through your mouth.',
+    'You are walking along a soft path in a green, magical forest.',
+    'Sunlight peeks through the leaves, making little golden spots on the ground.',
+    'You hear birds singing, and water trickling in a stream nearby.',
+    'A beautiful peacock walks up and opens its tail like a fan. "Welcome!" it says.',
+    'It shows you a tree with leaves that sparkle and hum a gentle song.',
+    'You sit under the tree and feel calm, safe and happy.',
+    'You wave goodbye to the peacock and walk home. Wiggle your fingers… and open your eyes.' ] },
+  { id: 'cloud', e: '☁️', n: 'Cloud Float', d: 'Drift on a soft cloud', bg: ['#4ea8de', '#e0f2ff'], fl: ['☁️', '🕊️', '☁️', '🌈'], lines: [
+    'Lie back and close your eyes. Take a slow breath in… and let it all out.',
+    'Imagine a big, fluffy cloud floating down to you, soft as a pillow.',
+    'You climb on. It is warm and squishy, like cotton candy.',
+    'The cloud floats gently up into the blue sky. You can see your house getting smaller below.',
+    'You drift over green fields, blue lakes and tall mountains.',
+    'A rainbow appears, and your cloud floats right through its colours. 🌈',
+    'You feel light and calm, as if you are floating too.',
+    'The cloud brings you softly back home. Breathe in… stretch… and open your eyes.' ] },
+  { id: 'garden', e: '🦋', n: 'Butterfly Garden', d: 'Grow wings and fly', bg: ['#7b2cbf', '#ffafcc'], fl: ['🦋', '🌷', '🌼', '🌺'], lines: [
+    'Close your eyes and breathe in slowly, like smelling a flower… and breathe out.',
+    'Imagine you are in a garden full of flowers of every colour.',
+    'You feel something on your back… you have grown soft, colourful butterfly wings!',
+    'You flutter up and float from flower to flower. Each one smells sweet.',
+    'Other butterflies join you, and you dance together in the warm breeze.',
+    'You land on a big sunflower and rest in the sunshine.',
+    'You feel happy, gentle and free.',
+    'Slowly, your wings fold away and you are back. Take a deep breath… and open your eyes.' ] },
+];
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+TRIPS.forEach(t => {
+  const b = document.createElement('button');
+  b.className = 'trip'; b.style.background = `linear-gradient(135deg, ${t.bg[0]}, ${t.bg[1]})`;
+  b.innerHTML = `<span class="e">${t.e}</span>${t.n}<span class="d">${t.d}</span>`;
+  b.addEventListener('click', () => start(t));
+  $('#trips').appendChild(b);
+});
+
+let trip = null, i = 0, paused = false, timer = null, floatTimer = null, token = 0;
+function start(t) {
+  trip = t; i = 0; paused = false; token++;
+  $('#chooser').hidden = true; $('#player').hidden = false;
+  $('#theatre').style.background = `linear-gradient(180deg, ${t.bg[0]}, ${t.bg[1]})`;
+  $('#pauseBtn').textContent = '⏸️ Pause';
+  say(`${t.e} ${t.n}. Listen and picture it in your mind. You can close your eyes!`);
+  clearInterval(floatTimer); floatTimer = setInterval(floaty, 900);
+  playLine();
+}
+function floaty() {
+  if (paused || !trip) return;
+  const f = document.createElement('div');
+  f.className = 'floaty'; f.textContent = trip.fl[Kids.rand(trip.fl.length)];
+  f.style.left = Math.random() * 92 + '%'; f.style.animationDuration = (9 + Math.random() * 6) + 's';
+  $('#theatre').appendChild(f); setTimeout(() => f.remove(), 16000);
+}
+// read each line slowly and calmly, then wait a little before the next one
+function playLine() {
+  if (!trip || paused) return;
+  const my = ++token, text = trip.lines[i];
+  const line = $('#line'); line.style.opacity = 0;
+  setTimeout(() => { if (my === token) { line.textContent = text; line.style.opacity = 1; } }, 500);
+  let fired = false;
+  const next = () => { if (fired || my !== token || paused) return; fired = true; timer = setTimeout(() => { if (my !== token || paused) return; i++; i < trip.lines.length ? playLine() : finish(); }, 2500); };
+  if (Kids.sound && 'speechSynthesis' in window) {
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.78; u.pitch = 1.05;
+      u.onend = next;
+      setTimeout(() => speechSynthesis.speak(u), 600);
+      timer = setTimeout(() => { if (my === token && !paused && !speechSynthesis.speaking) next(); }, 14000);   // safety net
+    } catch { timer = setTimeout(next, 6000); }
+  } else timer = setTimeout(next, 6500);
+}
+function finish() {
+  clearInterval(floatTimer);
+  document.body.classList.remove('dimmed');
+  $('#line').textContent = `Welcome back, ${K}! 🌟 What did you see? Tell a grown-up, or draw it in your Dream Jar!`;
+  const k = `imagine.${trip.id}.${new Date().toDateString()}`;
+  if (!Kids.store.get(k, false)) { Kids.store.set(k, true); Kids.addStar(); }
+  Kids.sfx.yay();
+  say(`Beautiful imagining, ${K}! Using your imagination makes your brain strong and creative. 🧠✨`, true);
+  $('#pauseBtn').textContent = '🔁 Again';
+  trip.done = true;
+}
+$('#pauseBtn').addEventListener('click', () => {
+  if (trip && trip.done) { trip.done = false; start(trip); return; }
+  paused = !paused; token++; clearTimeout(timer);
+  try { paused ? speechSynthesis.cancel() : null; } catch {}
+  $('#pauseBtn').textContent = paused ? '▶️ Continue' : '⏸️ Pause';
+  if (!paused) playLine();
+});
+$('#stopBtn').addEventListener('click', () => {
+  token++; clearTimeout(timer); clearInterval(floatTimer); try { speechSynthesis.cancel(); } catch {}
+  if (trip) trip.done = false; trip = null;
+  document.body.classList.remove('dimmed');
+  $('#player').hidden = true; $('#chooser').hidden = false;
+  say(`Where shall we go next, ${K}?`);
+});
+$('#dimBtn').addEventListener('click', () => document.body.classList.toggle('dimmed'));
+
+Kids.learn({
+  why: ['When you imagine something, your brain builds a picture, almost like watching a movie inside your head.',
+    'Imagining calm places helps your body relax, and imagining new ideas is how inventors, artists and scientists create new things!'],
+  imagine: ['Can you imagine a colour nobody has ever seen? Or an animal nobody has invented yet? Try it!'],
+  wow: ['Athletes often imagine doing their sport perfectly before they play. It helps their real practice too!',
+    'Albert Einstein imagined riding on a beam of light. That idea helped him discover amazing things about the universe.'],
+  talk: ['What was your favourite part of the journey?', 'Where would you like to go next time in your imagination?', 'Can you make up your own imagine-journey for a grown-up?'],
+});
+say(`Hi ${K}! Pick a journey. Get comfy, listen to the story, and picture it in your mind. 🌠`);
+</script>
+</body>
+</html>

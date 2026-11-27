@@ -26,11 +26,11 @@ kids/
 │   └── app-starter/    copy this to start a new game
 ├── english/            class-1-basics/ (reading lists, sentences, worksheets)
 ├── tamil/
-├── maths/              world-clock/ (Tick-Tock World Explorer)
-├── science/
+├── maths/              time & measuring games (world-clock, time-ladder, ruler-race, speed-race…)
+├── science/            Earth, space & universe games (spin-the-earth, rocket-launch, black-hole, zoom-out…)
 ├── world/
 ├── art-and-music/
-└── mind/               (planned) focus, goals, dreams, imagination
+└── mind/               focus-garden, goal-ladder, dream-jar, why-jar, imagine-time
 ```
 
 Each subject folder has a `README.md` listing its projects and ideas for new ones.
@@ -38,7 +38,7 @@ Each subject folder has a `README.md` listing its projects and ideas for new one
 ## Adding a new game
 
 1. Copy `templates/app-starter/` to `<subject>/<game-name>/`, using lowercase-with-dashes and no spaces.
-2. Build the game in its `index.html`. Use `Kids.addStar()`, `Kids.sfx.yay()`, `Kids.confetti()`, `Kids.speak()` and `Kids.praise()` for rewards.
+2. Build the game in its `index.html`. Use `Kids.addStar()`, `Kids.sfx.yay()`, `Kids.confetti()`, `Kids.speak()` and `Kids.praise()` for rewards, `Kids.challenges([...])` for Kuyil's challenges (needs `<section class="card" data-kuyil>`), `Kids.quiz(...)` for quiz rounds, and `Kids.learn({...})` for the Why / Imagine / Wow / Talk cards (needs `<section data-learn>`).
 3. Put pictures and sounds in an `assets/` folder inside the game. Put any library in `shared/vendor/`. Never load from the internet.
 4. Add a `README.md` to the game (what it teaches, age).
 5. Add a tile in the `SUBJECTS` list in the root `index.html`, and a row in the subject's `README.md`.

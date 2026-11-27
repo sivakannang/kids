@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Many Universes?</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .book { text-align: center; }
+  .book .art { font-size: 90px; line-height: 1.2; min-height: 120px; }
+  .book .txt { font-size: 24px; line-height: 1.5; max-width: 680px; margin: 10px auto; min-height: 110px; }
+  .book .pg { color: var(--muted); }
+  .opts { display: flex; flex-direction: column; gap: 10px; }
+  .opt-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .opt-row > span { font-weight: 600; width: 110px; }
+  .sw { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #ddd; cursor: pointer; }
+  .sw.active { box-shadow: 0 0 0 4px var(--purple); }
+  .opt-row .pick { justify-content: flex-start; }
+  #uname { font-size: 18px; padding: 8px 12px; border-radius: 12px; border: 3px solid #e5e0f5; font-family: inherit; flex: 1; min-width: 180px; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .gal { border-radius: 16px; overflow: hidden; background: #050822; color: #fff; font-size: 14px; font-weight: 600; text-align: center; padding-bottom: 6px; }
+  .gal svg { width: 100%; display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🫧</span>
+    <div><h1>Many Universes?</h1><small>A big "what if…?" to wonder about, <b data-kid-name>Kavikuyil</b></small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="story">📖 The Story</button>
+  <button class="tab" data-tab="make">🎨 Make a Universe</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card book" data-panel="story">
+      <div class="art" id="art"></div>
+      <div class="txt" id="txt"></div>
+      <div class="pg" id="pg"></div>
+      <div class="row">
+        <button class="btn orange" id="prevBtn">⏮️ Back</button>
+        <button class="btn purple" id="sayBtn">🔊 Read</button>
+        <button class="btn big green" id="nextBtn">Next ⏭️</button>
+      </div>
+    </section>
+    <section class="card" data-panel="make" hidden>
+      <svg id="uni" class="svgbox" viewBox="0 0 600 340"></svg>
+      <div class="opts" style="margin-top:12px">
+        <div class="opt-row"><span>🎨 Sky</span><div id="skyPick" style="display:flex;gap:8px"></div></div>
+        <div class="opt-row"><span>☀️ Suns</span><div class="pick" id="sunPick"></div></div>
+        <div class="opt-row"><span>🪐 Gravity</span><div class="pick" id="gravPick"></div></div>
+        <div class="opt-row"><span>🐾 Who lives there</span><div class="pick" id="critPick"></div></div>
+        <div class="opt-row"><span>✨ Something magic</span><div class="pick" id="magPick"></div></div>
+        <div class="opt-row"><span>🏷️ Name</span><input id="uname" maxlength="40"><button class="btn big green" id="saveBtn">💾 Save</button></div>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🫧 My universes</h3>
+      <div class="gallery" id="gallery"></div>
+      <div class="hint" id="galHint">Make a universe and save it here!</div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl, K = Kids.name;
+const PAGES = [
+  ['🌌', 'Our universe is EVERYTHING we know: every planet, every star, every galaxy… and you!'],
+  ['✨🌀✨', 'It is unbelievably big. There are billions of galaxies, and each galaxy has billions of stars.'],
+  ['🫧🫧🫧', 'Some scientists wonder: could there be OTHER universes too? Maybe like bubbles in a giant bubble bath, and each bubble is a whole universe!'],
+  ['🌞🌞🌞', 'Maybe in another universe the rules are different. Maybe gravity is gentler, or there are three suns in the sky!'],
+  ['🤔❓', 'The truth is: NOBODY knows yet. It is one of the biggest questions there is. Scientists keep thinking, testing and wondering.'],
+  ['🧑‍🔬💡', `Maybe one day YOU will help find the answer, ${K}! Until then, we can imagine. Let's make your very own universe!`],
+];
+let page = 0; const read = new Set([0]);
+function showPage() {
+  $('#art').textContent = PAGES[page][0]; $('#txt').textContent = PAGES[page][1];
+  $('#pg').textContent = `Page ${page + 1} of ${PAGES.length}`;
+  $('#prevBtn').disabled = page === 0;
+  $('#nextBtn').textContent = page === PAGES.length - 1 ? '🎨 Make a universe!' : 'Next ⏭️';
+  read.add(page); ch.check({ read: read.size });
+}
+$('#nextBtn').addEventListener('click', () => {
+  if (page === PAGES.length - 1) { document.querySelector('[data-tab="make"]').click(); return; }
+  page++; Kids.sfx.pop(); showPage(); Kids.speak(PAGES[page][1]);
+});
+$('#prevBtn').addEventListener('click', () => { if (page) { page--; Kids.sfx.pop(); showPage(); } });
+$('#sayBtn').addEventListener('click', () => Kids.speak(PAGES[page][1], true));
+
+/* ---------- make a universe ---------- */
+const SKIES = [['#050822', '#24336e'], ['#3a0ca3', '#f72585'], ['#004b23', '#38b000'], ['#ff7b00', '#ffd000'], ['#03045e', '#00b4d8'], ['#2b2d42', '#ef476f']];
+const GRAV = [['🪶', 'Floaty', 0.35], ['🙂', 'Normal', 1], ['🏋️', 'Heavy', 2.6]];
+const CRIT = ['🐙', '🦄', '🐲', '🤖', '🐱', '🦖', '👽', '🐧'];
+const MAGIC = [['🌈', 'rainbows'], ['🍭', 'candy planets'], ['💎', 'crystal stars'], ['🌊', 'oceans everywhere'], ['🎵', 'singing stars']];
+let u = { sky: 0, suns: 1, grav: 1, crit: '🦄', magic: '🌈', name: `${K}'s Universe` };
+$('#uname').value = u.name;
+function pick(id, list, label, key, val) {
+  const box = $(id); box.innerHTML = '';
+  list.forEach((x, i) => {
+    const b = document.createElement('button');
+    b.textContent = label(x, i); b.className = val(x, i) === u[key] ? 'active' : '';
+    b.addEventListener('click', () => { u[key] = val(x, i); Kids.sfx.pop(); renderOpts(); ch.check({ u }); });
+    box.appendChild(b);
+  });
+}
+function renderOpts() {
+  $('#skyPick').innerHTML = '';
+  SKIES.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'sw' + (u.sky === i ? ' active' : ''); d.style.background = `linear-gradient(${s[0]}, ${s[1]})`;
+    d.addEventListener('click', () => { u.sky = i; Kids.sfx.pop(); renderOpts(); });
+    $('#skyPick').appendChild(d);
+  });
+  pick('#sunPick', [0, 1, 2, 3], x => x === 0 ? '🌑 None' : '☀️'.repeat(x), 'suns', x => x);
+  pick('#gravPick', GRAV, g => `${g[0]} ${g[1]}`, 'grav', (g, i) => i);
+  pick('#critPick', CRIT, c => c, 'crit', c => c);
+  pick('#magPick', MAGIC, m => `${m[0]} ${m[1]}`, 'magic', m => m[0]);
+}
+function drawUni(svg, uu, small) {
+  svg.innerHTML = `<defs><linearGradient id="g${small ? Math.random().toString(36).slice(2) : 'main'}" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="${SKIES[uu.sky][0]}"/><stop offset="100%" stop-color="${SKIES[uu.sky][1]}"/></linearGradient></defs>`;
+  const gid = svg.querySelector('linearGradient').id;
+  el('rect', { width: 600, height: 340, fill: `url(#${gid})` }, svg);
+  for (let i = 0; i < 40; i++) el('circle', { cx: (i * 137) % 600, cy: (i * 71) % 260, r: 1.4, fill: '#fff', opacity: .6 }, svg);
+  for (let i = 0; i < uu.suns; i++) { const x = 120 + i * 150; el('circle', { cx: x, cy: 70, r: 34, fill: '#ffd166', opacity: .35 }, svg); el('circle', { cx: x, cy: 70, r: 22, fill: '#ffd166' }, svg); }
+  const em = (x, y, s, t) => { const e = el('text', { x, y, 'font-size': s, 'text-anchor': 'middle' }, svg); e.textContent = t; return e; };
+  [[480, 120], [90, 200], [530, 230]].forEach(([x, y]) => em(x, y, 34, uu.magic));
+  el('ellipse', { cx: 300, cy: 360, rx: 380, ry: 70, fill: '#ffffff', opacity: .18 }, svg);
+  return em(300, 300, 64, uu.crit);
+}
+let hero = null, t0 = performance.now();
+function frame(now) {
+  if (hero) {
+    const g = GRAV[u.grav][2], period = 1.2 * Math.sqrt(1 / g) * 1.4, h = 150 / g;
+    const ph = ((now - t0) / 1000 % period) / period, y = 300 - Math.min(170, h * 4 * ph * (1 - ph));
+    hero.setAttribute('y', y);
+  }
+  requestAnimationFrame(frame);
+}
+function refresh() { hero = drawUni($('#uni'), u); }
+const SAVE = 'universes';
+$('#saveBtn').addEventListener('click', () => {
+  u.name = $('#uname').value.trim() || `${K}'s Universe`;
+  const list = Kids.store.get(SAVE, []); list.unshift({ ...u }); Kids.store.set(SAVE, list.slice(0, 12));
+  Kids.sfx.yay(); Kids.confetti(); Kids.banner(`🫧 "${u.name}" saved!`); renderGallery();
+  ch.check({ u, saved: list.length });
+});
+function renderGallery() {
+  const list = Kids.store.get(SAVE, []);
+  $('#gallery').innerHTML = ''; $('#galHint').hidden = list.length > 0;
+  list.forEach(x => {
+    const d = document.createElement('div'); d.className = 'gal';
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 600 340');
+    drawUni(s, x, true); d.appendChild(s); d.appendChild(document.createTextNode(x.name)); $('#gallery').appendChild(d);
+  });
+}
+// redraw the preview whenever an option changes
+const _render = renderOpts; renderOpts = function () { _render(); refresh(); };
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Read the whole story 📖', hint: 'Press Next until the last page.', ok: c => c.read >= PAGES.length, yay: 'Nobody knows if there are other universes. It\'s a BIG question to wonder about!' },
+  { ask: 'Make a universe with TWO suns ☀️☀️', hint: 'Go to Make a Universe and pick two suns.', ok: c => c.u && c.u.suns === 2, yay: 'Two sunsets every evening! 🌅🌅' },
+  { ask: 'Make a FLOATY universe where things jump super high 🪶', hint: 'Choose Floaty gravity.', ok: c => c.u && c.u.grav === 0, yay: 'Boing, boing! Like jumping on the Moon!' },
+  { ask: 'Give your universe a name and SAVE it 💾', hint: 'Type a name, then press Save.', ok: c => c.saved >= 1, yay: 'Your very own universe!' },
+  { ask: 'Make 3 different universes 🫧🫧🫧', hint: 'Change things and save again.', ok: c => c.saved >= 3, yay: 'A whole bubble bath of universes!' },
+], { title: 'Universe Maker' });
+
+Kids.learn({
+  why: ['Scientists ask big questions and then try to test their ideas. "Are there other universes?" is a question nobody can test yet, so it is still a <b>mystery</b>.',
+    'It is okay not to know! Every big discovery started with someone wondering.'],
+  imagine: ['Close your eyes and imagine blowing a giant soap bubble. Inside it, tiny galaxies swirl and sparkle. Then another bubble floats past, with different colours and different stars inside…'],
+  wow: ['Scientists can see light from more than 13 billion years ago: almost back to the very start of our universe!',
+    'Some of the greatest scientists, like Albert Einstein, said that imagination is very important for science.'],
+  talk: ['If you could visit another universe, what would you hope to find?', 'What questions do YOU wonder about that nobody knows the answer to?', 'Why do you think scientists like mysteries?'],
+});
+showPage(); renderOpts(); renderGallery();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

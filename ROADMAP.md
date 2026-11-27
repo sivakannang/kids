@@ -28,50 +28,50 @@ She earns ⭐ for trying and exploring, not only for right answers, so curiosity
 | # | Game | She discovers | Status |
 |---|---|---|---|
 | 1 | **Tick-Tock World Explorer** | Reading the clock; time is different around the world | ✅ Done |
-| 2 | **How Long Is a Second?** | Clap, hop and count "one-elephant" with a stopwatch; heartbeat ≈ 1 second | Idea |
-| 3 | **Time Ladder** | 60 s → 1 min → 60 min → 1 h → 24 h → 1 day → 7 → week → month → year → century; zoom up and down the ladder | Idea |
-| 4 | **My Life in Numbers** | Her age in years → days → hours → heartbeats (huge numbers = wow) | Idea |
-| 5 | **Birthday & Calendar** | Days of the week, months, countdown to her birthday | Idea |
+| 2 | **How Long Is a Second?** | Clap, hop and count "one-elephant" with a stopwatch; heartbeat ≈ 1 second | ✅ Done |
+| 3 | **Time Ladder** | second → minute → hour → day → week → month → year → decade → century → millennium; climb up and down, plus a quiz | ✅ Done |
+| 4 | **My Life in Numbers** | Her age in years → days → hours → heartbeats (huge numbers = wow) | ✅ Done |
+| 5 | **Birthday & Calendar** | Days of the week, months, countdown to her birthday | ✅ Done |
 
 ## 📏 Journey 2: Measuring (`maths/`)
 | # | Game | She discovers | Status |
 |---|---|---|---|
-| 6 | **Measure with Hands & Feet** | Measuring with hands and feet: why everyone's answer is different → why we need cm and m | Idea |
-| 7 | **Ruler Race** | cm, m, km: an ant, her height, a cricket pitch, Bangalore → Chennai | Idea |
-| 8 | **Balance Scale** | Heavy and light, grams and kilograms | Idea |
-| 9 | **Speed Race** | Snail 🐌 vs cheetah 🐆 vs car vs plane vs rocket vs **light** ⚡ | Idea |
+| 6 | **Measure with Hands & Feet** | Measuring with hands and feet: why everyone's answer is different → why we need cm and m | ✅ Done |
+| 7 | **Ruler Race** | cm, m, km: an ant, her height, a cricket pitch, Bangalore → Chennai | ✅ Done |
+| 8 | **Balance Scale** | Heavy and light, grams and kilograms | ✅ Done |
+| 9 | **Speed Race** | Snail 🐌 vs cheetah 🐆 vs car vs plane vs rocket vs **light** ⚡ | ✅ Done |
 
 ## 🌍 Journey 3: Earth & Sky (`science/`)
 | # | Game | She discovers | Status |
 |---|---|---|---|
 | 10 | **Spin the Earth** | **Why 24 hours?** She spins the Earth; one full turn = one day. The Sun side has day and the other side has night (links to the world clock map) | ✅ Done |
-| 11 | **Around the Sun** | **Why 365 days?** One trip around the Sun = one year; seasons; why leap years exist | Idea |
-| 12 | **Moon Phases** | Why the Moon changes shape; a **month** ≈ one Moon cycle (29½ days) | Idea |
+| 11 | **Around the Sun** | **Why 365 days?** One trip around the Sun = one year; seasons; why leap years exist | ✅ Done |
+| 12 | **Moon Phases** | Why the Moon changes shape; a **month** ≈ one Moon cycle (29½ days) | ✅ Done |
 
 ## 🚀 Journey 4: Space (`science/`)
 | # | Game | She discovers | Status |
 |---|---|---|---|
-| 13 | **Planet Jump** | **Gravity is different on each planet.** Jump on the Moon (6× higher!), Mars, Jupiter (2.5× heavier) | Idea |
-| 14 | **Planet Trip** | Sizes and distances of the planets, to real scale (space is mostly empty!) | Idea |
-| 15 | **Rocket Launch / Cannon Hill** | **Escape velocity**: throw a ball faster and faster → it falls, it orbits, it escapes (11.2 km/s on Earth) | Idea |
-| 16 | **Light Travel** | Sunlight takes about 8 minutes to reach us → what a **light year** is | Idea |
+| 13 | **Planet Jump** | **Gravity is different on each planet.** Jump on the Moon (6× higher!), Mars, Jupiter (2.5× heavier) | ✅ Done |
+| 14 | **Planet Trip** | Sizes and distances of the planets, to real scale (space is mostly empty!) | ✅ Done |
+| 15 | **Rocket Launch / Cannon Hill** | **Escape velocity**: throw a ball faster and faster → it falls, it orbits, it escapes (11.2 km/s on Earth) | ✅ Done |
+| 16 | **Light Travel** | Sunlight takes about 8 minutes to reach us → what a **light year** is | ✅ Done |
 
 ## 🌌 Journey 5: The Universe (`science/`)
 | # | Game | She discovers | Status |
 |---|---|---|---|
-| 17 | **Life of a Star** | Stars are suns; they are born, shine and change (red giant, white dwarf) | Idea |
-| 18 | **Black Hole** | Uses the Cannon Hill game: squeeze a planet smaller and heavier until even **light** can't escape | Idea |
-| 19 | **Zoom Out!** | Kavikuyil → house → Bangalore → India → Earth → Solar System → Milky Way → **universe** | Idea |
-| 20 | **Imagine: Many Universes?** | A dreamy "what if" story; we explain that scientists are still wondering, so it's a big open question | Idea |
+| 17 | **Life of a Star** | Stars are suns; they are born, shine and change (red giant, white dwarf) | ✅ Done |
+| 18 | **Black Hole** | Uses the Cannon Hill game: squeeze a planet smaller and heavier until even **light** can't escape | ✅ Done |
+| 19 | **Zoom Out!** | Kavikuyil → house → Bangalore → India → Earth → Solar System → Milky Way → **universe** | ✅ Done |
+| 20 | **Imagine: Many Universes?** | A dreamy "what if" story; we explain that scientists are still wondering, so it's a big open question | ✅ Done |
 
 ## 🧠 Growing Me (`mind/`): focus, goals, dreams, imagination
 | # | Game | She discovers | Status |
 |---|---|---|---|
-| 21 | **Focus Garden** | A flower grows while she focuses (5 / 10 / 15 minutes); breathing bubble to calm down | Idea |
-| 22 | **Goal Ladder** | Pick a small goal → climb a step each day → celebrate at the top | Idea |
-| 23 | **Dream Jar** | Draw or say a dream ("I want to be an astronaut"); Kuyil reminds her of it | Idea |
-| 24 | **Why Jar** | Every question she asks goes in the jar; one is answered together each day | Idea |
-| 25 | **Imagine Time** | Short guided "picture it in your mind" journeys with read-aloud | Idea |
+| 21 | **Focus Garden** | A flower grows while she focuses (5 / 10 / 15 minutes); breathing bubble to calm down | ✅ Done |
+| 22 | **Goal Ladder** | Pick a small goal → climb a step each day → celebrate at the top | ✅ Done |
+| 23 | **Dream Jar** | Draw or say a dream ("I want to be an astronaut"); Kuyil reminds her of it | ✅ Done |
+| 24 | **Why Jar** | Every question she asks goes in the jar; one is answered together each day | ✅ Done |
+| 25 | **Imagine Time** | Short guided "picture it in your mind" journeys with read-aloud | ✅ Done |
 
 ---
 

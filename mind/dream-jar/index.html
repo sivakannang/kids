@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dream Jar</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  body { background: linear-gradient(160deg, #fdf0ff 0%, #e9f5ff 50%, #fff6e0 100%); background-attachment: fixed; }
+  #pad { width: 100%; aspect-ratio: 3 / 2; background: #fff; border-radius: 18px; border: 4px solid #e8defe; touch-action: none; cursor: crosshair; display: block; }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-top: 10px; }
+  .swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #ddd; cursor: pointer; }
+  .swatch.active { box-shadow: 0 0 0 4px var(--purple); }
+  .tool { border: 3px solid #eee; background: #fff; border-radius: 12px; padding: 4px 10px; cursor: pointer; font-size: 18px; font-family: inherit; }
+  .tool.active { border-color: var(--purple); background: #f1e9ff; }
+  .cats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  #dreamText { width: 100%; font-size: 18px; padding: 8px 12px; border-radius: 12px; border: 3px solid #e5e0f5; font-family: inherit; margin-top: 8px; }
+  .jar { position: relative; margin: 10px auto 0; width: 100%; max-width: 360px; min-height: 260px; border: 6px solid #a0d8ef; border-top-width: 14px; border-radius: 30px 30px 60px 60px; background: rgba(160,216,239,.18); padding: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-end; }
+  .jar::before { content: ''; position: absolute; top: -26px; left: 18%; right: 18%; height: 14px; background: #ffb4a2; border-radius: 8px; }
+  .slip { width: 72px; border-radius: 10px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.15); cursor: pointer; overflow: hidden; transform: rotate(var(--r)); }
+  .slip img { width: 100%; display: block; }
+  .slip span { display: block; font-size: 18px; text-align: center; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 16px; }
+  .modal .box { background: #fff; border-radius: 24px; padding: 18px; max-width: 640px; width: 100%; max-height: 92vh; overflow: auto; text-align: center; }
+  .modal img { width: 100%; border-radius: 14px; border: 3px solid #e8defe; }
+  .modal .dt { font-size: 24px; font-weight: 700; color: var(--purple); margin: 10px 0; }
+  .modal .tip { background: #fff3c4; border-radius: 14px; padding: 10px; font-size: 17px; }
+  .modal .tip a { color: var(--blue); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🫙</span>
+    <div><h1>Dream Jar</h1><small>Draw your dreams and keep them safe, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+    </section>
+    <section class="card">
+      <div class="label center" style="margin-top:0">1. What do you dream of being or doing?</div>
+      <div class="cats pick" id="cats"></div>
+      <div class="label center">2. Draw your dream!</div>
+      <canvas id="pad" width="900" height="600"></canvas>
+      <div class="tools" id="tools"></div>
+      <input id="dreamText" maxlength="80" placeholder="3. My dream is… (a grown-up can help you write)">
+      <div class="row"><button class="btn big green" id="saveBtn">🫙 Put it in my Dream Jar</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <h3 style="margin:0">🫙 My Dream Jar</h3>
+      <div class="jar" id="jar"></div>
+      <div class="hint" id="jarHint">Tap a dream to look at it.</div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const K = Kids.name;
+const CATS = [
+  { e: '🧑‍🚀', n: 'Astronaut', tips: [['Rocket Launch', '../../science/rocket-launch/index.html'], ['Planet Trip', '../../science/planet-trip/index.html']] },
+  { e: '🧑‍🔬', n: 'Scientist', tips: [['Light Travel', '../../science/light-travel/index.html'], ['Black Hole', '../../science/black-hole/index.html']] },
+  { e: '🧑‍⚕️', n: 'Doctor', tips: [['My Life in Numbers', '../../maths/my-life-in-numbers/index.html']] },
+  { e: '🧑‍🏫', n: 'Teacher', tips: [['Why Jar', '../why-jar/index.html'], ['Time Ladder', '../../maths/time-ladder/index.html']] },
+  { e: '🧑‍🎨', n: 'Artist', tips: [['Many Universes', '../../science/many-universes/index.html']] },
+  { e: '🧑‍✈️', n: 'Pilot', tips: [['Speed Race', '../../maths/speed-race/index.html'], ['Tick-Tock World Explorer', '../../maths/world-clock/index.html']] },
+  { e: '👷', n: 'Engineer', tips: [['Balance Scale', '../../maths/balance-scale/index.html'], ['Ruler Race', '../../maths/ruler-race/index.html']] },
+  { e: '🌍', n: 'Explorer', tips: [['Zoom Out!', '../../science/zoom-out/index.html'], ['Spin the Earth', '../../science/spin-the-earth/index.html']] },
+  { e: '🐾', n: 'Animal doctor', tips: [['Speed Race (cheetahs and snails!)', '../../maths/speed-race/index.html']] },
+  { e: '💭', n: 'Something else', tips: [['Imagine Time', '../imagine-time/index.html']] },
+];
+let cat = CATS[0];
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+const an = w => (/^[aeiou]/i.test(w) ? 'an ' : 'a ') + w;
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+CATS.forEach(c => {
+  const b = document.createElement('button');
+  b.textContent = `${c.e} ${c.n}`;
+  b.addEventListener('click', () => { cat = c; Kids.sfx.pop(); renderCats(); });
+  $('#cats').appendChild(b);
+});
+const renderCats = () => [...$('#cats').children].forEach((b, i) => b.classList.toggle('active', CATS[i] === cat));
+
+/* ---------- drawing pad ---------- */
+const pad = $('#pad'), ctx = pad.getContext('2d');
+const COLORS = ['#2b2d42', '#ef476f', '#ff9f1c', '#ffd166', '#06d6a0', '#118ab2', '#9b5de5', '#8d5524'];
+let color = COLORS[1], size = 10, erasing = false, drawing = null, drew = false;
+function blank() { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pad.width, pad.height); drew = false; }
+function tools() {
+  const t = $('#tools'); t.innerHTML = '';
+  COLORS.forEach(c => { const d = document.createElement('div'); d.className = 'swatch' + (c === color && !erasing ? ' active' : ''); d.style.background = c;
+    d.addEventListener('click', () => { color = c; erasing = false; tools(); }); t.appendChild(d); });
+  [[5, '•'], [10, '●'], [22, '⬤']].forEach(([s, l]) => { const b = document.createElement('button'); b.className = 'tool' + (size === s ? ' active' : ''); b.textContent = l;
+    b.addEventListener('click', () => { size = s; tools(); }); t.appendChild(b); });
+  const er = document.createElement('button'); er.className = 'tool' + (erasing ? ' active' : ''); er.textContent = '🧽 Eraser';
+  er.addEventListener('click', () => { erasing = !erasing; tools(); }); t.appendChild(er);
+  const cl = document.createElement('button'); cl.className = 'tool'; cl.textContent = '🗑️ Clear';
+  cl.addEventListener('click', () => { if (!drew || confirm('Clear your drawing?')) blank(); }); t.appendChild(cl);
+}
+const pos = e => { const r = pad.getBoundingClientRect(); return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height]; };
+pad.addEventListener('pointerdown', e => { drawing = pos(e); try { pad.setPointerCapture(e.pointerId); } catch {} dot(drawing); e.preventDefault(); });
+pad.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  const p = pos(e);
+  ctx.strokeStyle = erasing ? '#fff' : color; ctx.lineWidth = erasing ? size * 3 : size; ctx.lineCap = ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(...drawing); ctx.lineTo(...p); ctx.stroke();
+  drawing = p; drew = true;
+});
+const stop = () => { drawing = null; };
+pad.addEventListener('pointerup', stop); pad.addEventListener('pointercancel', stop);
+function dot(p) { ctx.fillStyle = erasing ? '#fff' : color; ctx.beginPath(); ctx.arc(p[0], p[1], (erasing ? size * 3 : size) / 2, 0, 7); ctx.fill(); drew = true; }
+
+/* ---------- the jar ---------- */
+const KEY = 'dreams';
+function renderJar() {
+  const list = Kids.store.get(KEY, []);
+  $('#jar').innerHTML = '';
+  $('#jarHint').textContent = list.length ? `${list.length} dream${list.length > 1 ? 's' : ''} in your jar. Tap one to look at it.` : 'Your jar is empty. Draw your first dream! ✨';
+  list.forEach((d, i) => {
+    const s = document.createElement('div');
+    s.className = 'slip'; s.style.setProperty('--r', `${((i * 37) % 17) - 8}deg`);
+    s.innerHTML = `<img src="${d.img}" alt=""><span>${d.e}</span>`;
+    s.addEventListener('click', () => openDream(i));
+    $('#jar').appendChild(s);
+  });
+}
+$('#saveBtn').addEventListener('click', () => {
+  if (!drew) { say(`Draw your dream first, ${K}! 🎨`); Kids.sfx.oops(); return; }
+  const text = $('#dreamText').value.trim();
+  const list = Kids.store.get(KEY, []);
+  list.push({ img: pad.toDataURL('image/jpeg', 0.6), e: cat.e, cat: cat.n, text, date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) });
+  while (list.length > 24) list.shift();
+  try { localStorage.setItem(KEY, JSON.stringify(list)); }
+  catch { say('Oh no, the jar is too full! Ask a grown-up to remove an old dream first.'); return; }
+  Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+  say(`What a wonderful dream, ${K}! It's safe in your jar now. Every day you learn something, you get closer to it. 🌟`, true);
+  blank(); $('#dreamText').value = ''; renderJar();
+});
+function openDream(i) {
+  const list = Kids.store.get(KEY, []), d = list[i], c = CATS.find(x => x.n === d.cat) || CATS[CATS.length - 1];
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="box"><img src="${d.img}" alt="Dream drawing">
+    <div class="dt">${d.e} ${esc(d.text || `I want to be ${an(d.cat.toLowerCase())}!`)}</div>
+    <div class="label">Dreamed on ${esc(d.date)}</div>
+    <div class="tip">🐦 Kuyil's tip: ${esc(an(d.cat.toLowerCase()))} would love these games: ${c.tips.map(t => `<a href="${t[1]}">${t[0]}</a>`).join(' and ')}!</div>
+    <div class="row"><button class="btn orange" data-a="close">Close</button><button class="btn red" data-a="del">🗑️ Remove</button></div></div>`;
+  m.addEventListener('click', e => {
+    const a = e.target.dataset && e.target.dataset.a;
+    if (e.target === m || a === 'close') m.remove();
+    if (a === 'del' && confirm('Remove this dream from the jar?')) { list.splice(i, 1); Kids.store.set(KEY, list); m.remove(); renderJar(); }
+  });
+  document.body.appendChild(m);
+  Kids.speak(Kids.forSpeech(d.text || `I want to be ${an(d.cat)}!`));
+}
+
+Kids.learn({
+  why: ['Dreams are like stars that guide you. When you know what you dream of, you can take small steps towards it every day.',
+    'Dreams can change as you grow, and that\'s okay! You can have lots of dreams.'],
+  imagine: ['Close your eyes and imagine yourself as a grown-up, doing your dream. Where are you? What are you wearing? Who is with you?',
+    'Hold that picture in your mind, then open your eyes and draw it!'],
+  wow: ['Kalpana Chawla grew up in Karnal, India, and dreamed of flying. She became an astronaut and flew in space! 🚀',
+    'APJ Abdul Kalam, who became the President of India, loved to say: "Dream, dream, dream!"'],
+  talk: ['What is your biggest dream?', 'What could you learn this week that helps your dream?', 'What did the grown-ups around you dream of when they were little?'],
+});
+blank(); tools(); renderCats(); renderJar();
+say(`Hi ${K}! What do you dream of? Pick one, draw it, and put it in your Dream Jar. ✨`);
+</script>
+</body>
+</html>
