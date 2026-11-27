@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spin the Earth</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<script src="../../shared/vendor/d3.min.js"></script>
+<script src="../../shared/vendor/topojson-client.min.js"></script>
+<script src="../../shared/vendor/countries-110m.js"></script>
+<style>
+  .layout {
+    display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+    gap: 18px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; padding: 0 12px 16px; } }
+  .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  /* ---------- space view ---------- */
+  .space-card { background: #0b1033; color: #fff; padding: 14px; }
+  .space-card h2 { margin: 2px 6px 8px; font-size: 22px; }
+  .space-card h2 small { display: block; font-size: 15px; font-weight: 500; opacity: .8; margin-top: 2px; }
+  #space { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  #space.dragging { cursor: grabbing; }
+  .ray { stroke: #ffd166; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 10 18; opacity: .55; animation: rays 1.2s linear infinite; }
+  @keyframes rays { to { stroke-dashoffset: -28; } }
+  .land { stroke: #fff; stroke-width: .5; }
+  .land.india { fill: #ffbe0b !important; stroke: #ff7b00; stroke-width: 1; }
+  .side-label { fill: #fff; font-size: 20px; font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+  .city-label { font-size: 15px; font-weight: 600; fill: #fff; paint-order: stroke; stroke: #0b1033; stroke-width: 4px; stroke-linejoin: round; }
+  .home-label { font-size: 18px; fill: #ffd166; }
+  .pulse { fill: #ff006e; transform-box: fill-box; transform-origin: center; animation: pulse 1.6s ease-out infinite; }
+  @keyframes pulse { from { transform: scale(1); opacity: .8; } to { transform: scale(3.4); opacity: 0; } }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+  .controls .btn { font-size: 17px; padding: 10px 14px; }
+  .speed { display: inline-flex; background: rgba(255,255,255,.12); border-radius: 18px; padding: 4px; gap: 4px; }
+  .speed button { border: none; background: transparent; color: #fff; font-size: 20px; padding: 6px 10px; border-radius: 14px; cursor: pointer; }
+  .speed button.active { background: #fff; }
+  .counters { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 12px; }
+  .counter { background: rgba(255,255,255,.12); border-radius: 16px; padding: 8px 14px; font-size: 17px; }
+  .counter b { color: #ffd166; font-size: 20px; }
+  .tip { text-align: center; font-size: 15px; opacity: .8; margin-top: 8px; }
+
+  /* ---------- Bangalore sky ---------- */
+  .sky-card h2 { margin: 0 0 8px; font-size: 22px; }
+  #sky { width: 100%; height: auto; display: block; border-radius: 20px; }
+  .now-row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  #clock { width: 150px; height: 150px; flex: none; }
+  .now-text .time { font-size: 40px; font-weight: 700; color: var(--purple); line-height: 1.1; }
+  .now-text .doing { font-size: 19px; margin-top: 4px; }
+  .now-text .part { font-size: 16px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- Kuyil challenges ---------- */
+  .mascot { display: flex; align-items: center; gap: 12px; }
+  .mascot .bird { font-size: 62px; animation: bob 2.4s ease-in-out infinite; display: inline-block; }
+  .bubble { background: #f1e9ff; border-radius: 22px; padding: 12px 16px; font-size: 20px; font-weight: 500; position: relative; flex: 1; }
+  .bubble::before { content: ''; position: absolute; left: -12px; top: 50%; margin-top: -10px; border: 10px solid transparent; border-right-color: #f1e9ff; border-left: 0; }
+  .bubble.done { background: #d3f8e2; }
+  .bubble.done::before { border-right-color: #d3f8e2; }
+  .dots { display: flex; gap: 6px; justify-content: center; margin: 12px 0 6px; }
+  .dots span { width: 14px; height: 14px; border-radius: 50%; background: #e5e0f5; }
+  .dots span.ok { background: var(--green); }
+  .dots span.cur { background: var(--orange); }
+  .hint { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+
+  /* ---------- learn cards ---------- */
+  .learn { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; }
+  .lcard { border-radius: 24px; padding: 16px 18px; font-size: 18px; line-height: 1.45; position: relative; }
+  .lcard h3 { margin: 0 0 8px; font-size: 20px; }
+  .lcard p { margin: 0 0 8px; }
+  .lcard .say { position: absolute; top: 12px; right: 12px; border: none; background: rgba(255,255,255,.7); border-radius: 999px; width: 40px; height: 40px; font-size: 20px; cursor: pointer; }
+  .why { background: #fff3c4; } .imagine { background: #e8defe; } .wow { background: #d3f8e2; } .talk { background: #ffe1ec; }
+  .talk ul { margin: 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌍</span>
+    <div><h1>Spin the Earth</h1><small>Why do we have day and night, <b data-kid-name>Kavikuyil</b>? Why 24 hours?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="layout">
+  <div class="col">
+    <section class="card space-card">
+      <h2>🚀 Looking down at the Earth from space
+        <small>Drag the Earth around with your finger, or press Play. The Sun ☀️ shines from the left.</small></h2>
+      <svg id="space" viewBox="0 0 900 570" aria-label="The Earth spinning next to the Sun"></svg>
+      <div class="controls">
+        <button class="btn green" id="playBtn">▶️ Play</button>
+        <span class="speed" id="speed">
+          <button data-speed="1" title="Slow: 1 hour every second">🐢</button>
+          <button data-speed="3" class="active" title="Fast: 3 hours every second">🐇</button>
+          <button data-speed="8" title="Super fast: 8 hours every second">🚀</button>
+        </span>
+        <button class="btn orange" data-jump="6">🌅 Sunrise</button>
+        <button class="btn" data-jump="12">☀️ Noon</button>
+        <button class="btn pink" data-jump="18">🌇 Sunset</button>
+        <button class="btn purple" data-jump="0">🌙 Midnight</button>
+        <button class="btn red" id="nowBtn">⏱️ Right now</button>
+      </div>
+      <div class="counters">
+        <span class="counter">🔄 Full spins: <b id="spins">0</b> = <b id="days">0 days</b></span>
+        <span class="counter">✈️ Bangalore travelled: <b id="km">0 km</b></span>
+      </div>
+      <div class="tip">One full spin of the Earth takes 24 hours. That is one day!</div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card sky-card">
+      <h2>🏡 The sky over Kavikuyil's home in Bangalore</h2>
+      <svg id="sky" viewBox="0 0 400 250" aria-label="The sky in Bangalore"></svg>
+      <div class="now-row">
+        <svg id="clock" viewBox="0 0 200 200" aria-label="Clock"></svg>
+        <div class="now-text">
+          <div class="time" id="timeText"></div>
+          <div class="doing" id="doingText"></div>
+          <div class="part" id="partText"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="mascot">
+        <span class="bird">🐦</span>
+        <div class="bubble" id="bubble"></div>
+      </div>
+      <div class="dots" id="dots"></div>
+      <div class="hint" id="hint"></div>
+      <div class="row">
+        <button class="btn purple" id="hintBtn">💡 Hint</button>
+        <button class="btn orange" id="skipBtn">⏭️ Next challenge</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why?</h3>
+    <p><b>Why day and night?</b> The Earth is always spinning, like a top. The side facing the Sun has <b>day</b> ☀️. The side facing away from the Sun has <b>night</b> 🌙.</p>
+    <p><b>Why 24 hours?</b> One full spin takes 24 hours. Long ago, people in Egypt split the day into 12 parts and the night into 12 parts. 12 + 12 = <b>24 hours</b>!</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Close your eyes. Imagine you are a tiny astronaut, floating quietly in space. 🧑‍🚀</p>
+    <p>Below you, the big blue Earth is turning slowly, like a merry-go-round. Look! India is coming out of the dark into the golden sunshine. The Sun is rising in Bangalore, and someone is just waking up… is it you?</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>The Earth spins so fast that Bangalore moves about <b>1,600 kilometres every hour</b>. That's faster than an aeroplane! ✈️</p>
+    <p>We don't feel it, because everything spins together: you, your house, the air and the sea.</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>If the Earth stopped spinning, what would happen to day and night?</li>
+      <li>When you go to sleep, who on Earth is waking up?</li>
+      <li>Why do you think we don't feel the Earth spinning?</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+/* =========================================================
+   Setup & helpers
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const pad = n => String(n).padStart(2, '0');
+const mod = (a, n) => ((a % n) + n) % n;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const KMH = 1627; // speed of Bangalore around the Earth's axis (km per hour)
+
+const HOME = { name: 'Bangalore', lat: 12.97, lon: 77.59 };
+const CITIES = [
+  { name: 'London',   flag: '🇬🇧', lat: 51.51, lon: -0.13 },
+  { name: 'New York', flag: '🇺🇸', lat: 40.71, lon: -74.01 },
+  { name: 'Tokyo',    flag: '🇯🇵', lat: 35.68, lon: 139.69 },
+];
+
+// Simulation time = hours on the clock in Bangalore (IST). `tot` keeps counting past 24.
+function istNow() {
+  const d = new Date();
+  const utcH = d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600;
+  return mod(utcH + 5.5, 24);
+}
+const state = {
+  tot: istNow(),
+  start: 0,
+  travelled: 0,      // hours of spin, both directions
+  playing: false,
+  speed: 3,
+  bestSpins: 0,
+  anim: null,
+};
+state.start = state.tot;
+const hourOf = () => mod(state.tot, 24);
+
+/* =========================================================
+   Space view: Sun + Earth seen from above the North Pole
+   ========================================================= */
+const W = 900, H = 570, CX = 540, CY = 285, R = 230;
+const space = $('#space');
+const geo = {};
+function buildSpace() {
+  const defs = el('defs', {}, space);
+  defs.innerHTML = `
+    <radialGradient id="sunGlow"><stop offset="0%" stop-color="#fff7c2"/><stop offset="45%" stop-color="#ffd166"/><stop offset="100%" stop-color="#ff9f1c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ocean" cx="35%" cy="40%"><stop offset="0%" stop-color="#5cc8ff"/><stop offset="100%" stop-color="#1f6fd1"/></radialGradient>
+    <radialGradient id="sheen" cx="30%" cy="35%" r="75%"><stop offset="0%" stop-color="#fff" stop-opacity=".25"/><stop offset="60%" stop-color="#fff" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".25"/></radialGradient>
+    <linearGradient id="nightGrad" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#050822" stop-opacity="0"/>
+      <stop offset="6%" stop-color="#050822" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#050822" stop-opacity=".66"/></linearGradient>
+    <clipPath id="disc"><circle cx="${CX}" cy="${CY}" r="${R}"/></clipPath>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ffd166"/></marker>`;
+
+  // twinkly background stars
+  for (let i = 0; i < 90; i++) {
+    el('circle', { cx: Math.random() * W, cy: Math.random() * H, r: Math.random() * 1.6 + .3, fill: '#fff', opacity: Math.random() * .7 + .2 }, space);
+  }
+  // the Sun and its rays
+  for (let i = -3; i <= 3; i++) {
+    const y = CY + i * 55;
+    el('line', { x1: 150, y1: y, x2: CX - R * Math.sqrt(1 - Math.min(.95, ((y - CY) / R) ** 2)) - 6, y2: y, class: 'ray' }, space);
+  }
+  el('circle', { cx: -30, cy: CY, r: 230, fill: 'url(#sunGlow)' }, space);
+  el('circle', { cx: -30, cy: CY, r: 150, fill: '#ffcf3f' }, space);
+  el('text', { x: 50, y: CY + 6, 'font-size': 30, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-weight': 700, fill: '#b35c00' }, space).textContent = 'SUN';
+
+  // the Earth: everything in `spin` turns together
+  geo.spin = el('g', { 'clip-path': 'url(#disc)' }, space);
+  el('circle', { cx: CX, cy: CY, r: R, fill: 'url(#ocean)' }, geo.spin);
+  geo.base = null;
+
+  if (window.d3 && window.topojson && window.WORLD_ATLAS) {
+    const clip = 108;
+    const proj = d3.geoAzimuthalEquidistant().rotate([0, -90]).clipAngle(clip)
+      .scale(R / (clip * Math.PI / 180)).translate([CX, CY]).precision(.3);
+    const path = d3.geoPath(proj);
+    geo.proj = proj;
+    el('path', { d: path(d3.geoGraticule().step([30, 15])()), fill: 'none', stroke: '#fff', 'stroke-opacity': .18, 'stroke-width': 1 }, geo.spin);
+    const obj = WORLD_ATLAS.objects.countries;
+    const feats = topojson.feature(WORLD_ATLAS, obj).features;
+    const nb = topojson.neighbors(obj.geometries);
+    const PAL = ['#8fd694', '#ffe08a', '#f7b267', '#c3a6ff', '#ff9fb2', '#9ee6e0'];
+    const colors = [];
+    feats.forEach((f, i) => {
+      const d = path(f);
+      if (!d) return;            // too far south to show on this view
+      const used = new Set(nb[i].map(j => colors[j]));
+      let k = 0; while (used.has(k)) k++;
+      colors[i] = k;
+      el('path', { d, fill: PAL[k % PAL.length], class: 'land' + (String(f.id) === '356' ? ' india' : '') }, geo.spin);
+    });
+    // the equator: a belt around the middle of the Earth
+    el('path', { d: path({ type: 'LineString', coordinates: d3.range(-180, 181, 5).map(l => [l, 0]) }), fill: 'none', stroke: '#ff4d6d', 'stroke-width': 2, 'stroke-dasharray': '6 6', opacity: .8 }, geo.spin);
+  } else {
+    el('text', { x: CX, y: CY, fill: '#fff', 'text-anchor': 'middle', 'font-size': 18 }, geo.spin).textContent = 'Map files missing in shared/vendor';
+  }
+  el('circle', { cx: CX, cy: CY, r: 7, fill: '#fff' }, geo.spin);  // North Pole
+
+  // night side (away from the Sun) + a little 3D shine
+  el('rect', { x: CX - 14, y: CY - R, width: R + 14, height: 2 * R, fill: 'url(#nightGrad)', 'clip-path': 'url(#disc)', 'pointer-events': 'none' }, space);
+  el('circle', { cx: CX, cy: CY, r: R, fill: 'url(#sheen)', 'pointer-events': 'none' }, space);
+  el('circle', { cx: CX, cy: CY, r: R, fill: 'none', stroke: '#9fd3ff', 'stroke-width': 3, opacity: .6 }, space);
+  el('text', { x: CX, y: CY + 24, class: 'city-label', 'text-anchor': 'middle', 'font-size': 13 }, space).textContent = '⬆ North Pole';
+
+  // labels for the four "times" around the Earth
+  const L = (x, y, t) => el('text', { x, y, class: 'side-label' }, space).textContent = t;
+  L(CX, CY - R - 24, '🌅 Sunrise');
+  L(CX, CY + R + 26, '🌇 Sunset');
+  L(CX - R - 6 - 52, CY - 14, '☀️ Noon');
+  L(CX + R + 62, CY - 14, '🌙 Midnight');
+  el('text', { x: CX - R - 58, y: CY + 12, class: 'city-label', 'text-anchor': 'middle', 'font-size': 13 }, space).textContent = 'facing the Sun';
+  el('text', { x: CX + R + 62, y: CY + 12, class: 'city-label', 'text-anchor': 'middle', 'font-size': 13 }, space).textContent = 'away from the Sun';
+
+  // spin-direction arrow (anticlockwise, like the real Earth seen from above the North Pole)
+  const ar = R + 26, a0 = -25 * Math.PI / 180, a1 = -62 * Math.PI / 180;
+  const p0 = [CX + ar * Math.cos(a0), CY + ar * Math.sin(a0)], p1 = [CX + ar * Math.cos(a1), CY + ar * Math.sin(a1)];
+  el('path', { d: `M${p0[0]} ${p0[1]} A${ar} ${ar} 0 0 0 ${p1[0]} ${p1[1]}`, fill: 'none', stroke: '#ffd166', 'stroke-width': 5, 'marker-end': 'url(#arrow)' }, space);
+  el('text', { x: p1[0] + 22, y: p1[1] - 4, class: 'city-label', 'font-size': 14 }, space).textContent = '↺ spins this way';
+
+  // city markers (outside the clip so labels stay upright)
+  geo.marks = el('g', {}, space);
+  geo.cityEls = CITIES.map(c => {
+    const g = el('g', {}, geo.marks);
+    el('circle', { r: 6, fill: '#fff', stroke: '#2b2d42', 'stroke-width': 2 }, g);
+    const t = el('text', { x: 10, y: 5, class: 'city-label' }, g);
+    return { c, g, t };
+  });
+  const hg = el('g', {}, geo.marks);
+  el('circle', { r: 8, class: 'pulse' }, hg);
+  el('circle', { r: 8, fill: '#ff006e', stroke: '#fff', 'stroke-width': 3 }, hg);
+  const ht = el('text', { x: 14, y: 6, class: 'city-label home-label' }, hg);
+  geo.home = { c: HOME, g: hg, t: ht };
+}
+
+// math angle (degrees, anticlockwise, y up) of a place on the un-turned map
+function baseAngle(lon, lat) {
+  if (!geo.proj) return 0;
+  const [x, y] = geo.proj([lon, lat]);
+  return Math.atan2(-(y - CY), x - CX) * 180 / Math.PI;
+}
+function baseRadius(lon, lat) {
+  if (!geo.proj) return R * 0.85;
+  const [x, y] = geo.proj([lon, lat]);
+  return Math.hypot(x - CX, y - CY);
+}
+let homeBase = 0, eastSign = 1;
+function calibrate() {
+  homeBase = baseAngle(HOME.lon, HOME.lat);
+  // which way is "east" on this map? (should be anticlockwise)
+  const d = mod(baseAngle(HOME.lon + 10, HOME.lat) - homeBase + 180, 360) - 180;
+  eastSign = d >= 0 ? 1 : -1;
+}
+// local sun-hour of a place, if Bangalore's clock shows `h`
+const localHour = (lon, h) => mod(h + (lon - HOME.lon) / 15, 24);
+
+function renderSpace() {
+  const h = hourOf();
+  // Bangalore must point: noon → left (180°), sunset → down (270°), midnight → right, sunrise → up
+  const want = 180 + (h - 12) * 15;
+  const rho = want - homeBase;                    // turn the whole map anticlockwise by rho
+  geo.spin.setAttribute('transform', `rotate(${-rho} ${CX} ${CY})`);
+  const place = (o, label) => {
+    const a = (baseAngle(o.c.lon, o.c.lat) + rho) * Math.PI / 180;
+    const r = baseRadius(o.c.lon, o.c.lat);
+    const x = CX + r * Math.cos(a), y = CY - r * Math.sin(a);
+    o.g.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    o.t.textContent = label;
+    o.t.setAttribute('x', x > CX + R * .45 ? -14 : 10);
+    o.t.setAttribute('text-anchor', x > CX + R * .45 ? 'end' : 'start');
+  };
+  for (const o of geo.cityEls) {
+    const lh = localHour(o.c.lon, h);
+    place(o, `${o.c.flag} ${o.c.name} ${lh >= 6 && lh < 18 ? '☀️' : '🌙'}`);
+  }
+  place(geo.home, `👧 ${Kids.name}'s home`);
+}
+
+/* =========================================================
+   Bangalore sky + clock
+   ========================================================= */
+const sky = $('#sky');
+const skyEls = {};
+function buildSky() {
+  const defs = el('defs', {}, sky);
+  defs.innerHTML = `<linearGradient id="skyGrad" x1="0" x2="0" y1="0" y2="1">
+    <stop offset="0%" id="skyTop"/><stop offset="100%" id="skyBot"/></linearGradient>
+    <radialGradient id="sunBall"><stop offset="0%" stop-color="#fff7c2"/><stop offset="60%" stop-color="#ffd166"/><stop offset="100%" stop-color="#ff9f1c"/></radialGradient>`;
+  el('rect', { x: 0, y: 0, width: 400, height: 250, fill: 'url(#skyGrad)' }, sky);
+  skyEls.stars = el('g', {}, sky);
+  for (let i = 0; i < 40; i++) el('circle', { cx: Math.random() * 400, cy: Math.random() * 170, r: Math.random() * 1.4 + .4, fill: '#fff' }, skyEls.stars);
+  skyEls.sun = el('g', {}, sky);
+  el('circle', { r: 34, fill: '#ffd166', opacity: .35 }, skyEls.sun);
+  el('circle', { r: 22, fill: 'url(#sunBall)' }, skyEls.sun);
+  skyEls.moon = el('text', { 'font-size': 34, 'text-anchor': 'middle', 'dominant-baseline': 'central' }, sky);
+  skyEls.moon.textContent = '🌙';
+  // ground, home, tree and Kavikuyil
+  el('path', { d: 'M0 200 Q100 175 200 195 T400 190 V250 H0 Z', fill: '#7bd389' }, sky);
+  el('path', { d: 'M0 215 Q120 200 240 215 T400 212 V250 H0 Z', fill: '#5bbf6c' }, sky);
+  const emo = (x, y, s, t) => { const e = el('text', { x, y, 'font-size': s, 'text-anchor': 'middle' }, sky); e.textContent = t; return e; };
+  emo(60, 212, 54, '🌳');
+  emo(310, 215, 60, '🏠');
+  skyEls.kid = emo(205, 228, 40, '👧');
+  skyEls.dark = el('rect', { x: 0, y: 160, width: 400, height: 90, fill: '#050822', opacity: 0 }, sky);
+  emo(28, 30, 14, 'EAST').setAttribute('fill', '#fff');
+  emo(372, 30, 14, 'WEST').setAttribute('fill', '#fff');
+}
+function hexMix(a, b, k) {
+  const pa = a.match(/\w\w/g).map(x => parseInt(x, 16)), pb = b.match(/\w\w/g).map(x => parseInt(x, 16));
+  return '#' + pa.map((v, i) => Math.round(v + (pb[i] - v) * k).toString(16).padStart(2, '0')).join('');
+}
+const NIGHT = ['0b1446', '1f2a6b'], TWI = ['3b2a7a', 'ff9a6b'], DAY = ['3fa9f5', 'bfe6ff'];
+function renderSky() {
+  const h = hourOf();
+  const ang = (h - 6) / 12 * Math.PI;
+  const e = Math.sin(ang);                         // how high the Sun is (−1 … 1)
+  let top, bot;
+  if (e <= -0.25) [top, bot] = NIGHT;
+  else if (e < 0) { const k = (e + .25) / .25; top = hexMix(NIGHT[0], TWI[0], k).slice(1); bot = hexMix(NIGHT[1], TWI[1], k).slice(1); }
+  else if (e < .3) { const k = e / .3; top = hexMix(TWI[0], DAY[0], k).slice(1); bot = hexMix(TWI[1], DAY[1], k).slice(1); }
+  else [top, bot] = DAY;
+  $('#skyTop').setAttribute('stop-color', '#' + top);
+  $('#skyBot').setAttribute('stop-color', '#' + bot);
+  const sx = 200 - 165 * Math.cos(ang), sy = 200 - 165 * Math.sin(ang);
+  skyEls.sun.setAttribute('transform', `translate(${sx},${sy})`);
+  skyEls.sun.style.display = sy < 225 ? '' : 'none';
+  const mx = 200 - 165 * Math.cos(ang + Math.PI), my = 200 - 165 * Math.sin(ang + Math.PI);
+  skyEls.moon.setAttribute('x', mx); skyEls.moon.setAttribute('y', my);
+  skyEls.moon.style.display = my < 215 ? '' : 'none';
+  skyEls.stars.setAttribute('opacity', clamp(-e * 3, 0, 1));
+  skyEls.dark.setAttribute('opacity', clamp(-e * 1.2, 0, .55));
+  const asleep = h < 5.5 || h >= 21.5;
+  skyEls.kid.textContent = asleep ? '😴' : '👧';
+}
+
+const clockEls = {};
+function buildClock() {
+  const c = $('#clock');
+  const COL = ['#ff595e','#ff924c','#ffca3a','#c5ca30','#8ac926','#36949d','#1982c4','#4267ac','#565aa0','#6a4c93','#b5179e','#f15bb5'];
+  el('circle', { cx: 100, cy: 100, r: 96, fill: '#9b5de5' }, c);
+  el('circle', { cx: 100, cy: 100, r: 86, fill: '#fffdf7' }, c);
+  for (let i = 0; i < 60; i++) {
+    const a = i * 6 * Math.PI / 180, big = i % 5 === 0;
+    el('line', { x1: 100 + 84 * Math.sin(a), y1: 100 - 84 * Math.cos(a), x2: 100 + (big ? 74 : 79) * Math.sin(a), y2: 100 - (big ? 74 : 79) * Math.cos(a),
+      stroke: big ? '#2b2d42' : '#c9c3e6', 'stroke-width': big ? 3 : 1.5, 'stroke-linecap': 'round' }, c);
+  }
+  for (let n = 1; n <= 12; n++) {
+    const a = n * 30 * Math.PI / 180;
+    el('text', { x: 100 + 61 * Math.sin(a), y: 100 - 61 * Math.cos(a), 'font-size': 20, 'font-weight': 700, fill: COL[n % 12], 'text-anchor': 'middle', 'dominant-baseline': 'central' }, c).textContent = n;
+  }
+  clockEls.h = el('line', { x1: 100, y1: 108, x2: 100, y2: 55, stroke: '#ef476f', 'stroke-width': 8, 'stroke-linecap': 'round' }, c);
+  clockEls.m = el('line', { x1: 100, y1: 110, x2: 100, y2: 28, stroke: '#118ab2', 'stroke-width': 5, 'stroke-linecap': 'round' }, c);
+  el('circle', { cx: 100, cy: 100, r: 7, fill: '#2b2d42' }, c);
+}
+const DOING = [
+  [0, 5.5, '😴 Sleeping… sweet dreams!'],
+  [5.5, 7, '🌅 The Sun is rising, time to wake up!'],
+  [7, 8, '🪥 Brushing teeth & breakfast 🥣'],
+  [8, 13, '🎒 School time!'],
+  [13, 14, '🍛 Lunch time'],
+  [14, 16, '📚 Homework & rest'],
+  [16, 18, '⚽ Play time outside!'],
+  [18, 19.5, '🌇 Sunset, time to come home'],
+  [19.5, 20.5, '🍽️ Dinner time'],
+  [20.5, 21.5, '📖 Bedtime story'],
+  [21.5, 24, '😴 Sleeping… sweet dreams!'],
+];
+function partOfDay(h) {
+  if (h >= 5 && h < 12) return 'morning 🌅';
+  if (h >= 12 && h < 17) return 'afternoon ☀️';
+  if (h >= 17 && h < 20) return 'evening 🌇';
+  return 'night 🌙';
+}
+function renderClock() {
+  const h = hourOf();
+  const hh = Math.floor(h), mm = Math.floor((h - hh) * 60);
+  clockEls.h.setAttribute('transform', `rotate(${(h % 12) * 30} 100 100)`);
+  clockEls.m.setAttribute('transform', `rotate(${(h - hh) * 360} 100 100)`);
+  $('#timeText').textContent = `${hh % 12 || 12}:${pad(mm)} ${hh < 12 ? 'AM' : 'PM'}`;
+  $('#doingText').textContent = DOING.find(d => h >= d[0] && h < d[1])[2];
+  $('#partText').textContent = `It's ${partOfDay(h)} in Bangalore`;
+}
+
+/* =========================================================
+   Counters
+   ========================================================= */
+function renderCounters() {
+  const spins = Math.max(0, Math.floor((state.tot - state.start) / 24));
+  $('#spins').textContent = spins;
+  $('#days').textContent = `${spins} day${spins === 1 ? '' : 's'}`;
+  $('#km').textContent = `${Math.round(state.travelled * KMH).toLocaleString('en-IN')} km`;
+  if (spins > state.bestSpins) {
+    state.bestSpins = spins;
+    Kids.sfx.yay(); Kids.confetti();
+    Kids.banner(spins === 1 ? '🔄 One full spin = 24 hours = 1 day!' : `🔄 ${spins} spins = ${spins} days!`);
+    if (spins <= 3) Kids.addStar();
+    checkChallenge(true);
+  }
+}
+
+/* =========================================================
+   Moving time: drag, play, jump
+   ========================================================= */
+function advance(dh) {
+  state.tot += dh;
+  state.travelled += Math.abs(dh);
+}
+let dragging = null;
+function pointerAngle(e) {
+  const pt = space.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(space.getScreenCTM().inverse());
+  return { a: Math.atan2(-(p.y - CY), p.x - CX) * 180 / Math.PI, d: Math.hypot(p.x - CX, p.y - CY) };
+}
+space.addEventListener('pointerdown', e => {
+  const p = pointerAngle(e);
+  if (p.d > R + 60) return;
+  stopPlay(); state.anim = null;
+  dragging = { a: p.a };
+  space.classList.add('dragging');
+  try { space.setPointerCapture(e.pointerId); } catch {}
+  e.preventDefault();
+});
+space.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const p = pointerAngle(e);
+  if (p.d < 25) return;
+  const da = mod(p.a - dragging.a + 180, 360) - 180;  // anticlockwise drag = forward in time
+  dragging.a = p.a;
+  const before = Math.floor(hourOf());
+  advance(da / 15);
+  if (Math.floor(hourOf()) !== before) Kids.sfx.tick();
+});
+const endDrag = () => { if (!dragging) return; dragging = null; space.classList.remove('dragging'); checkChallenge(); };
+space.addEventListener('pointerup', endDrag);
+space.addEventListener('pointercancel', endDrag);
+
+function startPlay() { state.playing = true; $('#playBtn').textContent = '⏸️ Pause'; }
+function stopPlay() {
+  if (!state.playing) return;
+  state.playing = false; $('#playBtn').textContent = '▶️ Play';
+}
+$('#playBtn').addEventListener('click', () => {
+  Kids.sfx.pop(); state.anim = null;
+  if (state.playing) { stopPlay(); checkChallenge(); } else startPlay();
+});
+document.querySelectorAll('#speed button').forEach(b => b.addEventListener('click', () => {
+  state.speed = +b.dataset.speed; Kids.sfx.pop();
+  document.querySelectorAll('#speed button').forEach(x => x.classList.toggle('active', x === b));
+}));
+function jumpTo(hour) {
+  stopPlay();
+  const dist = mod(hour - hourOf(), 24);
+  state.anim = { from: state.tot, dist, t0: performance.now(), dur: 400 + dist * 90 };
+  Kids.sfx.whoosh();
+}
+document.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => jumpTo(+b.dataset.jump)));
+$('#nowBtn').addEventListener('click', () => jumpTo(istNow()));
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (state.playing) advance(state.speed * dt);
+  if (state.anim) {
+    const a = state.anim, k = Math.min(1, (now - a.t0) / a.dur);
+    const ease = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+    const target = a.from + a.dist * ease;
+    advance(target - state.tot);
+    if (k >= 1) { state.anim = null; checkChallenge(); }
+  }
+  renderSpace(); renderSky(); renderClock(); renderCounters();
+  if (CHALLENGES[ch.i] && CHALLENGES[ch.i].spin) checkChallenge(true);
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   Kuyil's challenges
+   ========================================================= */
+const between = (h, a, b) => a <= b ? h >= a && h < b : h >= a || h < b;
+const CHALLENGES = [
+  { ask: 'Spin the Earth so it is NIGHT in Bangalore 🌙', hint: 'Night is on the dark side, away from the Sun.',
+    ok: h => between(h, 20, 4.5), yay: 'Yes! Bangalore is facing away from the Sun, so it is night time. 🌙' },
+  { ask: 'Now make the Sun RISE in Bangalore 🌅', hint: 'Sunrise is at the top, where Bangalore comes out of the dark into the light.',
+    ok: h => between(h, 5.5, 7), yay: 'Good morning! Bangalore just turned into the sunlight, so the Sun is rising. 🌅' },
+  { ask: 'Make it NOON, when the Sun is high up in the sky ☀️', hint: 'Turn Bangalore so it faces the Sun.',
+    ok: h => between(h, 11.5, 12.75), yay: 'Bangalore is facing the Sun. It is noon, the brightest time of the day! ☀️' },
+  { ask: "Make it 8 o'clock in the morning, school time! 🎒", hint: 'Watch the clock while you spin: short hand on 8, long hand on 12.',
+    ok: h => between(h, 7.75, 8.25), yay: "It's 8 o'clock. Time to go to school! 🎒" },
+  { ask: 'Make the Sun SET in Bangalore 🌇', hint: 'Sunset is at the bottom, where Bangalore goes from the light into the dark.',
+    ok: h => between(h, 17.5, 19), yay: 'The Sun is setting. Bangalore is turning away from the Sun. 🌇' },
+  { ask: 'Make it DAYTIME in New York 🇺🇸. Look for the ☀️ next to its name!', hint: 'Turn New York towards the Sun. What time is it in Bangalore then?',
+    ok: h => between(localHour(-74.01, h), 7, 17), yay: () => `New York has day, and Bangalore has ${partOfDay(hourOf()).split(' ')[0]}! Different places, different times. 🌍` },
+  { ask: 'Spin the Earth ONE whole time around. How long does it take?', hint: 'Keep spinning until Bangalore comes all the way back. Or press Play!',
+    spin: true, yay: 'One full spin = 24 hours = 1 day! 🎉' },
+];
+const ch = { i: 0, done: new Set(), spinsAt: 0 };
+function showChallenge() {
+  const c = CHALLENGES[ch.i];
+  ch.spinsAt = Math.floor((state.tot - state.start) / 24);
+  ch.spinFrom = state.tot;
+  $('#bubble').textContent = `${Kids.name}, ${c.ask}`;
+  $('#bubble').classList.remove('done');
+  $('#hint').textContent = '';
+  renderDots();
+}
+function renderDots() {
+  $('#dots').innerHTML = CHALLENGES.map((_, i) =>
+    `<span class="${ch.done.has(i) ? 'ok' : i === ch.i ? 'cur' : ''}"></span>`).join('');
+}
+let nextTimer;
+function checkChallenge(fromSpin) {
+  const c = CHALLENGES[ch.i];
+  if (!c || ch.done.has(ch.i)) return;
+  const ok = c.spin ? state.tot - ch.spinFrom >= 24 : !fromSpin && c.ok(hourOf());
+  if (!ok) return;
+  ch.done.add(ch.i);
+  const msg = typeof c.yay === 'function' ? c.yay() : c.yay;
+  const p = Kids.praise();
+  $('#bubble').textContent = `${p} ${msg}`;
+  $('#bubble').classList.add('done');
+  Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+  Kids.speak(Kids.forSpeech(`${p} ${msg}`));
+  renderDots();
+  clearTimeout(nextTimer);
+  nextTimer = setTimeout(nextChallenge, 4500);
+}
+function nextChallenge() {
+  clearTimeout(nextTimer);
+  if (ch.done.size === CHALLENGES.length) {
+    $('#bubble').textContent = `🏆 Wow, ${Kids.name}! You finished all of Kuyil's challenges. You know why we have day and night!`;
+    $('#bubble').classList.add('done');
+    Kids.banner(`🏆 Day & Night Expert: ${Kids.name}!`);
+    ch.done.clear(); ch.i = -1;
+    setTimeout(() => { ch.i = 0; showChallenge(); }, 7000);
+    return;
+  }
+  do { ch.i = (ch.i + 1) % CHALLENGES.length; } while (ch.done.has(ch.i));
+  showChallenge();
+}
+$('#hintBtn').addEventListener('click', () => {
+  const c = CHALLENGES[ch.i]; if (!c) return;
+  $('#hint').textContent = '💡 ' + c.hint;
+  Kids.speak(c.hint, true);
+});
+$('#skipBtn').addEventListener('click', () => { Kids.sfx.pop(); nextChallenge(); });
+
+/* =========================================================
+   Read-aloud cards
+   ========================================================= */
+document.querySelectorAll('[data-say]').forEach(card => {
+  card.querySelector('.say').addEventListener('click', () => {
+    const text = [...card.querySelectorAll('h3, p, li')].map(e => e.textContent).join('. ');
+    Kids.speak(Kids.forSpeech(text), true);
+  });
+});
+
+/* =========================================================
+   Go!
+   ========================================================= */
+buildSpace();
+calibrate();
+buildSky();
+buildClock();
+showChallenge();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

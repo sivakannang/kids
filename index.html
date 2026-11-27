@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kavikuyil's Learning World</title>
+<link rel="stylesheet" href="shared/kids.css">
+<style>
+  main { max-width: 1200px; margin: 0 auto; padding: 0 18px 10px; }
+  .hello { text-align: center; margin: 4px 0 22px; font-size: 22px; color: var(--muted); }
+  .hello b { color: var(--purple); }
+  .subject { margin-bottom: 26px; }
+  .subject h2 { margin: 0 0 12px; font-size: 26px; display: flex; align-items: center; gap: 10px; }
+  .subject h2 .pill { font-size: 14px; font-weight: 600; background: #fff; border-radius: 999px; padding: 3px 12px; color: var(--muted); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .tile {
+    position: relative; display: block; text-decoration: none; color: #fff; border-radius: 26px; padding: 18px 18px 20px;
+    min-height: 150px; box-shadow: 0 7px 0 rgba(0,0,0,.15); transition: transform .15s, box-shadow .15s; overflow: hidden;
+  }
+  a.tile:hover { transform: translateY(-4px) rotate(-1deg); box-shadow: 0 11px 0 rgba(0,0,0,.15); }
+  a.tile:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,.15); }
+  .tile .emoji { font-size: 52px; line-height: 1; display: inline-block; }
+  a.tile:hover .emoji { animation: wobble .8s ease-in-out infinite; }
+  .tile h3 { margin: 10px 0 4px; font-size: 22px; }
+  .tile p { margin: 0; font-size: 15px; opacity: .95; line-height: 1.3; }
+  .tile .tag { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,.3); border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600; }
+  .tile.soon { background: #fff !important; color: var(--muted); box-shadow: 0 5px 0 rgba(0,0,0,.06); border: 3px dashed #ddd8f0; }
+  .tile.soon .emoji { filter: grayscale(.6); opacity: .7; }
+  .c-purple { background: linear-gradient(135deg, #9b5de5, #7b3fe0); }
+  .c-blue   { background: linear-gradient(135deg, #3aa6dd, #118ab2); }
+  .c-green  { background: linear-gradient(135deg, #2ed3a2, #04a57c); }
+  .c-orange { background: linear-gradient(135deg, #ffb347, #ff8a00); }
+  .c-pink   { background: linear-gradient(135deg, #f774c4, #e0409e); }
+  .c-red    { background: linear-gradient(135deg, #ff7a93, #ef476f); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌈</span>
+    <div><h1><span data-kid-name>Kavikuyil</span>'s Learning World</h1><small>Pick a game and let's play & learn!</small></div>
+  </div>
+  <div class="badges" data-kids-badges></div>
+</header>
+
+<main>
+  <div class="hello" id="hello"></div>
+  <div id="subjects"></div>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span></footer>
+
+<script src="shared/kids.js"></script>
+<script>
+/* =========================================================
+   Add a new project here: give it a link (path) to make it
+   playable, or leave path out to show it as "coming soon".
+   ========================================================= */
+const SUBJECTS = [
+  { title: '🔤 English', color: 'c-purple', items: [
+    { emoji: '📖', name: 'Common Words', about: 'Class 1 reading word list to print and read together', path: 'english/class-1-basics/common-words.pdf', tag: 'Print' },
+    { emoji: '🧩', name: 'Word Match', about: 'Tap the picture that matches the word' },
+    { emoji: '🔊', name: 'Phonics Fun', about: 'Hear the sounds that letters make' },
+  ]},
+  { title: '🌺 Tamil', color: 'c-pink', items: [
+    { emoji: 'அ', name: 'Uyir Ezhuthukkal', about: 'Learn the Tamil vowels with sounds' },
+    { emoji: '🎶', name: 'Rhymes', about: 'Sing along with Tamil rhymes' },
+  ]},
+  { title: '🔢 Maths', color: 'c-blue', items: [
+    { emoji: '⏰', name: 'Tick-Tock World Explorer', about: 'Read the clock and travel the world’s time zones', path: 'maths/world-clock/index.html' },
+    { emoji: '🍎', name: 'Counting Fun', about: 'Count fruits, stars and animals' },
+    { emoji: '🛒', name: 'Money Shop', about: 'Buy toys with ₹ coins and notes' },
+  ]},
+  { title: '🔬 Science', color: 'c-green', items: [
+    { emoji: '🌍', name: 'Spin the Earth', about: 'Why do we have day and night? Why 24 hours?', path: 'science/spin-the-earth/index.html', tag: 'New!' },
+    { emoji: '🪐', name: 'Planet Jump', about: 'Jump on the Moon, Mars and Jupiter: gravity is different everywhere!' },
+    { emoji: '🐾', name: 'Animal Homes', about: 'Who lives where?' },
+  ]},
+  { title: '🌍 World', color: 'c-orange', items: [
+    { emoji: '🚩', name: 'Flag Quiz', about: 'Guess the country from its flag' },
+  ]},
+  { title: '🎨 Art & Music', color: 'c-red', items: [
+    { emoji: '🖍️', name: 'Drawing Pad', about: 'Draw and colour anything' },
+    { emoji: '🎹', name: 'Little Piano', about: 'Play songs on a colourful piano' },
+  ]},
+];
+
+const box = document.getElementById('subjects');
+for (const s of SUBJECTS) {
+  const ready = s.items.filter(i => i.path).length;
+  const sec = document.createElement('section');
+  sec.className = 'subject';
+  sec.innerHTML = `<h2>${s.title} <span class="pill">${ready ? `${ready} ready` : 'coming soon'}</span></h2><div class="tiles"></div>`;
+  const tiles = sec.querySelector('.tiles');
+  for (const it of s.items) {
+    const t = document.createElement(it.path ? 'a' : 'div');
+    t.className = `tile ${s.color}${it.path ? '' : ' soon'}`;
+    if (it.path) { t.href = it.path; t.addEventListener('click', () => Kids.sfx.pop()); }
+    t.innerHTML = `<span class="tag">${it.path ? (it.tag || 'Play') : '🔒 Soon'}</span>
+      <span class="emoji">${it.emoji}</span><h3>${it.name}</h3><p>${it.about}</p>`;
+    tiles.appendChild(t);
+  }
+  box.appendChild(sec);
+}
+
+const h = new Date().getHours();
+const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+document.getElementById('hello').innerHTML =
+  `${greet}, <b>${Kids.name}</b>! 👋 You have <b>⭐ ${Kids.stars}</b> stars. What shall we learn today?`;
+</script>
+</body>
+</html>
