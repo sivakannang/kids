@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Life in Numbers</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .age { text-align: center; }
+  .age .big { font-size: 34px; font-weight: 700; color: var(--purple); }
+  .age .secs { font-size: 60px; font-weight: 700; color: var(--blue); font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 8px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .gcard { border-radius: 22px; padding: 16px; background: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.06), 0 8px 22px rgba(60,60,120,.08); text-align: center; }
+  .gcard .e { font-size: 46px; }
+  .gcard .q { font-size: 18px; font-weight: 600; margin: 6px 0 10px; min-height: 48px; }
+  .gcard .ans { font-size: 30px; font-weight: 700; color: var(--purple); font-variant-numeric: tabular-nums; }
+  .gcard .sub { font-size: 15px; color: var(--muted); margin-top: 4px; }
+  .gcard .btn { font-size: 17px; padding: 9px 14px; }
+  .gcard.revealed { background: #f8f4ff; }
+  .setup { text-align: center; }
+  .setup input { font-size: 22px; padding: 8px 12px; border-radius: 14px; border: 3px solid #e5e0f5; font-family: inherit; }
+  .mile { font-size: 20px; line-height: 1.6; }
+  .mile b { color: var(--purple); }
+  .small-link { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 14px; font-family: inherit; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🎂</span>
+    <div><h1>My Life in Numbers</h1><small>How many days, hours and heartbeats old is <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <section class="card setup" id="setup" hidden>
+    <h2 style="margin:0 0 6px">👨‍👩‍👧 For grown-ups: when is <span data-kid-name>Kavikuyil</span>'s birthday?</h2>
+    <p class="label">It is saved only in this browser on this computer, and never sent anywhere.</p>
+    <input type="date" id="bday">
+    <div class="row"><button class="btn big green" id="saveBday">💾 Save birthday</button></div>
+  </section>
+
+  <div id="main" hidden>
+    <section class="card age">
+      <div class="big" id="ageText"></div>
+      <div class="label">You have been alive for this many seconds, and it's still counting!</div>
+      <div class="secs" id="secs"></div>
+    </section>
+
+    <h2 style="margin:18px 6px 10px">🤔 Guess first! More or less?</h2>
+    <div class="cards" id="cards"></div>
+
+    <section class="card" style="margin-top:18px">
+      <h2 style="margin:0 0 8px">📅 Big days coming up</h2>
+      <div class="mile" id="miles"></div>
+      <div class="row"><button class="small-link" id="changeBday">Change birthday (grown-ups)</button></div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const DAY = 86400000;
+const fmt = n => Math.floor(n).toLocaleString('en-IN');
+const fmtDate = d => d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+function say(t, good) { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); }
+
+// a "nice" round number near v (1, 2 or 5 × 10ⁿ), not too close to v, for the more/less guess
+function niceNear(v) {
+  const c = [];
+  for (let k = 0; k < 13; k++) for (const m of [1, 2, 5]) c.push(m * 10 ** k);
+  const ok = c.filter(x => Math.abs(Math.log(x / v)) > 0.18);
+  return ok.reduce((a, b) => Math.abs(Math.log(b / v)) < Math.abs(Math.log(a / v)) ? b : a);
+}
+function ageParts(b, now) {
+  let y = now.getFullYear() - b.getFullYear(), m = now.getMonth() - b.getMonth(), d = now.getDate() - b.getDate();
+  if (d < 0) { m--; d += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+  if (m < 0) { y--; m += 12; }
+  return { y, m, d };
+}
+
+/* things to count (per millisecond alive) */
+const THINGS = [
+  { e: '🌍', what: 'days', q: n => `Have you been alive for MORE or LESS than ${fmt(n)} days?`, per: 1 / DAY,
+    sub: 'Each day is one spin of the Earth!' },
+  { e: '🕐', what: 'hours', q: n => `MORE or LESS than ${fmt(n)} hours old?`, per: 1 / 3600000,
+    sub: '24 hours in every single day' },
+  { e: '❤️', what: 'heartbeats', q: n => `Has your heart beaten MORE or LESS than ${fmt(n)} times?`, per: 100 / 60000,
+    sub: 'About 100 beats a minute for a child (a guess!)' },
+  { e: '🌬️', what: 'breaths', q: n => `Have you taken MORE or LESS than ${fmt(n)} breaths?`, per: 25 / 60000,
+    sub: 'About 25 breaths a minute for a child (a guess!)' },
+  { e: '🌙', what: 'trips of the Moon', q: n => `Has the Moon gone around the Earth MORE or LESS than ${fmt(n)} times?`, per: 1 / (29.53 * DAY),
+    sub: 'One trip ≈ 29½ days' },
+  { e: '🚀', what: 'km around the Sun', q: n => `Have you travelled MORE or LESS than ${fmt(n)} km around the Sun, riding on the Earth?`, per: 2574000 / DAY,
+    sub: 'The Earth zooms about 25 lakh km every day!' },
+];
+
+let bday = Kids.birthday();
+function init() {
+  bday = Kids.birthday();
+  $('#setup').hidden = !!bday;
+  $('#main').hidden = !bday;
+  if (!bday) { say(`Hi ${Kids.name}! Ask a grown-up to put in your birthday, then we can count your whole life! 🎂`); return; }
+  say(`${Kids.name}, guess first, then tap to find out! Some numbers are REALLY big. 🤯`);
+  buildCards(); renderMiles();
+}
+$('#saveBday').addEventListener('click', () => {
+  const v = $('#bday').value;
+  if (!v || new Date(v) > new Date()) { alert('Please choose a birthday in the past.'); return; }
+  Kids.setBirthday(v); Kids.sfx.yay(); init();
+});
+$('#changeBday').addEventListener('click', () => { $('#bday').value = Kids.store.get('kid.birthday', ''); $('#setup').hidden = false; $('#main').hidden = true; });
+
+let revealed = [];
+function buildCards() {
+  const ms = Date.now() - bday;
+  revealed = THINGS.map(() => false);
+  $('#cards').innerHTML = '';
+  THINGS.forEach((t, i) => {
+    const v = ms * t.per, n = niceNear(v);
+    const c = document.createElement('div');
+    c.className = 'gcard';
+    c.innerHTML = `<div class="e">${t.e}</div><div class="q">${t.q(n)}</div>
+      <div class="row"><button class="btn green" data-g="more">⬆️ More</button><button class="btn orange" data-g="less">⬇️ Less</button></div>`;
+    c.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => {
+      const right = (b.dataset.g === 'more') === (v > n);
+      revealed[i] = true;
+      c.classList.add('revealed');
+      c.innerHTML = `<div class="e">${t.e}</div><div class="q">${right ? '✅ You guessed right!' : '😮 Surprise!'} It's ${v > n ? 'MORE' : 'LESS'} than ${fmt(n)}.</div>
+        <div class="ans" data-live="${i}">${fmt(v)}</div><div class="sub">${t.what} · ${t.sub}</div>`;
+      if (right) { Kids.addStar(); Kids.sfx.yay(); } else { Kids.sfx.pop(); }
+      Kids.speak(Kids.forSpeech(`${fmt(v)} ${t.what}!`));
+      if (revealed.every(Boolean)) { Kids.confetti(); say(`Wow, ${Kids.name}! Your life is full of BIG numbers, and they keep growing every second! 🎉`, true); }
+    }));
+    $('#cards').appendChild(c);
+  });
+}
+function renderMiles() {
+  const now = new Date(), days = Math.floor((now - bday) / DAY);
+  const lines = [];
+  // next birthday
+  let nb = new Date(now.getFullYear(), bday.getMonth(), bday.getDate());
+  if (nb < new Date(now.getFullYear(), now.getMonth(), now.getDate())) nb.setFullYear(nb.getFullYear() + 1);
+  const toNb = Math.round((nb - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / DAY);
+  lines.push(toNb === 0 ? `🎂 <b>It's your birthday TODAY!</b> Happy birthday! 🎉` :
+    `🎂 Your next birthday is in <b>${toNb} sleep${toNb > 1 ? 's' : ''}</b>, on ${fmtDate(nb)}.`);
+  // next "round" day milestones
+  for (const step of [500, 1000]) {
+    const next = (Math.floor(days / step) + 1) * step;
+    const when = new Date(bday.getTime() + next * DAY);
+    lines.push(`🎉 You will be <b>${fmt(next)} days old</b> on ${fmtDate(when)}.`);
+  }
+  const big = new Date(bday.getTime() + 10000 * DAY);
+  lines.push(`🚀 You will be <b>10,000 days old</b> on ${fmtDate(big)}, when you are about 27!`);
+  $('#miles').innerHTML = lines.join('<br>');
+}
+function tick() {
+  if (bday) {
+    const now = new Date(), ms = now - bday, a = ageParts(bday, now);
+    $('#ageText').textContent = `${Kids.name} is ${a.y} years, ${a.m} month${a.m === 1 ? '' : 's'} and ${a.d} day${a.d === 1 ? '' : 's'} old!`;
+    $('#secs').textContent = fmt(ms / 1000);
+    document.querySelectorAll('[data-live]').forEach(e => { e.textContent = fmt(ms * THINGS[+e.dataset.live].per); });
+  }
+  requestAnimationFrame(tick);
+}
+
+Kids.learn({
+  why: ['Your age is counted in <b>years</b>: one year for every trip the Earth makes around the Sun.',
+    'But we can count it in other ways too: days (Earth spins), months (Moon trips), even heartbeats! The same time, many different numbers.'],
+  imagine: ['Imagine a giant jar. Every day of your life, a marble drops in. Clink!',
+    'Now the jar has thousands of marbles, and tomorrow there will be one more. What will you do with tomorrow\'s marble?'],
+  wow: ['Your heart has beaten many crores of times already, and it never takes a holiday! ❤️',
+    'Riding on the Earth, you have travelled billions of kilometres around the Sun without leaving home.'],
+  talk: ['Which number surprised you the most?', 'What would you like to do on your 3,000th day?', 'How many days old is a grown-up you love? Work it out together!'],
+});
+init();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

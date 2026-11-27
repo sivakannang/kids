@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planet Trip</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .planet { cursor: pointer; }
+  .planet-label { font-size: 13px; font-weight: 600; fill: #fff; text-anchor: middle; }
+  .scroller { overflow-x: auto; border-radius: 18px; background: #050822; }
+  #dist { display: block; height: 260px; }
+  .info h2 { margin: 0; font-size: 30px; }
+  .info .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .info .f { background: #f1e9ff; border-radius: 14px; padding: 8px 10px; font-size: 15px; }
+  .info .f b { display: block; font-size: 18px; color: var(--purple); }
+  .info .fun { margin-top: 10px; font-size: 18px; background: #fff3c4; border-radius: 14px; padding: 10px; }
+  .ball { width: 70px; height: 70px; border-radius: 50%; flex: none; box-shadow: inset -10px -10px 0 rgba(0,0,0,.2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🪐</span>
+    <div><h1>Planet Trip</h1><small>How big are the planets, and how far away, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="size">📏 Sizes</button>
+  <button class="tab" data-tab="dist">🚀 Distances</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card space-card" data-panel="size">
+      <h2>📏 The planets next to each other, real sizes <small>The Sun is SO big, only its edge fits on the left! Tap a planet.</small></h2>
+      <svg id="size" class="svgbox" viewBox="0 0 900 340"></svg>
+    </section>
+    <section class="card space-card" data-panel="dist" hidden>
+      <h2>🚀 How far from the Sun? <small>Scroll sideways. Planet sizes are NOT to scale here, but distances are. Tap a planet, then fly!</small></h2>
+      <div class="scroller" id="scroller"><svg id="dist"></svg></div>
+      <div class="row"><button class="btn big green" id="flyBtn">🚀 Fly from Earth</button></div>
+      <div class="result" id="flyResult" style="color:var(--ink)">Tap a planet, then press Fly!</div>
+    </section>
+  </div>
+  <div>
+    <section class="card info">
+      <div style="display:flex;gap:14px;align-items:center"><div class="ball" id="iBall"></div><div><h2 id="iName"></h2><div class="label" id="iSize" style="margin:0"></div></div></div>
+      <div class="facts" id="iFacts"></div>
+      <div class="fun" id="iFun"></div>
+    </section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl;
+const P = [
+  { id: 'mercury', n: 'Mercury', r: 0.383, au: 0.39, c: '#9e8a78', day: '59 Earth days', year: '88 days', moons: '0',
+    fun: 'Mercury is the smallest planet and the closest to the Sun. Its year is only 88 days!' },
+  { id: 'venus', n: 'Venus', r: 0.949, au: 0.72, c: '#e8c16a', day: '243 Earth days', year: '225 days', moons: '0',
+    fun: 'Venus is the hottest planet. Its day is LONGER than its year!' },
+  { id: 'earth', n: 'Earth', r: 1, au: 1, c: '#3a8ee6', day: '24 hours', year: '365 days', moons: '1',
+    fun: 'Our home! The only planet we know with air to breathe, water to drink, and life. 🌱' },
+  { id: 'mars', n: 'Mars', r: 0.532, au: 1.52, c: '#d0542b', day: '24 hours 37 min', year: '687 days', moons: '2',
+    fun: 'Mars has the tallest volcano in the Solar System, Olympus Mons, about 2½ times taller than Mount Everest! 🌋' },
+  { id: 'jupiter', n: 'Jupiter', r: 11.21, au: 5.2, c: '#c98e5a', day: 'about 10 hours', year: '12 years', moons: 'more than 90',
+    fun: 'Jupiter has a giant storm called the Great Red Spot that is bigger than the whole Earth! 🌀' },
+  { id: 'saturn', n: 'Saturn', r: 9.45, au: 9.54, c: '#e3c78b', day: 'about 10½ hours', year: '29 years', moons: 'more than 140', rings: true,
+    fun: 'Saturn has the most famous rings, and it is so light it could float in a giant bathtub! 🛁' },
+  { id: 'uranus', n: 'Uranus', r: 4.01, au: 19.2, c: '#8fe3e8', day: 'about 17 hours', year: '84 years', moons: 'more than 25',
+    fun: 'Uranus spins on its side, like a ball rolling around the Sun. 🎳' },
+  { id: 'neptune', n: 'Neptune', r: 3.88, au: 30.07, c: '#3d5ee0', day: 'about 16 hours', year: '165 years', moons: '16',
+    fun: 'Neptune is the farthest planet and has the fastest winds in the Solar System. 💨' },
+];
+const AU = 149600000, LIGHT = 299792;
+let sel = P[2];
+
+/* ---------- info ---------- */
+function showInfo(p) {
+  sel = p;
+  $('#iBall').style.background = p.c;
+  $('#iName').textContent = p.n;
+  $('#iSize').textContent = p.id === 'earth' ? 'Our home planet' : p.r > 1 ? `About ${p.r < 2 ? p.r.toFixed(1) : Math.round(p.r)} times as wide as the Earth` : `About ${Math.round(p.r * 100)}% as wide as the Earth`;
+  const crore = p.au * AU / 1e7;
+  $('#iFacts').innerHTML = `
+    <div class="f">☀️ From the Sun<b>${Math.round(crore).toLocaleString('en-IN')} crore km</b></div>
+    <div class="f">🔄 One day<b>${p.day}</b></div>
+    <div class="f">🎂 One year<b>${p.year}</b></div>
+    <div class="f">🌙 Moons<b>${p.moons}</b></div>`;
+  $('#iFun').textContent = p.fun;
+  document.querySelectorAll('[data-pid]').forEach(e => e.classList.toggle('sel', e.dataset.pid === p.id));
+  drawDist();
+}
+function tap(p) { Kids.sfx.pop(); showInfo(p); Kids.speak(Kids.forSpeech(`${p.n}. ${p.fun}`)); ch.check({ tap: p.id }); }
+
+/* ---------- sizes (real scale) ---------- */
+(function drawSizes() {
+  const s = $('#size'), k = 7.6, cy = 190;     // px per Earth radius
+  for (let i = 0; i < 80; i++) el('circle', { cx: Math.random() * 900, cy: Math.random() * 340, r: Math.random() * 1.3 + .3, fill: '#fff', opacity: .6 }, s);
+  el('circle', { cx: 140 - 109 * k, cy, r: 109 * k, fill: '#ffcf3f' }, s);
+  el('text', { x: 60, y: cy + 6, 'font-size': 22, 'font-weight': 700, fill: '#b35c00', 'text-anchor': 'middle' }, s).textContent = 'SUN';
+  let x = 160;
+  P.forEach(p => {
+    const r = p.r * k; x += r;
+    const g = el('g', { class: 'planet', 'data-pid': p.id }, s);
+    if (p.rings) el('ellipse', { cx: x, cy, rx: r * 2.1, ry: r * .45, fill: 'none', stroke: '#f1e0b5', 'stroke-width': 6, opacity: .8 }, g);
+    el('circle', { cx: x, cy, r: Math.max(r, 2.5), fill: p.c }, g);
+    el('circle', { cx: x, cy, r: Math.max(r, 12), fill: 'transparent' }, g);
+    const lab = el('text', { x, y: p.r > 3 ? cy + r + 22 : (P.indexOf(p) % 2 ? cy + 40 : cy - 28), class: 'planet-label' }, g);
+    lab.textContent = p.n;
+    g.addEventListener('click', () => tap(p));
+    x += r + (p.rings ? r * 1.2 : 12);
+  });
+})();
+
+/* ---------- distances (real scale, scroll) ---------- */
+const PXAU = 140, D0 = 70;
+const dist = $('#dist');
+dist.setAttribute('width', D0 + 30.07 * PXAU + 80);
+dist.setAttribute('viewBox', `0 0 ${D0 + 30.07 * PXAU + 80} 260`);
+let rocketX = null;
+function drawDist() {
+  dist.innerHTML = '';
+  const cy = 130, W = D0 + 30.07 * PXAU + 80;
+  for (let i = 0; i < 260; i++) el('circle', { cx: Math.random() * W, cy: Math.random() * 260, r: Math.random() * 1.2 + .3, fill: '#fff', opacity: .5 }, dist);
+  el('circle', { cx: 0, cy, r: 60, fill: '#ffcf3f' }, dist);
+  el('line', { x1: 60, y1: cy, x2: W, y2: cy, stroke: '#8fa2ff', 'stroke-dasharray': '4 10', opacity: .5 }, dist);
+  for (let a = 5; a <= 30; a += 5) el('text', { x: D0 + a * PXAU, y: 248, fill: '#8fa2ff', 'font-size': 13, 'text-anchor': 'middle' }, dist).textContent = `${(a * 15).toLocaleString('en-IN')} crore km`;
+  P.forEach(p => {
+    const x = D0 + p.au * PXAU, r = Math.max(6, Math.min(22, p.r * 2.2));
+    const g = el('g', { class: 'planet', 'data-pid': p.id }, dist);
+    if (p.id === sel.id) el('circle', { cx: x, cy, r: r + 8, fill: 'none', stroke: '#ffd166', 'stroke-width': 3 }, g);
+    if (p.rings) el('ellipse', { cx: x, cy, rx: r * 2, ry: r * .45, fill: 'none', stroke: '#f1e0b5', 'stroke-width': 3 }, g);
+    el('circle', { cx: x, cy, r, fill: p.c }, g);
+    el('circle', { cx: x, cy, r: 24, fill: 'transparent' }, g);
+    el('text', { x, y: P.indexOf(p) % 2 ? cy + 46 : cy - 34, class: 'planet-label' }, g).textContent = p.n;
+    g.addEventListener('click', () => tap(p));
+  });
+  if (rocketX != null) el('text', { x: rocketX, y: cy - 14, 'font-size': 30, 'text-anchor': 'middle' }, dist).textContent = '🚀';
+}
+function fmtYears(h) { const d = h / 24; return d < 365 ? `${Math.round(d)} days` : `${Math.round(d / 365)} years`; }
+let flying = false;
+$('#flyBtn').addEventListener('click', () => {
+  if (flying) return;
+  if (sel.id === 'earth') { $('#flyResult').textContent = 'You are already home on Earth! Tap another planet. 🌍'; return; }
+  flying = true;
+  const from = D0 + PXAU, to = D0 + sel.au * PXAU, t0 = performance.now(), dur = 1200 + Math.abs(to - from) * 1.2;
+  Kids.sfx.whoosh();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+    rocketX = from + (to - from) * e; drawDist();
+    $('#scroller').scrollLeft = rocketX - $('#scroller').clientWidth / 2;
+    if (k < 1) requestAnimationFrame(step);
+    else {
+      flying = false;
+      const km = Math.abs(sel.au - 1) * AU;           // when the planets line up on the same side of the Sun
+      const lightMin = km / LIGHT / 60;
+      const msg = `Arrived at ${sel.n}! When the planets line up, it is about ${Math.round(km / 1e7).toLocaleString('en-IN')} crore km from Earth. A car driving non-stop would take about ${fmtYears(km / 80)}. Light takes about ${lightMin < 60 ? Math.round(lightMin) + ' minutes' : (lightMin / 60).toFixed(1) + ' hours'}.`;
+      $('#flyResult').textContent = '🚀 ' + msg;
+      Kids.sfx.yay(); Kids.speak(Kids.forSpeech(msg));
+      ch.check({ fly: sel.id });
+    }
+  };
+  requestAnimationFrame(step);
+});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Find the BIGGEST planet and tap it', hint: 'Look at the Sizes picture. Which planet is the largest ball?', ok: c => c.tap === 'jupiter', yay: 'Jupiter! More than 1,000 Earths could fit inside it.' },
+  { ask: 'Find the SMALLEST planet', hint: 'It is also the closest to the Sun.', ok: c => c.tap === 'mercury', yay: 'Mercury, the tiny, speedy planet!' },
+  { ask: 'Find the planet whose DAY is longer than its YEAR 🤯', hint: 'Tap the planets and compare "One day" and "One year".', ok: c => c.tap === 'venus', yay: 'Venus spins so slowly that its day is longer than its year!' },
+  { ask: 'Find the planet with the most famous RINGS 💍', hint: 'It looks like it is wearing a hula hoop!', ok: c => c.tap === 'saturn', yay: 'Saturn and its beautiful rings of ice and rock!' },
+  { ask: 'Fly a rocket from Earth to MARS 🔴', hint: 'Go to Distances, tap Mars, then press Fly.', ok: c => c.fly === 'mars', yay: 'Mars is our neighbour. Real rockets take about 7 months to get there!' },
+  { ask: 'Fly all the way to the FARTHEST planet 🚀', hint: 'Scroll to the very end of Distances.', ok: c => c.fly === 'neptune', yay: 'Neptune is SO far: the Voyager 2 spacecraft took 12 years to get there!' },
+], { title: 'Planet Explorer' });
+
+Kids.learn({
+  why: ['The planets all travel around the Sun, each on its own path. The closer a planet is, the faster it goes and the shorter its year.',
+    'Small planets near the Sun (Mercury, Venus, Earth, Mars) are rocky. The big ones far away (Jupiter, Saturn, Uranus, Neptune) are giant balls of gas and ice.'],
+  imagine: ['Imagine the Sun is a big football in Cubbon Park. ⚽ The Earth would be a tiny peppercorn about 25 big steps away!',
+    'And Neptune would be a small bead about 700 metres away. Space is mostly… empty space!'],
+  wow: ['About 1,300 Earths could fit inside Jupiter, and about 13 lakh Earths could fit inside the Sun! ☀️', 'Mars has the tallest volcano we know, and Venus is hotter than an oven: about 465°C!'],
+  talk: ['Which planet would you visit first? Why?', 'What would you pack for a trip to Mars?', 'Why do you think there is life on Earth but not on the other planets?'],
+});
+showInfo(P[2]);
+</script>
+</body>
+</html>

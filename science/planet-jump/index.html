@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planet Jump</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  main.layout {
+    display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+    gap: 18px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 960px) { main.layout { grid-template-columns: 1fr; padding: 0 12px 16px; } }
+  .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .worlds { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .world {
+    border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 6px 4px 8px; cursor: pointer; text-align: center;
+    font-size: 15px; font-weight: 600; color: var(--ink); transition: transform .15s;
+  }
+  .world:hover { transform: translateY(-2px); }
+  .world.active { border-color: var(--purple); background: #f1e9ff; }
+  .world .ball { width: 38px; height: 38px; border-radius: 50%; margin: 2px auto 4px; box-shadow: inset -6px -6px 0 rgba(0,0,0,.18); }
+  .world .pull { display: block; height: 6px; border-radius: 3px; background: #eee; margin: 4px 6px 0; overflow: hidden; }
+  .world .pull i { display: block; height: 100%; background: linear-gradient(90deg, var(--green), var(--orange), var(--red)); }
+
+  #scene { width: 100%; height: auto; display: block; border-radius: 20px; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  .jumpbar { display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .jump-btn {
+    border: none; border-radius: 999px; padding: 16px 46px; font-size: 30px; font-weight: 700; color: #fff; cursor: pointer;
+    background: linear-gradient(180deg, #ff7aa8, #ef476f); box-shadow: 0 8px 0 #b8264d; transition: transform .08s, box-shadow .08s;
+  }
+  .jump-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 #b8264d; }
+  .stat { background: #f1e9ff; border-radius: 16px; padding: 8px 14px; font-size: 17px; text-align: center; min-width: 120px; }
+  .stat b { display: block; font-size: 26px; color: var(--purple); }
+  .result { margin-top: 12px; font-size: 20px; font-weight: 500; text-align: center; border-radius: 18px; padding: 10px; min-height: 50px; background: #eef6ff; }
+  .fact { margin-top: 10px; font-size: 18px; text-align: center; color: #5a189a; }
+
+  .info h2 { margin: 0 0 4px; font-size: 26px; }
+  .info .big { font-size: 22px; font-weight: 600; }
+  .items { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .items button { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .items button.active { border-color: var(--orange); background: #fff4e0; }
+  .scale { display: flex; align-items: center; gap: 14px; background: #fff7e6; border-radius: 18px; padding: 12px; }
+  .scale .thing { font-size: 60px; line-height: 1; }
+  .scale .kg { font-size: 34px; font-weight: 700; color: var(--orange); }
+  .scale .sub { font-size: 16px; color: var(--muted); }
+  .board { display: flex; flex-direction: column; gap: 6px; }
+  .brow { display: grid; grid-template-columns: 100px 1fr 64px; gap: 8px; align-items: center; font-size: 15px; }
+  .brow .bar { height: 18px; background: #eee; border-radius: 9px; overflow: hidden; }
+  .brow .bar i { display: block; height: 100%; border-radius: 9px; }
+  .hint { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🪐</span>
+    <div><h1>Planet Jump</h1><small>How high can <b data-kid-name>Kavikuyil</b> jump on other worlds?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="layout">
+  <div class="col">
+    <section class="card">
+      <div class="worlds" id="worlds"></div>
+      <svg id="scene" viewBox="0 0 800 480" aria-label="Jumping scene"></svg>
+      <div class="jumpbar">
+        <div class="stat">Height<b id="hNow">0.00 m</b></div>
+        <button class="jump-btn" id="jumpBtn">JUMP! ⬆️</button>
+        <div class="stat">In the air<b id="tNow">0.0 s</b></div>
+      </div>
+      <div class="result" id="result">Tap JUMP (or the picture, or the space bar) to jump!</div>
+      <div class="fact" id="fact"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card">
+      <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+      <div class="dots" id="dots"></div>
+      <div class="hint" id="hint"></div>
+      <div class="row">
+        <button class="btn purple" id="hintBtn">💡 Hint</button>
+        <button class="btn orange" id="skipBtn">⏭️ Next challenge</button>
+      </div>
+    </section>
+
+    <section class="card info">
+      <h2 id="wName"></h2>
+      <div class="big" id="wPull"></div>
+      <div class="items" id="items"></div>
+      <div class="scale">
+        <span class="thing" id="thing"></span>
+        <div><div class="sub" id="thingEarth"></div><div class="kg" id="thingKg"></div><div class="sub" id="thingFeel"></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 style="margin:0 0 10px;font-size:22px">📊 My jump board</h2>
+      <div class="board" id="board"><div class="hint">Jump on different worlds to fill your board!</div></div>
+    </section>
+  </div>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why?</h3>
+    <p><b>Gravity</b> is an invisible pull. It's what makes things fall down.</p>
+    <p>Big, heavy worlds pull hard, so you can only jump a little and things feel heavy. Small worlds like the Moon pull gently, so you float up high!</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Close your eyes. You are standing on the Moon in a puffy white space suit. The Earth is shining in the black sky.</p>
+    <p>You bend your knees and jump… up, up, up… and float slowly down like a feather. Boing! You're bouncing like a kangaroo!</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>On the Moon you could jump about <b>6 times higher</b> than on Earth!</p>
+    <p>Astronauts who walked on the Moon found it easier to hop like bunnies 🐰. And on the Sun, a 3 kg school bag would feel as heavy as a big 84 kg grown-up!</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>Which world would you like to play on? Why?</li>
+      <li>What games would be fun on the Moon? What would be hard?</li>
+      <li>Why does a ball always come back down when you throw it up?</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+/* =========================================================
+   Worlds: g = pull compared with Earth (Earth = 1)
+   ========================================================= */
+const WORLDS = [
+  { id: 'pluto',   name: 'Pluto',   g: 0.063, ball: '#d8c7b0', sky: ['#020311', '#14162e'], ground: '#cbb89e', dark: true,
+    fact: 'Pluto is a tiny dwarf planet, very far away and very cold ❄️' },
+  { id: 'moon',    name: 'Moon',    g: 0.165, ball: '#c9c9c9', sky: ['#03040d', '#1a1c2c'], ground: '#a8a8a8', dark: true, earthInSky: true,
+    fact: 'There is no air on the Moon, so you need a space suit! The Earth shines in its sky 🌍' },
+  { id: 'mercury', name: 'Mercury', g: 0.38,  ball: '#9e8a78', sky: ['#05050c', '#231c1a'], ground: '#8c7b6b', dark: true, bigSun: true,
+    fact: 'Mercury is the closest planet to the Sun: very hot in the day, freezing at night 🔥❄️' },
+  { id: 'mars',    name: 'Mars',    g: 0.38,  ball: '#d0542b', sky: ['#c98a67', '#f0c6a3'], ground: '#b8461a',
+    fact: 'Mars is the Red Planet. Its red colour comes from rusty dust 🔴' },
+  { id: 'uranus',  name: 'Uranus',  g: 0.89,  ball: '#8fe3e8', sky: ['#5fb7c4', '#c4f1f4'], ground: null,
+    fact: 'Uranus spins on its side, like a ball rolling around the Sun 🎳' },
+  { id: 'venus',   name: 'Venus',   g: 0.91,  ball: '#e8c16a', sky: ['#d99a3a', '#f6dc9c'], ground: '#b97a2f',
+    fact: 'Venus is the hottest planet, hidden under thick yellow clouds ☁️' },
+  { id: 'earth',   name: 'Earth',   g: 1,     ball: '#3fa34d', sky: ['#5cbcf5', '#d6f0ff'], ground: '#6cc070', home: true,
+    fact: 'Our home! The only planet we know with plants, animals and people 🌱' },
+  { id: 'saturn',  name: 'Saturn',  g: 1.07,  ball: '#e3c78b', sky: ['#c9a96e', '#f1e0b5'], ground: null, rings: true,
+    fact: 'Saturn has beautiful rings made of ice and rock 💍' },
+  { id: 'neptune', name: 'Neptune', g: 1.14,  ball: '#3d5ee0', sky: ['#2340a8', '#7d9cf0'], ground: null,
+    fact: 'Neptune has the fastest winds in the whole Solar System 💨' },
+  { id: 'jupiter', name: 'Jupiter', g: 2.53,  ball: '#c98e5a', sky: ['#a8724a', '#e8c9a0'], ground: null, bands: true,
+    fact: 'Jupiter is the BIGGEST planet. All the other planets could fit inside it! 🟠' },
+  { id: 'sun',     name: 'Sun',     g: 28,    ball: '#ffb703', sky: ['#ff7b00', '#ffd166'], ground: null, star: true,
+    fact: 'The Sun is a star! Far too hot to visit, so this is just pretend 🔥' },
+];
+const ITEMS = [
+  { e: '🎒', name: 'School bag', kg: 3 },
+  { e: '🍉', name: 'Watermelon', kg: 5 },
+  { e: '🐶', name: 'Puppy', kg: 10 },
+  { e: '🐘', name: 'Baby elephant', kg: 100 },
+];
+const G = 9.81, EARTH_JUMP = 0.3;               // a child's jump on Earth ≈ 30 cm
+const V0 = Math.sqrt(2 * G * EARTH_JUMP);
+const fmtM = m => m < 0.1 ? `${Math.round(m * 100)} cm` : `${m.toFixed(m < 10 ? 2 : 1)} m`;
+const the = w => (w.id === 'moon' || w.id === 'sun' ? 'the ' : '') + w.name;
+const times = g => {
+  const r = 1 / g;
+  if (g >= 0.85 && g < 1) return 'a little HIGHER than on Earth 🙂';
+  if (g > 1 && g <= 1.2) return 'a little LOWER than on Earth 🙂';
+  if (r >= 1.05) return `${r < 10 ? r.toFixed(1) : Math.round(r)}× HIGHER than on Earth! 🚀`;
+  if (r <= 0.95) return `${(g).toFixed(g < 10 ? 1 : 0)}× LOWER than on Earth 💪`;
+  return 'almost the same as on Earth 🌍';
+};
+
+const state = { w: WORLDS.find(w => w.home), item: ITEMS[0], y: 0, vy: 0, air: false, t0: 0, peak: 0, best: {}, jumps: {} };
+
+/* =========================================================
+   Scene
+   ========================================================= */
+const scene = $('#scene');
+const SW = 800, SH = 480, GROUND = 410, TOP = 40;
+const S = {};
+function buildScene() {
+  const defs = el('defs', {}, scene);
+  defs.innerHTML = `<linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" id="sky0"/><stop offset="100%" id="sky1"/></linearGradient>`;
+  el('rect', { x: 0, y: 0, width: SW, height: SH, fill: 'url(#sky)' }, scene);
+  S.deco = el('g', {}, scene);
+  S.ruler = el('g', {}, scene);
+  S.ground = el('g', {}, scene);
+  S.peak = el('line', { x1: 330, x2: 470, stroke: '#ffd166', 'stroke-width': 3, 'stroke-dasharray': '8 6', opacity: 0 }, scene);
+  S.hero = el('text', { x: 400, 'font-size': 76, 'text-anchor': 'middle' }, scene);
+  S.shadow = el('ellipse', { cx: 400, cy: GROUND + 4, rx: 34, ry: 7, fill: '#000', opacity: .25 }, scene);
+  scene.insertBefore(S.shadow, S.hero);
+}
+let PPM = 200; // pixels per metre (changes for each world so the jump fits)
+function drawWorld() {
+  const w = state.w;
+  $('#sky0').setAttribute('stop-color', w.sky[0]);
+  $('#sky1').setAttribute('stop-color', w.sky[1]);
+  const maxH = EARTH_JUMP / w.g;
+  PPM = (GROUND - TOP - 70) / Math.max(maxH * 1.08, 0.8);
+  S.deco.innerHTML = ''; S.ground.innerHTML = ''; S.ruler.innerHTML = '';
+
+  // sky decorations
+  if (w.dark) for (let i = 0; i < 70; i++) el('circle', { cx: Math.random() * SW, cy: Math.random() * (GROUND - 30), r: Math.random() * 1.6 + .3, fill: '#fff', opacity: Math.random() * .8 + .2 }, S.deco);
+  const emo = (x, y, s, t, o = 1) => { const e = el('text', { x, y, 'font-size': s, 'text-anchor': 'middle', opacity: o }, S.deco); e.textContent = t; };
+  if (w.earthInSky) emo(540, 120, 70, '🌍');
+  else if (w.star) { for (let i = 0; i < 8; i++) emo(Math.random() * SW, 60 + Math.random() * 250, 30 + Math.random() * 30, '🔥', .5); }
+  else if (w.bigSun) el('circle', { cx: 660, cy: 100, r: 60, fill: '#ffd166' }, S.deco);
+  else if (!w.dark) el('circle', { cx: 670, cy: 80, r: w.home ? 34 : 18, fill: '#fff3b0', opacity: .9 }, S.deco);
+  if (w.home) { emo(120, 120, 40, '☁️'); emo(560, 170, 34, '☁️'); }
+  if (w.bands) for (let i = 0; i < 6; i++) el('rect', { x: 0, y: 40 + i * 60, width: SW, height: 22, fill: i % 2 ? '#8a5a37' : '#f3dcb8', opacity: .35 }, S.deco);
+  if (w.rings) el('ellipse', { cx: 620, cy: 110, rx: 150, ry: 26, fill: 'none', stroke: '#fff2cf', 'stroke-width': 10, opacity: .7 }, S.deco);
+
+  // ground: rocky ground, or a magic floating platform on gas worlds and the Sun
+  if (w.ground) {
+    el('rect', { x: 0, y: GROUND, width: SW, height: SH - GROUND, fill: w.ground }, S.ground);
+    el('rect', { x: 0, y: GROUND, width: SW, height: 6, fill: '#000', opacity: .12 }, S.ground);
+    if (w.id === 'moon' || w.id === 'mercury' || w.id === 'pluto') {
+      [[120, 440, 40], [560, 452, 55], [700, 432, 25], [300, 462, 30]].forEach(([x, y, r]) => el('ellipse', { cx: x, cy: y, rx: r, ry: r * .28, fill: '#000', opacity: .16 }, S.ground));
+    }
+    if (w.home) { const t = el('text', { x: 90, y: GROUND + 6, 'font-size': 60, 'text-anchor': 'middle' }, S.ground); t.textContent = '🌳'; }
+  } else {
+    el('rect', { x: 250, y: GROUND, width: 300, height: 22, rx: 11, fill: '#9b5de5' }, S.ground);
+    el('rect', { x: 250, y: GROUND, width: 300, height: 8, rx: 4, fill: '#c9a7ff' }, S.ground);
+    const t = el('text', { x: 400, y: GROUND + 54, 'font-size': 18, 'font-weight': 600, fill: '#fff', 'text-anchor': 'middle' }, S.ground);
+    t.textContent = w.star ? '🛸 magic heat-proof platform (pretend!)' : '🛸 magic floating platform: no solid ground here!';
+  }
+
+  // ruler + reference heights
+  const step = maxH > 4 ? 1 : maxH > 1.5 ? 0.5 : maxH > 0.5 ? 0.1 : 0.05;
+  const topM = (GROUND - TOP) / PPM;
+  el('line', { x1: 70, y1: GROUND, x2: 70, y2: TOP, stroke: '#fff', 'stroke-width': 3, opacity: .8 }, S.ruler);
+  for (let m = 0; m <= topM + 1e-9; m += step) {
+    const y = GROUND - m * PPM;
+    el('line', { x1: 62, y1: y, x2: 78, y2: y, stroke: '#fff', 'stroke-width': 2 }, S.ruler);
+    const lbl = el('text', { x: 56, y: y + 5, 'font-size': 15, 'font-weight': 600, fill: '#fff', 'text-anchor': 'end', 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.35)', 'stroke-width': 3 }, S.ruler);
+    lbl.textContent = fmtM(+m.toFixed(2));
+  }
+  const ref = (m, text) => {
+    if (m > topM) return;
+    const y = GROUND - m * PPM;
+    el('line', { x1: 80, x2: 780, y1: y, y2: y, stroke: '#fff', 'stroke-width': 2, 'stroke-dasharray': '4 8', opacity: .7 }, S.ruler);
+    const t = el('text', { x: 776, y: y - 6, 'font-size': 16, 'font-weight': 600, fill: '#fff', 'text-anchor': 'end', 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.4)', 'stroke-width': 3 }, S.ruler);
+    t.textContent = text;
+  };
+  if (!w.home) ref(EARTH_JUMP, '🌍 your jump on Earth');
+  ref(2, '🚪 top of a door (2 m)');
+  ref(5, '🦒 top of a giraffe (5 m)');
+
+  S.hero.textContent = w.home ? '👧' : '🧑‍🚀';
+  S.peak.setAttribute('opacity', 0);
+  drawHero();
+}
+function drawHero(squash) {
+  const y = GROUND - state.y * PPM;
+  S.hero.setAttribute('y', y - 4);
+  S.hero.setAttribute('transform', squash ? `translate(400 ${y}) scale(1.15 .82) translate(-400 ${-y})` : '');
+  const k = Math.max(0.25, 1 - state.y * PPM / 300);
+  S.shadow.setAttribute('rx', 34 * k); S.shadow.setAttribute('opacity', .25 * k);
+}
+
+/* =========================================================
+   Jumping
+   ========================================================= */
+function jump() {
+  if (state.air) return;
+  state.air = true; state.vy = V0; state.y = 0; state.peak = 0; state.t0 = performance.now();
+  Kids.sfx.boing();
+}
+$('#jumpBtn').addEventListener('click', jump);
+scene.addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
+document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); jump(); } });
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (state.air) {
+    const g = G * state.w.g;
+    // small sub-steps keep the very fast Sun jump accurate
+    const n = Math.ceil(dt / 0.002);
+    for (let i = 0; i < n && state.air; i++) {
+      state.vy -= g * dt / n; state.y += state.vy * dt / n;
+      state.peak = Math.max(state.peak, state.y);
+      if (state.y <= 0) land();
+    }
+    $('#hNow').textContent = fmtM(Math.max(0, state.y));
+    if (state.air) $('#tNow').textContent = `${((now - state.t0) / 1000).toFixed(1)} s`;
+    drawHero();
+  }
+  requestAnimationFrame(frame);
+}
+function land() {
+  state.air = false; state.y = 0;
+  const w = state.w;
+  // use the exact physics numbers for the result (the animation is only drawn ~60 times a second)
+  const peak = EARTH_JUMP / w.g, air = 2 * V0 / (G * w.g);
+  $('#tNow').textContent = `${air.toFixed(air < 0.1 ? 2 : 1)} s`;
+  $('#hNow').textContent = fmtM(peak);
+  S.peak.setAttribute('y1', GROUND - peak * PPM); S.peak.setAttribute('y2', GROUND - peak * PPM); S.peak.setAttribute('opacity', 1);
+  drawHero(true); setTimeout(() => drawHero(), 120);
+  Kids.sfx.pop();
+  const msg = w.home
+    ? `On Earth you jumped about ${fmtM(peak)} high and were in the air for ${air.toFixed(1)} seconds.`
+    : `On ${the(w)} you jumped ${fmtM(peak)} high, ${times(w.g)} You were in the air for ${air.toFixed(air < 0.1 ? 2 : 1)} seconds.`;
+  $('#result').textContent = msg;
+  state.best[w.id] = peak;
+  state.jumps[w.id] = (state.jumps[w.id] || 0) + 1;
+  renderBoard();
+  checkChallenge({ w, peak, air });
+}
+
+/* =========================================================
+   Info panel: what things weigh here
+   ========================================================= */
+function renderInfo() {
+  const w = state.w, it = state.item;
+  $('#wName').textContent = `${w.name}`;
+  $('#wPull').textContent = w.home ? '🌍 Normal Earth pull' :
+    w.g < 1 ? `🪶 Pull is ${w.g < 0.2 ? 'very ' : ''}gentle: ${w.g} × Earth` : `💪 Pull is ${w.g > 2 ? 'very ' : ''}strong: ${w.g} × Earth`;
+  $('#thing').textContent = it.e;
+  $('#thingEarth').textContent = `A ${it.name.toLowerCase()} that weighs ${it.kg} kg on Earth`;
+  const kg = it.kg * w.g;
+  $('#thingKg').textContent = `feels like ${kg < 10 ? kg.toFixed(1) : Math.round(kg)} kg`;
+  $('#thingFeel').textContent = w.home ? 'just normal' : w.g < 1 ? 'lighter! easy to lift 💪' : w.g > 2 ? 'SO heavy! 😵' : 'a little heavier';
+  $('#fact').textContent = w.fact;
+}
+function renderItems() {
+  $('#items').innerHTML = '';
+  ITEMS.forEach(it => {
+    const b = document.createElement('button');
+    b.textContent = `${it.e} ${it.name}`; b.className = it === state.item ? 'active' : '';
+    b.addEventListener('click', () => { state.item = it; Kids.sfx.pop(); renderItems(); renderInfo(); });
+    $('#items').appendChild(b);
+  });
+}
+function renderBoard() {
+  const rows = WORLDS.filter(w => state.best[w.id] != null).sort((a, b) => state.best[b.id] - state.best[a.id]);
+  if (!rows.length) return;
+  const max = Math.max(...rows.map(w => state.best[w.id]));
+  $('#board').innerHTML = rows.map(w => `
+    <div class="brow"><span>${w.name}</span>
+      <div class="bar"><i style="width:${Math.max(2, state.best[w.id] / max * 100)}%;background:${w.ball}"></i></div>
+      <span>${fmtM(state.best[w.id])}</span></div>`).join('');
+}
+
+/* =========================================================
+   World picker
+   ========================================================= */
+function buildWorlds() {
+  const box = $('#worlds');
+  WORLDS.forEach(w => {
+    const b = document.createElement('button');
+    b.className = 'world'; b.dataset.id = w.id;
+    const pull = Math.min(1, Math.log10(w.g * 20) / Math.log10(28 * 20));
+    b.innerHTML = `<div class="ball" style="background:${w.ball}"></div>${w.name}<span class="pull" title="How strong the pull is"><i style="width:${Math.max(6, pull * 100)}%"></i></span>`;
+    b.addEventListener('click', () => selectWorld(w));
+    box.appendChild(b);
+  });
+}
+function selectWorld(w) {
+  if (state.air) { state.air = false; state.y = 0; }
+  state.w = w;
+  document.querySelectorAll('.world').forEach(b => b.classList.toggle('active', b.dataset.id === w.id));
+  Kids.sfx.whoosh();
+  drawWorld(); renderInfo();
+  $('#hNow').textContent = '0.00 m'; $('#tNow').textContent = '0.0 s';
+  $('#result').textContent = `Welcome to ${the(w)}! Press JUMP!`;
+}
+
+/* =========================================================
+   Kuyil's challenges
+   ========================================================= */
+const CH = [
+  { ask: 'Jump on Earth first, to see how high you go 🌍', hint: 'Pick Earth (the green one), then press JUMP.',
+    ok: j => j.w.id === 'earth', yay: 'That is a normal Earth jump. Now let\'s visit other worlds! 🚀' },
+  { ask: 'Find a world where you jump HIGHER than on Earth 🚀', hint: 'Try a small world, like the Moon or Mars.',
+    ok: j => j.w.g < 0.95, yay: j => `On ${the(j.w)} the pull is gentle, so you jump higher!` },
+  { ask: 'Find a world where you can hardly jump at all 💪', hint: 'Try a GIANT world… maybe the biggest planet, or a star!',
+    ok: j => j.w.g > 2, yay: j => `${the(j.w).replace(/^t/, 'T')} pulls SO hard, you only jumped ${fmtM(j.peak)}!` },
+  { ask: 'Find a world where jumping feels ALMOST the same as on Earth 🤔', hint: 'Look at the pull bars under the planets: find one about the same as Earth.',
+    ok: j => !j.w.home && j.w.g >= 0.85 && j.w.g <= 1.15, yay: j => `Yes! ${j.w.name}'s pull is almost the same as Earth's.` },
+  { ask: 'Stay in the air for MORE than 5 seconds ⏱️', hint: 'Find the world with the weakest pull of all: tiny and far away.',
+    ok: j => j.air > 5, yay: j => `Wheee! ${j.air.toFixed(1)} seconds in the air on ${the(j.w)}!` },
+  { ask: 'Jump 3 times on Mars, the Red Planet 🔴', hint: 'Mars is the red one. Jump, jump, jump!',
+    ok: () => (state.jumps.mars || 0) - (ch.marsAt || 0) >= 3, yay: 'Three bouncy jumps on Mars! 🔴' },
+  { ask: 'Where would your school bag 🎒 feel the HEAVIEST? Go there and jump!', hint: 'Look at the "feels like" box for each world.',
+    ok: j => j.w.id === 'sun', yay: 'The Sun! Its pull is 28 times stronger than Earth\'s. 🔥' },
+];
+const ch = { i: 0, done: new Set(), marsAt: 0 };
+function showChallenge() {
+  const c = CH[ch.i];
+  ch.marsAt = state.jumps.mars || 0;
+  $('#bubble').textContent = `${Kids.name}, ${c.ask}`;
+  $('#bubble').classList.remove('done');
+  $('#hint').textContent = '';
+  $('#dots').innerHTML = CH.map((_, i) => `<span class="${ch.done.has(i) ? 'ok' : i === ch.i ? 'cur' : ''}"></span>`).join('');
+}
+let nextTimer;
+function checkChallenge(j) {
+  const c = CH[ch.i];
+  if (!c || ch.done.has(ch.i) || !c.ok(j)) return;
+  ch.done.add(ch.i);
+  const msg = `${Kids.praise()} ${typeof c.yay === 'function' ? c.yay(j) : c.yay}`;
+  $('#bubble').textContent = msg; $('#bubble').classList.add('done');
+  Kids.addStar(); Kids.sfx.yay(); Kids.confetti(); Kids.speak(Kids.forSpeech(msg));
+  $('#dots').innerHTML = CH.map((_, i) => `<span class="${ch.done.has(i) ? 'ok' : ''}"></span>`).join('');
+  clearTimeout(nextTimer); nextTimer = setTimeout(nextChallenge, 4500);
+}
+function nextChallenge() {
+  clearTimeout(nextTimer);
+  if (ch.done.size === CH.length) {
+    $('#bubble').textContent = `🏆 Amazing, ${Kids.name}! You are a Gravity Explorer! You know that every world pulls differently.`;
+    $('#bubble').classList.add('done');
+    Kids.banner(`🏆 Gravity Explorer: ${Kids.name}!`);
+    ch.done.clear(); ch.i = -1;
+    setTimeout(() => { ch.i = 0; showChallenge(); }, 7000);
+    return;
+  }
+  do { ch.i = (ch.i + 1) % CH.length; } while (ch.done.has(ch.i));
+  showChallenge();
+}
+$('#hintBtn').addEventListener('click', () => { const c = CH[ch.i]; if (!c) return; $('#hint').textContent = '💡 ' + c.hint; Kids.speak(c.hint, true); });
+$('#skipBtn').addEventListener('click', () => { Kids.sfx.pop(); nextChallenge(); });
+
+/* =========================================================
+   Go!
+   ========================================================= */
+buildScene();
+buildWorlds();
+renderItems();
+selectWorld(state.w);
+showChallenge();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

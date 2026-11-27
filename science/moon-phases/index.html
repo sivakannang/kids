@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moon Phases</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  main.layout {
+    display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+    gap: 18px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 960px) { main.layout { grid-template-columns: 1fr; padding: 0 12px 16px; } }
+  .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .space-card { background: #0b1033; color: #fff; padding: 14px; }
+  .space-card h2 { margin: 2px 6px 8px; font-size: 22px; }
+  .space-card h2 small { display: block; font-size: 15px; font-weight: 500; opacity: .8; margin-top: 2px; }
+  #space { width: 100%; height: auto; display: block; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .note { font-size: 15px; font-weight: 600; fill: #fff; paint-order: stroke; stroke: #0b1033; stroke-width: 4px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+  .controls .btn { font-size: 16px; padding: 9px 13px; }
+
+  .sky-card { background: linear-gradient(180deg, #0b1446, #24336e); color: #fff; text-align: center; }
+  .sky-card h2 { margin: 0 0 6px; font-size: 21px; }
+  #moonView { width: 230px; height: 230px; display: block; margin: 0 auto; }
+  .pname { font-size: 30px; font-weight: 700; color: #ffd166; }
+  .ptamil { font-size: 18px; opacity: .9; }
+  .pday { font-size: 17px; margin-top: 6px; opacity: .9; }
+  .strip { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 14px; }
+  .strip button { border: 2px solid transparent; background: rgba(255,255,255,.06); border-radius: 10px; padding: 3px 0 1px; cursor: pointer; color: #cfd8ff; font-size: 11px; }
+  .strip button.cur { border-color: #ffd166; background: rgba(255,209,102,.15); }
+  .strip svg { width: 100%; height: auto; display: block; }
+  .hint { font-size: 16px; color: var(--muted); text-align: center; min-height: 22px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌙</span>
+    <div><h1>Moon Phases</h1><small>Why does the Moon change shape, <b data-kid-name>Kavikuyil</b>? Where does a month come from?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="layout">
+  <div class="col">
+    <section class="card space-card">
+      <h2>🚀 Looking down from space
+        <small>Drag the Moon around the Earth, or press Play. The Sun ☀️ always lights up the half of the Moon that faces it.</small></h2>
+      <svg id="space" viewBox="0 0 760 560" aria-label="The Moon travelling around the Earth"></svg>
+      <div class="controls">
+        <button class="btn green" id="playBtn">▶️ Play</button>
+        <button class="btn red" id="tonightBtn">🌙 Tonight's Moon</button>
+        <button class="btn purple" data-age="0">🌑 New Moon</button>
+        <button class="btn" data-age="7.4">🌓 Half (growing)</button>
+        <button class="btn orange" data-age="14.8">🌕 Full Moon</button>
+        <button class="btn pink" data-age="22.1">🌗 Half (shrinking)</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="card sky-card">
+      <h2>🏡 What we see from Bangalore</h2>
+      <svg id="moonView" viewBox="-110 -110 220 220" aria-label="The Moon as we see it"></svg>
+      <div class="pname" id="pname"></div>
+      <div class="ptamil" id="ptamil"></div>
+      <div class="pday" id="pday"></div>
+      <div class="strip" id="strip"></div>
+    </section>
+
+    <section class="card">
+      <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+      <div class="dots" id="dots"></div>
+      <div class="hint" id="hint"></div>
+      <div class="row">
+        <button class="btn purple" id="hintBtn">💡 Hint</button>
+        <button class="btn orange" id="skipBtn">⏭️ Next challenge</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why?</h3>
+    <p>The Moon doesn't make its own light. The Sun always lights up <b>half</b> of it, like a torch shining on a ball.</p>
+    <p>As the Moon travels around the Earth, we see more or less of that bright half. One trip takes about 29½ days, and that's where the <b>month</b> comes from. Even the word "month" comes from "moon"!</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Imagine lying on the terrace at night, looking up. Each night the Moon grows a little bigger, like a slice of melon getting fatter, until it's a big round Pournami Moon.</p>
+    <p>Then, night by night, it gets thinner again, until it hides away completely on Amavasai.</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>The Moon is about <b>3,84,400 km</b> away. A car driving non-stop would take about <b>160 days</b> to get there!</p>
+    <p>And we always see the <b>same face</b> of the Moon. Its other side always faces away from us.</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>Have you ever seen the Moon in the daytime? (You can!)</li>
+      <li>Why can't we see the Moon on Amavasai?</li>
+      <li>Look at the Moon tonight. Which shape is it? Draw it!</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const mod = (a, n) => ((a % n) + n) % n;
+const CYCLE = 29.530588853;                       // days from one new Moon to the next
+
+/* ---------- tonight's Moon (age in days since the last new Moon) ---------- */
+function ageNow() {
+  const ref = Date.UTC(2000, 0, 6, 18, 14);       // a known new Moon
+  return mod((Date.now() - ref) / 86400000, CYCLE);
+}
+
+/* ---------- phase names ---------- */
+function phaseOf(age) {
+  const f = age / CYCLE;
+  if (f < 0.034 || f > 0.966) return { n: 'New Moon', t: 'அமாவாசை · Amavasai: the Moon is hiding!', e: '🌑' };
+  if (f < 0.216) return { n: 'Crescent Moon (growing)', t: 'A thin smile in the sky', e: '🌒' };
+  if (f < 0.284) return { n: 'Half Moon (growing)', t: 'First quarter: lit on the right', e: '🌓' };
+  if (f < 0.466) return { n: 'Gibbous Moon (growing)', t: 'Almost full!', e: '🌔' };
+  if (f < 0.534) return { n: 'Full Moon', t: 'பௌர்ணமி · Pournami: big and round!', e: '🌕' };
+  if (f < 0.716) return { n: 'Gibbous Moon (shrinking)', t: 'Getting smaller…', e: '🌖' };
+  if (f < 0.784) return { n: 'Half Moon (shrinking)', t: 'Last quarter: lit on the left', e: '🌗' };
+  return { n: 'Crescent Moon (shrinking)', t: 'A thin sliver before Amavasai', e: '🌘' };
+}
+
+/* ---------- draw the Moon's shape as seen from Earth ---------- */
+// age 0 = new, CYCLE/2 = full. Growing Moons are lit on the right (as seen from India and the north).
+function phasePath(age, R) {
+  const f = age / CYCLE;
+  const e = f * 2 * Math.PI;                       // 0 … 2π
+  const k = Math.cos(e);                           // 1 at new, -1 at full
+  const rx = Math.abs(k) * R;
+  const waxing = f <= 0.5;
+  // lit side semicircle, then back along the terminator ellipse
+  const sweepTerm = (k > 0) ? 0 : 1;
+  let d = `M0 ${-R} A${R} ${R} 0 0 1 0 ${R} A${rx.toFixed(2)} ${R} 0 0 ${sweepTerm} 0 ${-R} Z`;
+  return { d, flip: !waxing };
+}
+function drawMoon(g, age, R) {
+  g.innerHTML = '';
+  el('circle', { r: R, fill: '#2a2f55' }, g);                         // dark side (very faint)
+  const { d, flip } = phasePath(age, R);
+  const lit = el('path', { d, fill: '#fff4c9' }, g);
+  if (flip) lit.setAttribute('transform', 'scale(-1 1)');
+  // a few craters so it looks like the Moon
+  [[-0.3, -0.25, 0.16], [0.28, 0.2, 0.12], [0.1, -0.45, 0.08], [-0.2, 0.4, 0.1]].forEach(([x, y, r]) =>
+    el('circle', { cx: x * R, cy: y * R, r: r * R, fill: '#000', opacity: .07 }, g));
+  el('circle', { r: R, fill: 'none', stroke: '#fff', 'stroke-opacity': .15, 'stroke-width': 1 }, g);
+}
+
+/* =========================================================
+   Space view: Sun on the left, Earth in the middle, Moon going round
+   ========================================================= */
+const svg = $('#space');
+const EX = 430, EY = 280, ORBIT = 190;
+const S = {};
+function buildSpace() {
+  const defs = el('defs', {}, svg);
+  defs.innerHTML = `<radialGradient id="sunG"><stop offset="0%" stop-color="#fff7c2"/><stop offset="50%" stop-color="#ffd166"/><stop offset="100%" stop-color="#ff9f1c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="earthG" cx="40%" cy="35%"><stop offset="0%" stop-color="#6fd3ff"/><stop offset="100%" stop-color="#1f6fd1"/></radialGradient>`;
+  for (let i = 0; i < 90; i++) el('circle', { cx: Math.random() * 760, cy: Math.random() * 560, r: Math.random() * 1.5 + .3, fill: '#fff', opacity: Math.random() * .7 + .2 }, svg);
+  for (let i = -3; i <= 3; i++) el('line', { x1: 110, y1: EY + i * 60, x2: 740, y2: EY + i * 60, stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '10 16', opacity: .25 }, svg);
+  el('circle', { cx: -40, cy: EY, r: 200, fill: 'url(#sunG)' }, svg);
+  el('circle', { cx: -40, cy: EY, r: 130, fill: '#ffcf3f' }, svg);
+  el('text', { x: 40, y: EY + 6, 'font-size': 26, 'font-weight': 700, fill: '#b35c00', 'text-anchor': 'middle' }, svg).textContent = 'SUN';
+  el('circle', { cx: EX, cy: EY, r: ORBIT, fill: 'none', stroke: '#8fa2ff', 'stroke-width': 2, 'stroke-dasharray': '6 8', opacity: .7 }, svg);
+  // Earth (night side on the right, away from the Sun)
+  el('circle', { cx: EX, cy: EY, r: 52, fill: 'url(#earthG)' }, svg);
+  el('path', { d: `M${EX - 18} ${EY - 30} q20 -10 34 6 q8 14 -6 22 q-18 6 -28 -6 z M${EX + 4} ${EY + 18} q14 -4 20 8 q-6 12 -18 8 z`, fill: '#58c46a' }, svg);
+  el('path', { d: `M${EX} ${EY - 52} A52 52 0 0 1 ${EX} ${EY + 52} Z`, fill: '#050822', opacity: .6 }, svg);
+  el('text', { x: EX, y: EY + 76, class: 'note', 'text-anchor': 'middle' }, svg).textContent = '🌍 Earth (Bangalore is here!)';
+  // the Moon: lit half always faces the Sun (left)
+  S.moon = el('g', {}, svg);
+  el('circle', { r: 26, fill: '#3a3f66' }, S.moon);
+  el('path', { d: 'M0 -26 A26 26 0 0 0 0 26 Z', fill: '#fff4c9' }, S.moon);
+  el('circle', { r: 26, fill: 'none', stroke: '#fff', 'stroke-opacity': .4 }, S.moon);
+  S.sight = el('line', { stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '4 6', opacity: .8 }, svg);
+  svg.insertBefore(S.sight, S.moon);
+  S.label = el('text', { class: 'note', 'text-anchor': 'middle' }, svg);
+  el('text', { x: 20, y: 540, class: 'note' }, svg).textContent = '↺ The Moon goes around the Earth this way, once in about 29½ days.';
+}
+// Moon's angle around the Earth: new Moon = towards the Sun (left), full Moon = far side (right)
+const moonAngle = age => Math.PI + 2 * Math.PI * age / CYCLE;    // maths angle (y up), anticlockwise
+function renderSpace() {
+  const a = moonAngle(state.age);
+  const x = EX + ORBIT * Math.cos(a), y = EY - ORBIT * Math.sin(a);
+  S.moon.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+  S.sight.setAttribute('x1', EX); S.sight.setAttribute('y1', EY); S.sight.setAttribute('x2', x); S.sight.setAttribute('y2', y);
+  S.label.setAttribute('x', x); S.label.setAttribute('y', y + (y > EY ? 48 : -38));
+  S.label.textContent = phaseOf(state.age).e + ' Moon';
+}
+
+/* =========================================================
+   Sky panel + 30-day strip
+   ========================================================= */
+const view = el('g', {}, $('#moonView'));
+const stripBtns = [];
+function buildStrip() {
+  for (let d = 0; d < 30; d++) {
+    const b = document.createElement('button');
+    b.title = `Day ${d}`;
+    const s = document.createElementNS(SVGNS, 'svg'); s.setAttribute('viewBox', '-14 -14 28 28');
+    drawMoon(el('g', {}, s), Math.min(d, CYCLE - 0.01), 12);
+    b.appendChild(s);
+    b.appendChild(document.createTextNode(d));
+    b.addEventListener('click', () => goTo(d));
+    $('#strip').appendChild(b); stripBtns.push(b);
+  }
+}
+let lastDrawn = -1;
+function renderSky() {
+  const age = state.age;
+  if (Math.abs(age - lastDrawn) > 0.02) { drawMoon(view, age, 100); lastDrawn = age; }
+  const p = phaseOf(age);
+  $('#pname').textContent = `${p.e} ${p.n}`;
+  $('#ptamil').textContent = p.t;
+  $('#pday').textContent = `Day ${Math.floor(age)} of the Moon's 29½-day trip`;
+  const cur = Math.min(29, Math.floor(age));
+  stripBtns.forEach((b, i) => b.classList.toggle('cur', i === cur));
+}
+
+/* =========================================================
+   Moving the Moon
+   ========================================================= */
+const state = { tot: ageNow(), start: 0, playing: false, anim: null, bestTrips: 0 };
+state.start = state.tot;
+Object.defineProperty(state, 'age', { get() { return mod(this.tot, CYCLE); } });
+
+let drag = null;
+function pointerAngle(e) {
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return Math.atan2(-(p.y - EY), p.x - EX);
+}
+svg.addEventListener('pointerdown', e => {
+  stopPlay(); state.anim = null;
+  drag = { a: pointerAngle(e) };
+  try { svg.setPointerCapture(e.pointerId); } catch {}
+  e.preventDefault();
+});
+svg.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const a = pointerAngle(e);
+  const da = mod(a - drag.a + Math.PI, 2 * Math.PI) - Math.PI;   // anticlockwise = forward in time
+  drag.a = a;
+  const before = Math.floor(state.age);
+  state.tot += da / (2 * Math.PI) * CYCLE;
+  if (Math.floor(state.age) !== before) Kids.sfx.tick();
+});
+const endDrag = () => { if (drag) { drag = null; checkChallenge(); } };
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+
+function startPlay() { state.playing = true; $('#playBtn').textContent = '⏸️ Pause'; }
+function stopPlay() { if (state.playing) { state.playing = false; $('#playBtn').textContent = '▶️ Play'; } }
+$('#playBtn').addEventListener('click', () => { Kids.sfx.pop(); state.anim = null; if (state.playing) { stopPlay(); checkChallenge(); } else startPlay(); });
+function goTo(age, tonight) {
+  stopPlay();
+  const dist = mod(age - state.age, CYCLE);
+  state.anim = { from: state.tot, dist, t0: performance.now(), dur: 400 + dist * 60, tonight };
+  Kids.sfx.whoosh();
+}
+document.querySelectorAll('[data-age]').forEach(b => b.addEventListener('click', () => goTo(+b.dataset.age)));
+$('#tonightBtn').addEventListener('click', () => goTo(ageNow(), true));
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (state.playing) state.tot += 3 * dt;                      // 3 days every second
+  if (state.anim) {
+    const a = state.anim, k = Math.min(1, (now - a.t0) / a.dur);
+    state.tot = a.from + a.dist * (k < .5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+    if (k >= 1) { state.anim = null; if (a.tonight) state.sawTonight = true; checkChallenge(); }
+  }
+  const trips = Math.max(0, Math.floor((state.tot - state.start) / CYCLE));
+  if (trips > state.bestTrips) {
+    state.bestTrips = trips;
+    Kids.sfx.yay(); Kids.confetti(); Kids.banner('🌙 One trip of the Moon ≈ 29½ days ≈ 1 month!');
+    if (trips <= 2) Kids.addStar();
+  }
+  renderSpace(); renderSky();
+  const c = CH[ch.i]; if (c && c.trip) checkChallenge();
+  requestAnimationFrame(frame);
+}
+
+/* =========================================================
+   Kuyil's challenges
+   ========================================================= */
+const between = (a, b) => state.age >= a && state.age < b;
+const CH = [
+  { ask: 'Make a FULL MOON: Pournami 🌕', hint: 'Move the Moon to the far side of the Earth, away from the Sun.',
+    ok: () => between(13.8, 15.8), yay: 'Pournami! The Moon is on the far side, so we see ALL of its sunny half. 🌕' },
+  { ask: 'Now make a NEW MOON: Amavasai, when the Moon hides 🌑', hint: 'Move the Moon between the Earth and the Sun.',
+    ok: () => state.age < 1 || state.age > CYCLE - 1, yay: "Amavasai! The sunny half faces away from us, so we can't see the Moon. 🌑" },
+  { ask: 'Make a HALF MOON that is lit on the RIGHT 🌓', hint: 'Go a quarter of the way around after the New Moon.',
+    ok: () => between(6.4, 8.4), yay: 'A growing half Moon! It is one week after Amavasai. 🌓' },
+  { ask: 'Make a thin, smiling CRESCENT Moon 🌒', hint: 'Just a few days after the New Moon.',
+    ok: () => between(1.8, 5), yay: 'A beautiful crescent! In India it can look like a little smiling boat. 🛶' },
+  { ask: "Find TONIGHT'S Moon! Then look outside tonight to check 👀", hint: "Press the 🌙 Tonight's Moon button.",
+    ok: () => state.sawTonight, yay: () => `Tonight's Moon is a ${phaseOf(state.age).n}. Let's look at the sky tonight! 👀` },
+  { ask: 'Take the Moon ALL the way around the Earth once. How many days?', hint: 'Press Play, or keep dragging the Moon round!',
+    trip: true, ok: () => state.tot - ch.tripFrom >= CYCLE, yay: 'About 29½ days: that is about ONE MONTH! 🌙' },
+];
+const ch = { i: 0, done: new Set(), tripFrom: 0 };
+function showChallenge() {
+  ch.tripFrom = state.tot; state.sawTonight = false;
+  $('#bubble').textContent = `${Kids.name}, ${CH[ch.i].ask}`;
+  $('#bubble').classList.remove('done');
+  $('#hint').textContent = '';
+  renderDots();
+}
+function renderDots() { $('#dots').innerHTML = CH.map((_, i) => `<span class="${ch.done.has(i) ? 'ok' : i === ch.i ? 'cur' : ''}"></span>`).join(''); }
+let nextTimer;
+function checkChallenge() {
+  const c = CH[ch.i];
+  if (!c || ch.done.has(ch.i) || !c.ok()) return;
+  ch.done.add(ch.i);
+  const msg = `${Kids.praise()} ${typeof c.yay === 'function' ? c.yay() : c.yay}`;
+  $('#bubble').textContent = msg; $('#bubble').classList.add('done');
+  Kids.addStar(); Kids.sfx.yay(); Kids.confetti(); Kids.speak(Kids.forSpeech(msg));
+  renderDots();
+  clearTimeout(nextTimer); nextTimer = setTimeout(nextChallenge, 4500);
+}
+function nextChallenge() {
+  clearTimeout(nextTimer);
+  if (ch.done.size === CH.length) {
+    $('#bubble').textContent = `🏆 Wonderful, ${Kids.name}! You know why the Moon changes shape!`;
+    $('#bubble').classList.add('done'); Kids.banner(`🏆 Moon Expert: ${Kids.name}!`);
+    ch.done.clear(); ch.i = -1; setTimeout(() => { ch.i = 0; showChallenge(); }, 7000);
+    return;
+  }
+  do { ch.i = (ch.i + 1) % CH.length; } while (ch.done.has(ch.i));
+  showChallenge();
+}
+$('#hintBtn').addEventListener('click', () => { const c = CH[ch.i]; if (!c) return; $('#hint').textContent = '💡 ' + c.hint; Kids.speak(c.hint, true); });
+$('#skipBtn').addEventListener('click', () => { Kids.sfx.pop(); nextChallenge(); });
+
+/* ---------- go ---------- */
+buildSpace();
+buildStrip();
+showChallenge();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

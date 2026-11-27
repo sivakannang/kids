@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rocket Launch</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .speedbox { text-align: center; }
+  .speedbox input[type=range] { width: 100%; max-width: 520px; accent-color: #ff9f1c; height: 30px; }
+  .speedbox .v { font-size: 34px; font-weight: 700; color: #ffd166; }
+  .meter { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 14px; }
+  .meter span { background: rgba(255,255,255,.1); border-radius: 999px; padding: 3px 10px; }
+  .outcome { font-size: 24px; font-weight: 700; text-align: center; min-height: 36px; color: #ffd166; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🚀</span>
+    <div><h1>Rocket Launch</h1><small>How fast must you go to escape a planet, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card space-card">
+      <h2>🏔️ Launch a space ball from a tall mountain <small>Pick a speed and press LAUNCH. Too slow, it falls. Faster, it goes round and round (orbit). Even faster, it ESCAPES!</small></h2>
+      <div class="pick" id="planets"></div>
+      <svg id="sky" class="svgbox" viewBox="-400 -300 800 600" style="margin-top:10px"></svg>
+      <div class="outcome" id="outcome"></div>
+      <div class="speedbox">
+        <div class="v" id="vText"></div>
+        <input type="range" id="speed" min="0" max="100" value="40">
+        <div class="meter" id="meter"></div>
+        <div class="row">
+          <button class="btn orange" data-p="slow">🐢 Too slow</button>
+          <button class="btn" data-p="orbit">🔄 Orbit speed</button>
+          <button class="btn pink" data-p="escape">🚀 Escape speed</button>
+          <button class="btn big green" id="launch">🔥 LAUNCH!</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl;
+// real numbers: radius (km) and GM (km³/s²)
+const PLANETS = [
+  { id: 'moon', n: 'Moon', e: '🌕', R: 1737, mu: 4904.9, c: '#bdbdbd' },
+  { id: 'mars', n: 'Mars', e: '🔴', R: 3390, mu: 42828, c: '#d0542b' },
+  { id: 'earth', n: 'Earth', e: '🌍', R: 6371, mu: 398600, c: '#3a8ee6' },
+  { id: 'jupiter', n: 'Jupiter', e: '🟠', R: 69911, mu: 1.26687e8, c: '#c98e5a' },
+];
+let pl = PLANETS[2];
+const RPX = 120;                                   // planet radius on screen
+const H = 0.016;                                   // mountain height (as part of the radius)
+const vEsc = p => Math.sqrt(2 * p.mu / (p.R * (1 + H)));
+const vOrb = p => Math.sqrt(p.mu / (p.R * (1 + H)));
+const vMax = p => vEsc(p) * 1.5;
+let v = 0;
+const speedFromSlider = () => +$('#speed').value / 100 * vMax(pl);
+function setSpeed(x) { $('#speed').value = Math.round(x / vMax(pl) * 100); readSpeed(); }
+function readSpeed() {
+  v = speedFromSlider();
+  $('#vText').textContent = `${v.toFixed(1)} km per second`;
+  $('#meter').innerHTML = `<span>🔄 orbit: ${vOrb(pl).toFixed(1)} km/s</span><span>🚀 escape: ${vEsc(pl).toFixed(1)} km/s</span><span>✈️ a plane: 0.25 km/s</span>`;
+}
+$('#speed').addEventListener('input', readSpeed);
+document.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  setSpeed({ slow: vOrb(pl) * 0.55, orbit: vOrb(pl), escape: vEsc(pl) * 1.01 }[b.dataset.p]);
+}));
+PLANETS.forEach(p => {
+  const b = document.createElement('button');
+  b.textContent = `${p.e} ${p.n}`;
+  b.addEventListener('click', () => { if (sim) return; pl = p; Kids.sfx.pop(); renderPick(); setSpeed(vOrb(p) * 0.55); drawScene(); $('#outcome').textContent = ''; });
+  $('#planets').appendChild(b);
+});
+const renderPick = () => [...$('#planets').children].forEach((b, i) => b.classList.toggle('active', PLANETS[i] === pl));
+
+/* ---------- scene ---------- */
+const sky = $('#sky');
+let trail, ball;
+function drawScene() {
+  sky.innerHTML = '';
+  for (let i = 0; i < 90; i++) el('circle', { cx: Math.random() * 800 - 400, cy: Math.random() * 600 - 300, r: Math.random() * 1.4 + .3, fill: '#fff', opacity: .6 }, sky);
+  el('circle', { cx: 0, cy: 0, r: RPX + 10, fill: pl.c, opacity: .15 }, sky);
+  el('circle', { cx: 0, cy: 0, r: RPX, fill: pl.c }, sky);
+  el('text', { x: 0, y: 8, 'font-size': 22, 'font-weight': 700, fill: '#fff', 'text-anchor': 'middle' }, sky).textContent = pl.n;
+  // the mountain on top
+  el('path', { d: `M-26 ${-RPX + 6} L0 ${-RPX * (1 + H) - 6} L26 ${-RPX + 6} Z`, fill: '#6d4c41' }, sky);
+  el('path', { d: `M-8 ${-RPX * (1 + H) + 2} L0 ${-RPX * (1 + H) - 6} L8 ${-RPX * (1 + H) + 2} Z`, fill: '#fff' }, sky);
+  trail = el('path', { fill: 'none', stroke: '#ffd166', 'stroke-width': 3, opacity: .85 }, sky);
+  ball = el('circle', { cx: 0, cy: -RPX * (1 + H) - 6, r: 7, fill: '#ff6b6b', stroke: '#fff', 'stroke-width': 2 }, sky);
+}
+
+/* ---------- physics: gravity pulls towards the centre ---------- */
+let sim = null;
+$('#launch').addEventListener('click', () => {
+  if (sim) return;
+  drawScene();
+  const r0 = pl.R * (1 + H);
+  sim = { x: 0, y: r0, vx: v, vy: 0, swept: 0, ang: Math.PI / 2, pts: [], t0: performance.now(), last: performance.now(),
+    // time speed: one low orbit takes about 6 seconds on screen
+    scale: 2 * Math.PI * Math.sqrt(r0 ** 3 / pl.mu) / 6 };
+  $('#outcome').textContent = ''; Kids.sfx.whoosh();
+  requestAnimationFrame(step);
+});
+function toScreen(x, y) { return [x / pl.R * RPX, -y / pl.R * RPX]; }
+function step(now) {
+  const s = sim, dtReal = Math.min(0.05, (now - s.last) / 1000); s.last = now;
+  const T = dtReal * s.scale, n = 60, dt = T / n;
+  let result = null;
+  for (let i = 0; i < n && !result; i++) {
+    const r = Math.hypot(s.x, s.y), a = -pl.mu / r ** 3;
+    s.vx += a * s.x * dt; s.vy += a * s.y * dt;
+    s.x += s.vx * dt; s.y += s.vy * dt;
+    const ang = Math.atan2(s.y, s.x);
+    let d = ang - s.ang; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI;
+    s.swept += Math.abs(d); s.ang = ang;
+    const rr = Math.hypot(s.x, s.y);
+    const energy = (s.vx ** 2 + s.vy ** 2) / 2 - pl.mu / rr;
+    if (rr < pl.R) result = 'crash';
+    else if (s.swept >= 2 * Math.PI) result = 'orbit';
+    else if (rr > pl.R * 3.6 && energy >= 0) result = 'escape';
+  }
+  const [px, py] = toScreen(s.x, s.y);
+  s.pts.push(`${px.toFixed(1)},${py.toFixed(1)}`);
+  trail.setAttribute('d', 'M' + s.pts.join('L'));
+  ball.setAttribute('cx', px); ball.setAttribute('cy', py);
+  if (!result && (now - s.t0) / 1000 > 18) result = 'orbit';         // a huge, slow oval
+  if (result) return done(result);
+  requestAnimationFrame(step);
+}
+function done(result) {
+  const speed = v, p = pl;
+  sim = null;
+  const msg = {
+    crash: `💥 Too slow! Gravity pulled the ball back down to ${p.n}.`,
+    orbit: `🔄 ORBIT! The ball keeps falling, but it's so fast it keeps missing ${p.n}. That's how satellites stay up!`,
+    escape: `🚀 ESCAPED! At ${speed.toFixed(1)} km/s the ball flew away from ${p.n} forever. That's escape velocity!`,
+  }[result];
+  $('#outcome').textContent = msg;
+  result === 'crash' ? Kids.sfx.oops() : Kids.sfx.yay();
+  Kids.speak(Kids.forSpeech(msg));
+  ch.check({ planet: p.id, result, v: speed, orbitRatio: speed / vOrb(p) });
+}
+
+const ch = Kids.challenges([
+  { ask: 'Launch the ball too SLOWLY on Earth, so it falls back 🐢', hint: 'Use a small speed, or press "Too slow".',
+    ok: c => c.planet === 'earth' && c.result === 'crash', yay: 'Gravity pulls everything back down… unless it is fast enough!' },
+  { ask: 'Put the ball into ORBIT around the Earth 🔄', hint: 'Try about 8 km per second, or press "Orbit speed".',
+    ok: c => c.planet === 'earth' && c.result === 'orbit', yay: 'In orbit, the ball is falling all the time, but it keeps missing the Earth!' },
+  { ask: 'Make a stretched, OVAL orbit 🥚', hint: 'Go a little faster than orbit speed, but slower than escape speed.',
+    ok: c => c.result === 'orbit' && c.orbitRatio > 1.12, yay: 'An oval orbit! Many comets travel around the Sun like this.' },
+  { ask: 'ESCAPE from the Earth! 🚀', hint: 'You need about 11 km per second. That\'s 40,000 km per hour!',
+    ok: c => c.planet === 'earth' && c.result === 'escape', yay: 'Escape velocity for Earth is about 11.2 km per second!' },
+  { ask: 'Now escape from the MOON 🌕. Is it easier?', hint: 'Pick the Moon, then press "Escape speed".',
+    ok: c => c.planet === 'moon' && c.result === 'escape', yay: 'Only about 2.4 km/s! The Moon is small, so its pull is gentle. Easy to leave!' },
+  { ask: 'Try to escape from giant JUPITER 🟠', hint: 'Pick Jupiter. You will need a LOT of speed!',
+    ok: c => c.planet === 'jupiter' && c.result === 'escape', yay: 'You needed about 60 km/s! Big planets hold on tight.' },
+], { title: 'Rocket Scientist' });
+
+Kids.learn({
+  why: ['Gravity pulls everything towards a planet. If you throw a ball, it falls back. Throw it faster, and it lands farther away.',
+    'Throw it SO fast that the ground curves away before it lands, and it goes round and round: an <b>orbit</b>. Faster still, and it never comes back: that speed is called <b>escape velocity</b>.'],
+  imagine: ['Imagine standing on a giant mountain, higher than the clouds, with a magic cannon. 🏔️',
+    'Boom! The ball curves down, down… but the Earth curves away underneath it. It whooshes all the way around and comes back behind you!'],
+  wow: ['To escape the Earth, a rocket must reach about <b>11.2 km every second</b>, about 40,000 km per hour, around 45 times faster than a plane!',
+    'Clever Isaac Newton imagined this exact "cannon on a mountain" idea more than 300 years ago.'],
+  talk: ['Why is it easier to escape from the Moon than from the Earth?', 'Why do rockets need so much fuel?', 'If you were in orbit, would you feel like you were falling?'],
+});
+renderPick();
+setSpeed(vOrb(pl) * 0.55);
+drawScene();
+</script>
+</body>
+</html>

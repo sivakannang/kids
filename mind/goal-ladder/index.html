@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goal Ladder</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  body { background: linear-gradient(160deg, #d8f3dc 0%, #e9f5ff 50%, #fdf0ff 100%); background-attachment: fixed; }
+  .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .preset { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 8px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .preset .e { display: block; font-size: 30px; }
+  .preset.active { border-color: var(--green); background: #e3f7ea; }
+  #custom { width: 100%; font-size: 18px; padding: 8px 12px; border-radius: 12px; border: 3px solid #e5e0f5; font-family: inherit; margin-top: 8px; }
+  .goals { display: flex; gap: 8px; flex-wrap: wrap; }
+  .goal-chip { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 15px; }
+  .goal-chip.active { border-color: var(--purple); background: #f1e9ff; }
+  #ladder { max-width: 420px; margin: 0 auto; display: block; }
+  .goal-title { text-align: center; font-size: 26px; font-weight: 700; color: var(--purple); }
+  .progress { text-align: center; font-size: 18px; color: var(--muted); }
+  .small-link { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 14px; font-family: inherit; }
+  .cert { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    .cert, .cert * { visibility: visible; }
+    .cert { display: block; position: fixed; inset: 0; text-align: center; padding: 60px; border: 12px double #9b5de5; font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🪜</span>
+    <div><h1>Goal Ladder</h1><small>Big goals are climbed one small step at a time, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+    </section>
+    <section class="card" id="climbCard">
+      <div class="goals" id="goals"></div>
+      <div class="goal-title" id="gTitle" style="margin-top:12px"></div>
+      <div class="progress" id="gProg"></div>
+      <svg id="ladder" viewBox="0 0 300 420"></svg>
+      <div class="row">
+        <button class="btn big green" id="stepBtn">✅ I did a step today!</button>
+        <button class="btn purple" id="printBtn" hidden>🖨️ Print my certificate</button>
+      </div>
+      <div class="row"><button class="small-link" id="extraBtn">Grown-ups: add a step anyway</button><button class="small-link" id="delBtn">Remove this goal</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <h3 style="margin:0 0 10px">🎯 Make a new goal</h3>
+      <div class="presets" id="presets"></div>
+      <input id="custom" maxlength="50" placeholder="…or write your own goal (a grown-up can help!)">
+      <div class="label">How many steps (days) to the top?</div>
+      <div class="pick" id="stepsPick"><button data-n="5">5</button><button data-n="7" class="active">7</button><button data-n="10">10</button><button data-n="14">14</button></div>
+      <div class="row"><button class="btn big" id="createBtn">🪜 Start climbing!</button></div>
+    </section>
+  </div>
+</main>
+
+<div class="cert" id="cert"></div>
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl, K = Kids.name;
+const PRESETS = [
+  ['📚', 'Read a story every day'], ['🚲', 'Learn to ride my cycle'], ['🎹', 'Practise music every day'],
+  ['🧹', 'Tidy my room'], ['🥦', 'Eat my vegetables'], ['🦷', 'Brush my teeth twice a day'],
+  ['✍️', 'Write neatly every day'], ['🧘', 'Do Focus Garden every day'],
+];
+const KEY = 'goals';
+const day = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+let goals = Kids.store.get(KEY, []), cur = goals.length ? goals[0].id : null, preset = PRESETS[0], steps = 7;
+const save = () => Kids.store.set(KEY, goals);
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+
+PRESETS.forEach(p => {
+  const b = document.createElement('button');
+  b.className = 'preset'; b.innerHTML = `<span class="e">${p[0]}</span>${p[1]}`;
+  b.addEventListener('click', () => { preset = p; $('#custom').value = ''; Kids.sfx.pop(); renderPresets(); });
+  $('#presets').appendChild(b);
+});
+const renderPresets = () => [...$('#presets').children].forEach((b, i) => b.classList.toggle('active', PRESETS[i] === preset));
+$('#stepsPick').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  steps = +b.dataset.n; Kids.sfx.pop();
+  $('#stepsPick').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+}));
+$('#createBtn').addEventListener('click', () => {
+  const text = $('#custom').value.trim() || preset[1];
+  const e = $('#custom').value.trim() ? '⭐' : preset[0];
+  const g = { id: Date.now().toString(36), e, text, steps, done: [], created: day(new Date()) };
+  goals.unshift(g); cur = g.id; save(); Kids.sfx.yay();
+  say(`A new goal! "${text}". Climb one step every day, ${K}. You can do it! 💪`);
+  render();
+});
+
+function goal() { return goals.find(g => g.id === cur); }
+function render() {
+  $('#goals').innerHTML = '';
+  goals.forEach(g => {
+    const b = document.createElement('button');
+    b.className = 'goal-chip' + (g.id === cur ? ' active' : '');
+    b.textContent = `${g.done.length >= g.steps ? '🏆' : g.e} ${g.text}`;
+    b.addEventListener('click', () => { cur = g.id; Kids.sfx.pop(); render(); });
+    $('#goals').appendChild(b);
+  });
+  const g = goal();
+  $('#climbCard').hidden = !g;
+  if (!g) { say(`Hi ${K}! Pick a goal on the right, and let's climb towards it, one small step each day. 🪜`); return; }
+  const n = g.done.length, top = n >= g.steps;
+  $('#gTitle').textContent = `${g.e} ${g.text}`;
+  $('#gProg').textContent = top ? `🏆 You reached the top in ${g.steps} steps!` : `Step ${n} of ${g.steps}`;
+  const doneToday = g.done.includes(day(new Date()));
+  $('#stepBtn').disabled = top || doneToday;
+  $('#stepBtn').textContent = top ? '🏆 Goal reached!' : doneToday ? '🌙 Come back tomorrow for the next step' : '✅ I did a step today!';
+  $('#printBtn').hidden = !top;
+  drawLadder(g);
+}
+function drawLadder(g) {
+  const s = $('#ladder'); s.innerHTML = '';
+  const n = g.steps, top = 70, bottom = 400, gap = (bottom - top) / n;
+  el('rect', { x: 0, y: 400, width: 300, height: 20, fill: '#8fd694' }, s);
+  el('line', { x1: 90, y1: top - 10, x2: 90, y2: bottom, stroke: '#c47b3b', 'stroke-width': 10, 'stroke-linecap': 'round' }, s);
+  el('line', { x1: 210, y1: top - 10, x2: 210, y2: bottom, stroke: '#c47b3b', 'stroke-width': 10, 'stroke-linecap': 'round' }, s);
+  for (let i = 1; i <= n; i++) {
+    const y = bottom - i * gap + gap / 2, ok = i <= g.done.length;
+    el('line', { x1: 90, y1: y, x2: 210, y2: y, stroke: ok ? '#06d6a0' : '#e0b98a', 'stroke-width': 8, 'stroke-linecap': 'round' }, s);
+    if (ok) el('text', { x: 236, y: y + 6, 'font-size': 16 }, s).textContent = '⭐';
+  }
+  const t = el('text', { x: 150, y: 52, 'font-size': 46, 'text-anchor': 'middle' }, s); t.textContent = '🏆';
+  const k = g.done.length, ky = k >= n ? 40 : bottom - k * gap + gap / 2 - 6;
+  const kid = el('text', { x: 150, y: ky, 'font-size': 40, 'text-anchor': 'middle' }, s); kid.textContent = '👧';
+}
+$('#stepBtn').addEventListener('click', () => addStep(false));
+$('#extraBtn').addEventListener('click', () => { if (confirm('Add a step even though one was already done today?')) addStep(true); });
+$('#delBtn').addEventListener('click', () => {
+  const g = goal(); if (!g || !confirm(`Remove the goal "${g.text}"?`)) return;
+  goals = goals.filter(x => x !== g); cur = goals.length ? goals[0].id : null; save(); render();
+});
+function addStep(force) {
+  const g = goal(); if (!g || g.done.length >= g.steps) return;
+  const today = day(new Date());
+  if (!force && g.done.includes(today)) return;
+  g.done.push(force && g.done.includes(today) ? `${today}+${g.done.length}` : today); save();
+  Kids.addStar(); Kids.sfx.yay();
+  if (g.done.length >= g.steps) {
+    g.finished = today; save();
+    Kids.addStar(); Kids.addStar(); Kids.confetti();
+    Kids.banner(`🏆 Goal reached: ${g.text}!`);
+    say(`YOU DID IT, ${K}! 🏆 You climbed all ${g.steps} steps. Small steps every day made a BIG goal come true!`, true);
+    Kids.speak(Kids.forSpeech(`You did it! You reached your goal: ${g.text}!`));
+  } else {
+    const left = g.steps - g.done.length;
+    say(`${Kids.praise()} One more step up! Only ${left} more to the top. See you tomorrow! 🌙`, true);
+  }
+  render();
+}
+$('#printBtn').addEventListener('click', () => {
+  const g = goal();
+  $('#cert').innerHTML = `<div style="font-size:70px">🏆</div><h1>Certificate of Achievement</h1><p>This certifies that</p><h1 style="color:#9b5de5">${K}</h1>
+    <p>reached the goal</p><h2>${g.e} ${esc(g.text)}</h2><p>by climbing ${g.steps} steps, one day at a time.</p><p>${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p><div style="font-size:50px">⭐🪜⭐</div>`;
+  window.print();
+});
+
+Kids.learn({
+  why: ['Big goals can feel too big, like a tall ladder. But every ladder is just lots of small steps!',
+    'When you do a tiny bit every day, your brain gets used to it. Soon it feels easy, and you reach the top.'],
+  imagine: ['Imagine yourself at the very top of your ladder, holding your trophy. 🏆 How do you feel? Proud? Happy?',
+    'Now imagine the very first step. It\'s small and easy. You can do that today!'],
+  wow: ['Many great athletes and musicians say their secret is simple: practising a little bit, every single day.',
+    'It\'s okay to miss a day. Just climb again tomorrow! Every step still counts.'],
+  talk: ['What is something you would like to get better at?', 'What small step could you do today?', 'What goal did a grown-up you love reach by trying every day?'],
+});
+renderPresets(); render();
+</script>
+</body>
+</html>

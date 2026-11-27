@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My New Game</title>
+<!-- Copy this folder to <subject>/<game-name>/ — the ../../ paths then point at kids/shared/ -->
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  main { max-width: 900px; margin: 0 auto; padding: 0 18px 18px; }
+  .question { font-size: 30px; text-align: center; margin: 10px 0 20px; }
+  .row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🎮</span>
+    <div><h1>My New Game</h1><small>Hi <b data-kid-name></b>! 👋 Let's play!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="question">What is 2 + 3? 🤔</div>
+    <div class="row">
+      <button class="btn big orange" data-answer="4">4</button>
+      <button class="btn big green" data-answer="5">5</button>
+      <button class="btn big purple" data-answer="6">6</button>
+    </div>
+  </section>
+</main>
+
+<script src="../../shared/kids.js"></script>
+<script>
+  document.querySelectorAll('[data-answer]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.answer === '5') {
+      Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+      const p = Kids.praise(); Kids.banner(p); Kids.speak(Kids.forSpeech(p));
+    } else {
+      Kids.resetStreak(); Kids.sfx.oops();
+    }
+  }));
+</script>
+</body>
+</html>

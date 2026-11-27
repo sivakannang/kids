@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Light Travel</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .dests { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .dest { border: 3px solid transparent; background: rgba(255,255,255,.08); color: #fff; border-radius: 16px; padding: 8px 6px; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 600; }
+  .dest .e { display: block; font-size: 30px; }
+  .dest.active { border-color: #ffd166; background: rgba(255,209,102,.18); }
+  .clock { text-align: center; font-size: 40px; font-weight: 700; color: #ffd166; font-variant-numeric: tabular-nums; min-height: 52px; }
+  .times { display: flex; flex-direction: column; gap: 8px; }
+  .trow { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 8px; background: #f6f3ff; border-radius: 14px; padding: 8px 12px; font-size: 17px; }
+  .trow .e { font-size: 28px; }
+  .trow b { color: var(--purple); }
+  .back { background: #fff3c4; border-radius: 16px; padding: 12px; font-size: 18px; margin-top: 10px; }
+  .ly { background: #e8defe; border-radius: 16px; padding: 12px; font-size: 18px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">💡</span>
+    <div><h1>Light Travel</h1><small>How long does light take to get there, <b data-kid-name>Kavikuyil</b>? What is a light year?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card space-card">
+      <h2>⚡ Send a beam of light from Earth <small>Pick a place and press SEND. Light is the fastest thing in the universe!</small></h2>
+      <div class="dests" id="dests"></div>
+      <svg id="beam" class="svgbox" viewBox="0 0 800 180" style="margin-top:12px"></svg>
+      <div class="clock" id="clock"></div>
+      <div class="row"><button class="btn big green" id="sendBtn">⚡ SEND LIGHT!</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <h3 style="margin:0 0 8px" id="tTitle">How long to get there?</h3>
+      <div class="times" id="times"></div>
+      <div class="back" id="back"></div>
+      <div class="ly">💡 <b>A light year</b> is not a time: it's a DISTANCE! It is how far light travels in one whole year: about <b>9.5 lakh crore km</b> (9,46,07,30,47,25,808 km).</div>
+    </section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl;
+const C = 299792, LY = 9.4607e12;
+const DESTS = [
+  { id: 'moon', e: '🌕', n: 'the Moon', km: 384400, back: 'We see the Moon as it was about 1 second ago.' },
+  { id: 'sun', e: '☀️', n: 'the Sun', km: 149.6e6, back: 'When you look at sunlight, you see the Sun as it was 8 minutes ago! (Never look straight at the Sun, though!)' },
+  { id: 'mars', e: '🔴', n: 'Mars (when closest)', km: 54.6e6, back: 'Messages to robots on Mars take a few minutes, so they can\'t be driven like a remote-control car.' },
+  { id: 'jupiter', e: '🟠', n: 'Jupiter (when closest)', km: 588e6, back: 'We see Jupiter as it was more than half an hour ago.' },
+  { id: 'neptune', e: '🔵', n: 'Neptune', km: 4.35e9, back: 'Light from Neptune left about 4 hours before it reaches your eyes.' },
+  { id: 'proxima', e: '⭐', n: 'the nearest star', km: 4.24 * LY, back: 'The nearest star (Proxima Centauri) is 4.24 light years away. We see it as it was more than 4 years ago!' },
+  { id: 'centre', e: '🌀', n: 'the middle of our galaxy', km: 26000 * LY, back: 'Light from the middle of the Milky Way left 26,000 years ago, when people still lived in caves!' },
+  { id: 'andromeda', e: '🌌', n: 'the Andromeda galaxy', km: 2.5e6 * LY, back: 'Andromeda\'s light left 25 lakh years ago, long before there were any people like us!' },
+];
+const RACERS = [
+  { e: '⚡', n: 'Light', kmh: C * 3600 },
+  { e: '🚀', n: 'Rocket', kmh: 28000 },
+  { e: '✈️', n: 'Aeroplane', kmh: 900 },
+  { e: '🚗', n: 'Car', kmh: 80 },
+];
+let dest = DESTS[0], sending = false;
+
+function fmtDur(sec) {
+  if (sec < 60) return `${sec < 10 ? sec.toFixed(1) : Math.round(sec)} seconds`;
+  const m = sec / 60; if (m < 60) return `${Math.floor(m)} min ${Math.round(sec % 60)} s`;
+  const h = m / 60; if (h < 48) return `${h.toFixed(1)} hours`;
+  const d = h / 24; if (d < 365) return `${Math.round(d)} days`;
+  let y = d / 365.25;
+  if (y < 1000) return `${y < 10 ? y.toFixed(1) : Math.round(y)} years`;
+  const p = 10 ** (Math.floor(Math.log10(y)) - 2); y = Math.round(y / p) * p;   // keep 3 significant figures
+  if (y < 1e7) return `${Math.round(y).toLocaleString('en-IN')} years`;
+  return `${(y / 1e7).toLocaleString('en-IN', { maximumFractionDigits: 0 })} crore years`;
+}
+function renderDests() {
+  $('#dests').innerHTML = '';
+  DESTS.forEach(d => {
+    const b = document.createElement('button');
+    b.className = 'dest' + (d === dest ? ' active' : '');
+    b.innerHTML = `<span class="e">${d.e}</span>${d.n}`;
+    b.addEventListener('click', () => { if (sending) return; dest = d; Kids.sfx.pop(); renderDests(); renderTimes(); drawBeam(0); $('#clock').textContent = ''; });
+    $('#dests').appendChild(b);
+  });
+}
+function renderTimes() {
+  $('#tTitle').textContent = `How long to get to ${dest.n}?`;
+  $('#times').innerHTML = RACERS.map(r => `<div class="trow"><span class="e">${r.e}</span><span>${r.n}</span><b>${fmtDur(dest.km / r.kmh * 3600)}</b></div>`).join('');
+  $('#back').textContent = '👀 ' + dest.back;
+}
+function drawBeam(p) {
+  const s = $('#beam'); s.innerHTML = '';
+  for (let i = 0; i < 50; i++) el('circle', { cx: Math.random() * 800, cy: Math.random() * 180, r: Math.random() * 1.2 + .3, fill: '#fff', opacity: .5 }, s);
+  el('text', { x: 50, y: 112, 'font-size': 60, 'text-anchor': 'middle' }, s).textContent = '🌍';
+  el('text', { x: 750, y: 112, 'font-size': 60, 'text-anchor': 'middle' }, s).textContent = dest.e;
+  if (p > 0) {
+    const x = 90 + (620 * p);
+    el('line', { x1: 90, y1: 92, x2: x, y2: 92, stroke: '#ffd166', 'stroke-width': 6, 'stroke-linecap': 'round' }, s);
+    el('circle', { cx: x, cy: 92, r: 12, fill: '#fff7c2' }, s);
+  }
+}
+$('#sendBtn').addEventListener('click', () => {
+  if (sending) return;
+  sending = true;
+  const real = dest.km / C;                       // real seconds for light
+  const show = Math.min(real, 8);                 // short trips play in real time; long ones are sped up
+  const t0 = performance.now();
+  Kids.sfx.whoosh();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / 1000 / show);
+    drawBeam(k);
+    $('#clock').textContent = '⏱️ ' + fmtDur(real * k);
+    if (k < 1) requestAnimationFrame(step);
+    else {
+      sending = false;
+      const msg = `Light reached ${dest.n} in ${fmtDur(real)}!${real > show ? ' (We sped it up so you didn\'t have to wait!)' : ''}`;
+      $('#clock').textContent = '✅ ' + fmtDur(real);
+      Kids.sfx.yay(); Kids.speak(Kids.forSpeech(msg));
+      ch.check({ dest: dest.id, real });
+    }
+  };
+  requestAnimationFrame(step);
+});
+
+const ch = Kids.challenges([
+  { ask: 'Send light to the MOON 🌕. Count with it!', hint: 'Pick the Moon and press SEND. It plays in real time!', ok: c => c.dest === 'moon', yay: 'Just over 1 second to the Moon. One-elephant!' },
+  { ask: 'How long does SUNLIGHT take to reach us? ☀️', hint: 'Pick the Sun and send light.', ok: c => c.dest === 'sun', yay: 'About 8 minutes! Sunlight on your face left the Sun 8 minutes ago.' },
+  { ask: 'Send light to the NEAREST STAR ⭐', hint: 'Pick the nearest star.', ok: c => c.dest === 'proxima', yay: 'More than 4 YEARS! That star is 4.24 light years away.' },
+  { ask: 'Find a place light takes about 4 HOURS to reach', hint: 'Try the planets far, far away.', ok: c => c.dest === 'neptune', yay: 'Neptune! Even light needs about 4 hours to get there.' },
+  { ask: 'Find a place light takes MORE than a lakh years to reach 🤯', hint: 'Try the galaxies.', ok: c => c.real / 31557600 > 100000, yay: 'Galaxies are SO far away that even light takes lakhs of years!' },
+], { title: 'Light Speed Explorer' });
+
+Kids.learn({
+  why: ['Light is the fastest thing in the whole universe. It zooms about <b>3 lakh km every second</b>.',
+    'Space is so huge that kilometres become silly numbers. So scientists measure with <b>light years</b>: how far light goes in one year.'],
+  imagine: ['Imagine you are a tiny ray of sunlight. ☀️ You leave the Sun and zoom past Mercury, past Venus…',
+    'Eight minutes later you land, softly, on Kavikuyil\'s nose in Bangalore! 👃'],
+  wow: ['When you look at the stars, you are looking back in TIME. You see them as they were when their light left, maybe hundreds of years ago!',
+    'Light could go around the Earth 7½ times in just one second.'],
+  talk: ['If you could ride on a beam of light, where would you go?', 'Why do you think we see lightning before we hear thunder? (Light is much faster than sound!)', 'Some stars we see might not even be there any more. How is that possible?'],
+});
+renderDests(); renderTimes(); drawBeam(0);
+</script>
+</body>
+</html>

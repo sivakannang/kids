@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tick-Tock World Explorer</title>
+<!-- Shared look & feel, plus map files stored locally so the app works offline -->
+<link rel="stylesheet" href="../../shared/kids.css">
+<script src="../../shared/vendor/d3.min.js"></script>
+<script src="../../shared/vendor/topojson-client.min.js"></script>
+<script src="../../shared/vendor/countries-110m.js"></script>
+<style>
+  /* ---------- layout ---------- */
+  .layout {
+    display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+    gap: 18px; padding: 0 18px 18px; max-width: 1400px; margin: 0 auto; align-items: start;
+  }
+  @media (max-width: 920px) { .layout { grid-template-columns: 1fr; padding: 0 12px 16px; } }
+  .left { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  /* ---------- map ---------- */
+  .map-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .map-title h2 { margin: 0; font-size: 22px; }
+  #map { width: 100%; height: auto; display: block; border-radius: 20px; background: #cde7ff; touch-action: manipulation; }
+  .ocean { fill: url(#oceanGrad); }
+  .grat { fill: none; stroke: #ffffff; stroke-opacity: .5; stroke-width: .6; }
+  .country { stroke: #ffffff; stroke-width: .7; transition: fill .4s; }
+  .country.sel { fill: #ffbe0b !important; stroke: #ff7b00; stroke-width: 1.4; }
+  .night { fill: #1d1b4f; fill-opacity: .26; pointer-events: none; }
+  .sun { font-size: 30px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .city { cursor: pointer; }
+  .city .dot { fill: #ff006e; stroke: #fff; stroke-width: 2.5; transition: transform .2s; transform-box: fill-box; transform-origin: center; }
+  .city:hover .dot { transform: scale(1.45); }
+  .city.selected .dot { fill: #8338ec; transform: scale(1.5); }
+  .city .pulse { fill: #8338ec; opacity: 0; transform-box: fill-box; transform-origin: center; pointer-events: none; }
+  .city.selected .pulse { animation: pulse 1.6s ease-out infinite; }
+  @keyframes pulse { from { transform: scale(1); opacity: .7; } to { transform: scale(3.6); opacity: 0; } }
+  .city .label { opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .city:hover .label, .city.selected .label { opacity: 1; }
+  .city .label rect { fill: #fff; stroke: #8338ec; stroke-width: 2; }
+  .city .label text { font-size: 15px; font-weight: 600; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
+  .map-note { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip {
+    border: 3px solid #eee; background: #fafaff; border-radius: 999px; padding: 6px 12px;
+    font-size: 16px; font-weight: 500; cursor: pointer; transition: transform .15s;
+  }
+  .chip:hover { transform: translateY(-2px); border-color: #d6c8ff; }
+  .chip.active { border-color: #8338ec; background: #f1e9ff; color: #5a189a; font-weight: 600; }
+
+  /* ---------- fun facts strip ---------- */
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .facts { grid-template-columns: 1fr; } }
+  .fact {
+    border-radius: 22px; padding: 14px 16px; font-size: 18px; line-height: 1.35;
+  }
+  .fact h3 { margin: 0 0 6px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; opacity: .75; }
+  .fact.yellow { background: #fff3c4; }
+  .fact.green { background: #d3f8e2; }
+
+  /* ---------- city header ---------- */
+  .city-card { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .city-card .flag { font-size: 58px; line-height: 1; }
+  .city-card h2 { margin: 0; font-size: 28px; line-height: 1.1; }
+  .city-card .country-name { font-size: 18px; color: var(--muted); font-weight: 500; }
+  .city-card .tz { margin-top: 4px; display: inline-block; background: #eef6ff; color: var(--blue); border-radius: 999px; padding: 3px 12px; font-size: 15px; font-weight: 600; }
+  .greeting { text-align: center; font-size: 20px; font-weight: 600; margin: 4px 0 0; color: #5a189a; }
+
+  /* ---------- clock ---------- */
+  .clock-wrap { max-width: 400px; margin: 0 auto; }
+  #clock { width: 100%; height: auto; display: block; user-select: none; -webkit-user-select: none; }
+  .hand { transform-box: view-box; transform-origin: 220px 220px; }
+  body.mode-read .hand { transition: transform .9s cubic-bezier(.34,1.4,.64,1); }
+  .hit { pointer-events: none; }
+  body.mode-set .hit { pointer-events: stroke; cursor: grab; }
+  body.mode-set #clock { touch-action: none; cursor: grab; }
+  .hnum { font-size: 38px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  .mnum { font-size: 14px; font-weight: 700; fill: #fff; text-anchor: middle; dominant-baseline: central; transition: opacity .3s; }
+  .helper-off .mnum { opacity: 0; }
+  .sec-off .sec { display: none; }
+
+  .digital {
+    margin: 10px auto 0; max-width: 400px; text-align: center; border-radius: 22px; padding: 12px;
+    background: #2b2d42; color: #fff; position: relative; overflow: hidden; min-height: 112px;
+  }
+  .dtime { font-size: 52px; font-weight: 700; letter-spacing: 2px; color: #7cffcb; line-height: 1.1; }
+  .dwords { font-size: 19px; color: #ffd166; margin-top: 4px; }
+  .dmask { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: repeating-linear-gradient(45deg, #9b5de5, #9b5de5 18px, #a46ef0 18px, #a46ef0 36px); transition: transform .5s cubic-bezier(.68,-0.4,.27,1.4); }
+  .dmask .q { font-size: 40px; font-weight: 700; letter-spacing: 4px; }
+  .dmask .t { font-size: 16px; opacity: .95; }
+  .digital.show .dmask { transform: translateY(-105%); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 14px; }
+  .switches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 12px; font-size: 16px; }
+  .switches label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .switches input { width: 20px; height: 20px; accent-color: var(--purple); }
+  .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-top: 12px; font-size: 15px; color: var(--muted); }
+  .legend b { color: var(--ink); }
+
+  /* ---------- quiz ---------- */
+  .mascot { display: flex; align-items: center; gap: 14px; }
+  .mascot .owl { font-size: 70px; animation: bob 2.4s ease-in-out infinite; display: inline-block; }
+  .bubble { background: #f1e9ff; border-radius: 22px; padding: 14px 18px; font-size: 21px; font-weight: 500; position: relative; flex: 1; }
+  .bubble::before { content: ''; position: absolute; left: -12px; top: 50%; margin-top: -10px; border: 10px solid transparent; border-right-color: #f1e9ff; border-left: 0; }
+  .levels { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .level { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 7px 14px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .level.active { border-color: var(--orange); background: #fff4e0; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .opt {
+    border: none; border-radius: 22px; padding: 18px 10px; font-size: 40px; font-weight: 700; color: #fff; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.18); transition: transform .1s, opacity .3s;
+  }
+  .opt:nth-child(1) { background: #ef476f; } .opt:nth-child(2) { background: #118ab2; }
+  .opt:nth-child(3) { background: #ff9f1c; } .opt:nth-child(4) { background: #9b5de5; }
+  .opt:active { transform: translateY(4px); }
+  .opt.wrong { opacity: .35; animation: shake .45s; cursor: default; }
+  .opt.right { background: #06d6a0 !important; animation: pop .5s; outline: 5px solid #ffd166; }
+  .target { text-align: center; background: #2b2d42; border-radius: 22px; padding: 16px; color: #fff; }
+  .target-time { font-size: 60px; font-weight: 700; color: #7cffcb; line-height: 1.1; }
+  .target-words { font-size: 20px; color: #ffd166; }
+  .row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .feedback { min-height: 58px; margin-top: 16px; font-size: 21px; font-weight: 500; text-align: center; border-radius: 18px; padding: 12px; }
+  .feedback.good { background: #d3f8e2; color: #036b4f; }
+  .feedback.hint { background: #fff3c4; color: #7a5600; }
+  .center { text-align: center; margin-top: 10px; }
+  .tips { margin-top: 18px; background: #eef6ff; border-radius: 20px; padding: 12px 16px; font-size: 17px; line-height: 1.5; }
+  .tips b.r { color: var(--red); } .tips b.b { color: var(--blue); }
+
+</style>
+</head>
+<body class="mode-explore">
+
+<header>
+  <div class="logo">
+    <span class="big">⏰</span>
+    <div><h1>Tick-Tock World Explorer</h1><small>Hi <b data-kid-name>Kavikuyil</b>! 👋 Let's learn to read the clock, all around the world!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-mode="explore">🌍 World Clock</button>
+  <button class="tab" data-mode="read">🦉 What's the Time?</button>
+  <button class="tab" data-mode="set">✋ Set the Clock</button>
+</nav>
+
+<main class="layout">
+  <div class="left">
+    <!-- Explore: map -->
+    <section class="card" id="mapPanel">
+      <div class="map-title">
+        <h2>🗺️ Tap a city to travel there!</h2>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn orange" id="homeBtn">📍 Back to Bangalore</button>
+          <button class="btn pink" id="randomBtn">🎲 Surprise me!</button>
+        </div>
+      </div>
+      <svg id="map" viewBox="0 0 960 500" role="img" aria-label="World map with cities"></svg>
+      <div class="map-note" id="mapNote">☀️ shows where the Sun is shining right now. The dark part of the map is having night time 🌙</div>
+      <div class="chips" id="chips"></div>
+    </section>
+    <section class="facts" id="factsPanel">
+      <div class="fact yellow"><h3>💡 Fun fact</h3><div id="funFact"></div></div>
+      <div class="fact green"><h3>🧭 Compared to home</h3><div id="compare"></div></div>
+    </section>
+
+    <!-- Quiz panel -->
+    <section class="card" id="quizPanel" hidden>
+      <div class="mascot">
+        <span class="owl">🦉</span>
+        <div class="bubble" id="bubble"></div>
+      </div>
+      <div class="levels" id="levels"></div>
+
+      <div id="readArea">
+        <div class="options" id="options"></div>
+      </div>
+
+      <div id="setArea" hidden>
+        <div class="target">
+          <div style="font-size:18px; opacity:.85">Make the clock show:</div>
+          <div class="target-time" id="targetTime"></div>
+          <div class="target-words" id="targetWords"></div>
+        </div>
+        <div class="row">
+          <button class="btn big green" id="checkBtn">✅ Check</button>
+          <button class="btn big purple" id="showMeBtn">🪄 Show me</button>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+      <div class="center"><button class="btn big orange" id="nextBtn" hidden>Next one ➡️</button></div>
+
+      <div class="tips">
+        <b class="r">🔴 Short, fat hand = HOUR.</b> Look at the number it has just passed.<br>
+        <b class="b">🔵 Long hand = MINUTES.</b> Count by 5s from the top: 5, 10, 15, 20…<br>
+        🕛 Long hand on 12 → <i>o'clock</i> · on 3 → <i>quarter past</i> · on 6 → <i>half past</i> · on 9 → <i>quarter to</i>
+      </div>
+    </section>
+  </div>
+
+  <!-- Clock -->
+  <section class="card" id="clockCard">
+    <div class="city-card explore-only" id="cityCard">
+      <div class="flag" id="cFlag"></div>
+      <div>
+        <h2 id="cName"></h2>
+        <div class="country-name" id="cCountry"></div>
+        <div class="tz" id="cTz"></div>
+      </div>
+    </div>
+    <div class="clock-wrap"><svg id="clock" viewBox="0 0 440 440" aria-label="Wall clock"></svg></div>
+    <div class="greeting explore-only" id="greeting"></div>
+
+    <div class="digital explore-only" id="digital">
+      <div class="dtime" id="dtime"></div>
+      <div class="dwords" id="dwords"></div>
+      <div class="dmask"><div class="q">🤔 ?? : ??</div><div class="t">Kavikuyil, read the clock, then tap 👀 to check!</div></div>
+    </div>
+
+    <div class="controls explore-only">
+      <button class="btn big purple" id="digitalBtn">👀 Show digital time</button>
+      <button class="btn" id="freezeBtn">⏸️ Freeze</button>
+      <button class="btn green" id="speakBtn">🗣️ Hear it</button>
+    </div>
+    <div class="switches">
+      <label class="explore-only"><input type="checkbox" id="secToggle" checked> 🟠 Seconds hand</label>
+      <label><input type="checkbox" id="helperToggle" checked> 🔢 Minute helper</label>
+    </div>
+    <div class="legend">
+      <span>🔴 <b>Short hand</b> = hours</span>
+      <span>🔵 <b>Long hand</b> = minutes</span>
+      <span class="explore-only">🟠 <b>Thin hand</b> = seconds</span>
+    </div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for Kavikuyil, our little time explorer</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+/* =========================================================
+   Data
+   ========================================================= */
+const CITIES = [
+  { id:'bangalore', name:'Bangalore', country:'India', flag:'🇮🇳', tz:'Asia/Kolkata', lat:12.97, lon:77.59, iso:356,
+    fact:'Bangalore (Bengaluru) is called the "Garden City" because of its many parks and trees 🌳' },
+  { id:'kathmandu', name:'Kathmandu', country:'Nepal', flag:'🇳🇵', tz:'Asia/Kathmandu', lat:27.72, lon:85.32, iso:524,
+    fact:'Nepal has a funny time zone: it is 15 minutes ahead of India! Mount Everest 🏔️ is in Nepal.' },
+  { id:'dubai', name:'Dubai', country:'United Arab Emirates', flag:'🇦🇪', tz:'Asia/Dubai', lat:25.20, lon:55.27, iso:784,
+    fact:'Dubai has the Burj Khalifa, the tallest building in the whole world 🏙️' },
+  { id:'bangkok', name:'Bangkok', country:'Thailand', flag:'🇹🇭', tz:'Asia/Bangkok', lat:13.76, lon:100.50, iso:764,
+    fact:"Bangkok's full name is one of the longest city names in the world! 🐘" },
+  { id:'singapore', name:'Singapore', country:'Singapore', flag:'🇸🇬', tz:'Asia/Singapore', lat:1.35, lon:103.82, iso:702,
+    fact:'The Merlion is the symbol of Singapore. It is half lion and half fish 🦁🐟' },
+  { id:'beijing', name:'Beijing', country:'China', flag:'🇨🇳', tz:'Asia/Shanghai', lat:39.90, lon:116.41, iso:156,
+    fact:'China is very big, but the whole country uses just ONE time zone! Giant pandas 🐼 live in China.' },
+  { id:'seoul', name:'Seoul', country:'South Korea', flag:'🇰🇷', tz:'Asia/Seoul', lat:37.57, lon:126.98, iso:410,
+    fact:'Seoul is the home of K-pop music 🎤 and yummy kimchi.' },
+  { id:'tokyo', name:'Tokyo', country:'Japan', flag:'🇯🇵', tz:'Asia/Tokyo', lat:35.68, lon:139.69, iso:392,
+    fact:'Japan is called "The Land of the Rising Sun" 🌅 because the sun rises there early.' },
+  { id:'sydney', name:'Sydney', country:'Australia', flag:'🇦🇺', tz:'Australia/Sydney', lat:-33.87, lon:151.21, iso:36,
+    fact:'The Sydney Opera House roof looks like giant sails on a boat ⛵ Kangaroos 🦘 live in Australia!' },
+  { id:'auckland', name:'Auckland', country:'New Zealand', flag:'🇳🇿', tz:'Pacific/Auckland', lat:-36.85, lon:174.76, iso:554,
+    fact:'New Zealand is one of the first places on Earth to start each new day 🌄 The kiwi bird 🥝 lives here.' },
+  { id:'moscow', name:'Moscow', country:'Russia', flag:'🇷🇺', tz:'Europe/Moscow', lat:55.76, lon:37.62, iso:643,
+    fact:'Russia is so big that it has 11 different time zones! ❄️' },
+  { id:'istanbul', name:'Istanbul', country:'Türkiye', flag:'🇹🇷', tz:'Europe/Istanbul', lat:41.01, lon:28.98, iso:792,
+    fact:'Istanbul is in TWO continents at once: part is in Europe and part is in Asia! 🌉' },
+  { id:'cairo', name:'Cairo', country:'Egypt', flag:'🇪🇬', tz:'Africa/Cairo', lat:30.04, lon:31.24, iso:818,
+    fact:'The Great Pyramids near Cairo are more than 4,500 years old 🔺🐫' },
+  { id:'nairobi', name:'Nairobi', country:'Kenya', flag:'🇰🇪', tz:'Africa/Nairobi', lat:-1.29, lon:36.82, iso:404,
+    fact:'Nairobi has a national park with lions and giraffes right next to the city 🦁🦒' },
+  { id:'capetown', name:'Cape Town', country:'South Africa', flag:'🇿🇦', tz:'Africa/Johannesburg', lat:-33.92, lon:18.42, iso:710,
+    fact:'Penguins live on a beach near Cape Town! 🐧' },
+  { id:'paris', name:'Paris', country:'France', flag:'🇫🇷', tz:'Europe/Paris', lat:48.86, lon:2.35, iso:250,
+    fact:'The Eiffel Tower 🗼 sparkles at night with thousands of twinkling lights ✨' },
+  { id:'london', name:'London', country:'United Kingdom', flag:'🇬🇧', tz:'Europe/London', lat:51.51, lon:-0.13, iso:826,
+    fact:'"Big Ben" is the name of the giant bell inside London\'s famous clock tower 🔔🕰️' },
+  { id:'reykjavik', name:'Reykjavik', country:'Iceland', flag:'🇮🇸', tz:'Atlantic/Reykjavik', lat:64.15, lon:-21.94, iso:352,
+    fact:'In summer the sun hardly sets in Iceland, and in winter you can see the Northern Lights 🌌' },
+  { id:'newyork', name:'New York', country:'United States', flag:'🇺🇸', tz:'America/New_York', lat:40.71, lon:-74.01, iso:840,
+    fact:'The Statue of Liberty 🗽 in New York was a gift from France.' },
+  { id:'toronto', name:'Toronto', country:'Canada', flag:'🇨🇦', tz:'America/Toronto', lat:43.65, lon:-79.38, iso:124,
+    fact:'The giant Niagara Falls waterfall 💦 is close to Toronto. 🍁' },
+  { id:'losangeles', name:'Los Angeles', country:'United States', flag:'🇺🇸', tz:'America/Los_Angeles', lat:34.05, lon:-118.24, iso:840,
+    fact:'Los Angeles has Hollywood, where lots of movies are made 🎬' },
+  { id:'honolulu', name:'Honolulu', country:'United States (Hawaii)', flag:'🇺🇸', tz:'Pacific/Honolulu', lat:21.31, lon:-157.86, iso:840,
+    fact:'The islands of Hawaii were made by volcanoes 🌋🌺' },
+  { id:'mexicocity', name:'Mexico City', country:'Mexico', flag:'🇲🇽', tz:'America/Mexico_City', lat:19.43, lon:-99.13, iso:484,
+    fact:'Mexico City was built on top of an old lake! 🌮' },
+  { id:'rio', name:'Rio de Janeiro', country:'Brazil', flag:'🇧🇷', tz:'America/Sao_Paulo', lat:-22.91, lon:-43.17, iso:76,
+    fact:'Rio has a huge, colourful carnival party with music and dancing every year 🎉🦜' },
+  { id:'buenosaires', name:'Buenos Aires', country:'Argentina', flag:'🇦🇷', tz:'America/Argentina/Buenos_Aires', lat:-34.60, lon:-58.38, iso:32,
+    fact:'The tango dance was born in Buenos Aires 💃🕺' },
+];
+const HOME = CITIES[0];
+
+const LEVELS = [
+  { id:'oclock',  label:"🐣 O'clock" },
+  { id:'half',    label:'🐥 Half past' },
+  { id:'quarter', label:'🐤 Quarters' },
+  { id:'five',    label:'🦅 5 minutes' },
+  { id:'any',     label:'🚀 Any minute' },
+];
+
+/* =========================================================
+   Helpers
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const store = Kids.store;
+const pad = n => String(n).padStart(2, '0');
+const rand = n => Math.floor(Math.random() * n);
+
+const fmtCache = {};
+function partsIn(tz, date) {
+  let f = fmtCache[tz];
+  if (!f) f = fmtCache[tz] = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', weekday: 'long' });
+  const o = {};
+  for (const p of f.formatToParts(date)) o[p.type] = p.value;
+  return { y: +o.year, mo: +o.month, d: +o.day, h: (+o.hour) % 24, m: +o.minute, s: +o.second, weekday: o.weekday };
+}
+function offsetMin(tz, date) {
+  const p = partsIn(tz, date);
+  const asUTC = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.m, p.s);
+  return Math.round((asUTC - Math.floor(date.getTime() / 1000) * 1000) / 60000);
+}
+function fmtOffset(min) {
+  const sign = min >= 0 ? '+' : '−';
+  const a = Math.abs(min);
+  return `UTC${sign}${Math.floor(a / 60)}${a % 60 ? ':' + pad(a % 60) : ''}`;
+}
+const ONES = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve',
+  'thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty'];
+function numWord(n) { if (n < 20) return ONES[n]; const o = n % 10; return TENS[Math.floor(n / 10)] + (o ? '-' + ONES[o] : ''); }
+function minPhrase(n) { return numWord(n) + (n % 5 ? (n === 1 ? ' minute' : ' minutes') : ''); }
+function timeWords(h24, m) {
+  const h = h24 % 12 || 12, nx = (h24 + 1) % 12 || 12;
+  if (m === 0) return `${numWord(h)} o'clock`;
+  if (m === 15) return `quarter past ${numWord(h)}`;
+  if (m === 30) return `half past ${numWord(h)}`;
+  if (m === 45) return `quarter to ${numWord(nx)}`;
+  if (m < 30) return `${minPhrase(m)} past ${numWord(h)}`;
+  return `${minPhrase(60 - m)} to ${numWord(nx)}`;
+}
+function fmt12(h24, m) { return `${h24 % 12 || 12}:${pad(m)} ${h24 < 12 ? 'AM' : 'PM'}`; }
+function partOfDay(h) {
+  if (h >= 5 && h < 12) return { name: 'morning', icon: '🌅', greet: 'Good morning!' };
+  if (h >= 12 && h < 17) return { name: 'afternoon', icon: '☀️', greet: 'Good afternoon!' };
+  if (h >= 17 && h < 20) return { name: 'evening', icon: '🌇', greet: 'Good evening!' };
+  return { name: 'night', icon: '🌙', greet: 'Shhh… it\'s night time. Sweet dreams!' };
+}
+const podPhrase = pod => pod.name === 'night' ? 'at night' : `in the ${pod.name}`;
+function dayKey(p) { return p.y * 10000 + p.mo * 100 + p.d; }
+
+/* =========================================================
+   State
+   ========================================================= */
+const state = {
+  mode: 'explore',
+  city: HOME,
+  showDigital: false,
+  frozenAt: null,
+  level: store.get('tte.level', 'oclock'),
+  angles: { h: 0, m: 0, s: 0 },
+  anim: null,
+};
+
+const { sfx, speak, confetti, addStar } = Kids;
+const KID = Kids.name;
+
+/* =========================================================
+   Clock
+   ========================================================= */
+const C = 220;
+const RING = ['#ff595e','#ff924c','#ffca3a','#c5ca30','#8ac926','#36949d','#1982c4','#4267ac','#565aa0','#6a4c93','#b5179e','#f15bb5'];
+const polar = (r, deg) => { const a = deg * Math.PI / 180; return [C + r * Math.sin(a), C - r * Math.cos(a)]; };
+const clockRefs = {};
+function buildClock() {
+  const svg = $('#clock');
+  // rainbow outer ring (minute helper lives on it)
+  for (let i = 0; i < 12; i++) {
+    const a0 = i * 30 - 15, a1 = i * 30 + 15;
+    const [x0, y0] = polar(210, a0), [x1, y1] = polar(210, a1), [x2, y2] = polar(182, a1), [x3, y3] = polar(182, a0);
+    el('path', { d: `M${x0} ${y0} A210 210 0 0 1 ${x1} ${y1} L${x2} ${y2} A182 182 0 0 0 ${x3} ${y3}Z`, fill: RING[i] }, svg);
+  }
+  const helper = el('g', {}, svg);
+  for (let i = 0; i < 12; i++) {
+    const [x, y] = polar(196, i * 30);
+    el('text', { x, y, class: 'mnum' }, helper).textContent = pad(i * 5);
+  }
+  el('circle', { cx: C, cy: C, r: 182, fill: '#fffdf7' }, svg);
+  el('circle', { cx: C, cy: C, r: 176, fill: 'none', stroke: '#f0ebff', 'stroke-width': 4 }, svg);
+  for (let i = 0; i < 60; i++) {
+    const big = i % 5 === 0;
+    const [x1, y1] = polar(178, i * 6), [x2, y2] = polar(big ? 160 : 170, i * 6);
+    el('line', { x1, y1, x2, y2, stroke: big ? '#2b2d42' : '#b9b6d3', 'stroke-width': big ? 4 : 2, 'stroke-linecap': 'round' }, svg);
+  }
+  for (let n = 1; n <= 12; n++) {
+    const [x, y] = polar(134, n * 30);
+    el('text', { x, y, class: 'hnum', fill: RING[n % 12] }, svg).textContent = n;
+  }
+  const brand = el('text', { x: C, y: 150, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#c9c3e6', 'letter-spacing': 3 }, svg);
+  brand.textContent = 'TICK · TOCK';
+  clockRefs.dayIcon = el('text', { x: C, y: 298, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 34 }, svg);
+
+  // hands
+  const hourG = el('g', { class: 'hand' }, svg);
+  el('line', { x1: C, y1: C + 16, x2: C, y2: C - 92, stroke: '#ef476f', 'stroke-width': 15, 'stroke-linecap': 'round' }, hourG);
+  const minG = el('g', { class: 'hand' }, svg);
+  el('line', { x1: C, y1: C + 20, x2: C, y2: C - 150, stroke: '#118ab2', 'stroke-width': 9, 'stroke-linecap': 'round' }, minG);
+  const secG = el('g', { class: 'hand sec' }, svg);
+  el('line', { x1: C, y1: C + 30, x2: C, y2: C - 162, stroke: '#ff9f1c', 'stroke-width': 3, 'stroke-linecap': 'round' }, secG);
+  el('circle', { cx: C, cy: C - 128, r: 6, fill: '#ff9f1c' }, secG);
+  el('circle', { cx: C, cy: C, r: 13, fill: '#2b2d42' }, svg);
+  el('circle', { cx: C, cy: C, r: 5, fill: '#ffd166' }, svg);
+  // invisible fat grab areas for dragging (hour on top since it is shorter)
+  const hitM = el('g', { class: 'hand hit', 'data-hand': 'minute' }, svg);
+  el('line', { x1: C, y1: C, x2: C, y2: C - 160, stroke: 'rgba(0,0,0,0)', 'stroke-width': 40, 'stroke-linecap': 'round' }, hitM);
+  const hitH = el('g', { class: 'hand hit', 'data-hand': 'hour' }, svg);
+  el('line', { x1: C, y1: C, x2: C, y2: C - 100, stroke: 'rgba(0,0,0,0)', 'stroke-width': 44, 'stroke-linecap': 'round' }, hitH);
+
+  Object.assign(clockRefs, { svg, helper, hourG, minG, secG, hitM, hitH });
+}
+function setAngles(a) {
+  state.angles = a;
+  clockRefs.hourG.style.transform = clockRefs.hitH.style.transform = `rotate(${a.h}deg)`;
+  clockRefs.minG.style.transform = clockRefs.hitM.style.transform = `rotate(${a.m}deg)`;
+  clockRefs.secG.style.transform = `rotate(${a.s}deg)`;
+}
+const anglesFor = (h, m, s = 0) => ({ h: ((h % 12) + m / 60 + s / 3600) * 30, m: (m + s / 60) * 6, s: s * 6 });
+const fwd = (a, b) => ((b - a) % 360 + 360) % 360;      // forward distance a → b
+// rotate forward to the new angles (used with the CSS transition in quiz mode)
+function setAnglesForward(t) {
+  const c = state.angles;
+  setAngles({ h: c.h + fwd(c.h, t.h), m: c.m + fwd(c.m, t.m) + (fwd(c.h, t.h) > 30 ? 360 : 0), s: c.s + fwd(c.s, t.s) });
+}
+const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* =========================================================
+   Explore mode
+   ========================================================= */
+let lastKey = '';
+function frame() {
+  requestAnimationFrame(frame);
+  if (state.mode !== 'explore') return;
+  const now = state.frozenAt || new Date();
+  const p = partsIn(state.city.tz, now);
+  const sec = p.s + (state.frozenAt ? 0 : now.getMilliseconds() / 1000);
+  let target = anglesFor(p.h, p.m, sec);
+  if (state.anim) {
+    const t = (performance.now() - state.anim.start) / 1000;
+    if (t >= 1) state.anim = null;
+    else {
+      const e = easeInOut(t), f = state.anim.from;
+      // spin forward like a time machine; the minute hand gets an extra lap for fun
+      target = { h: f.h + fwd(f.h, target.h) * e, m: f.m + (fwd(f.m, target.m) + 360) * e, s: f.s + fwd(f.s, target.s) * e };
+    }
+  }
+  setAngles(target);
+  const key = `${state.city.id}|${p.h}:${p.m}:${p.s}`;
+  if (key !== lastKey) { lastKey = key; updateExploreText(p, now); }
+}
+
+function updateExploreText(p, now) {
+  const c = state.city;
+  const pod = partOfDay(p.h);
+  $('#cFlag').textContent = c.flag;
+  $('#cName').textContent = c.name;
+  $('#cCountry').textContent = c.country;
+  const off = offsetMin(c.tz, now);
+  $('#cTz').textContent = `🕐 ${c.tz.replace(/_/g, ' ')} · ${fmtOffset(off)}`;
+  $('#dtime').textContent = fmt12(p.h, p.m);
+  $('#dwords').textContent = `${timeWords(p.h, p.m)} ${podPhrase(pod)} · ${p.weekday}`;
+  clockRefs.dayIcon.textContent = pod.icon;
+  $('#greeting').textContent = `${pod.icon} ${pod.greet}`;
+  $('#funFact').textContent = c.fact;
+
+  // compare with home (Bangalore)
+  if (c.id === HOME.id) {
+    $('#compare').textContent = `🏠 This is home! Tap another city to see what time it is there.`;
+  } else {
+    const hp = partsIn(HOME.tz, now);
+    const diff = off - offsetMin(HOME.tz, now);
+    let txt;
+    if (diff === 0) txt = `Same time as ${HOME.name}! 🤝`;
+    else {
+      const a = Math.abs(diff), hh = Math.floor(a / 60), mm = a % 60;
+      const parts = [];
+      if (hh) parts.push(`${hh} hour${hh > 1 ? 's' : ''}`);
+      if (mm) parts.push(`${mm} minutes`);
+      txt = `${c.name} is ${parts.join(' and ')} ${diff > 0 ? 'AHEAD of ⏩' : 'BEHIND ⏪'} ${HOME.name}.`;
+    }
+    const dk = dayKey(p), hk = dayKey(hp);
+    if (dk > hk) txt += ` It's already TOMORROW (${p.weekday}) here! 🚀`;
+    else if (dk < hk) txt += ` It's still YESTERDAY (${p.weekday}) here! 🐢`;
+    txt += ` In ${HOME.name} it is ${fmt12(hp.h, hp.m)}.`;
+    $('#compare').textContent = txt;
+  }
+}
+
+function selectCity(city, silent) {
+  if (!silent && city.id !== state.city.id) { sfx.whoosh(); state.anim = { from: { ...state.angles }, start: performance.now() }; }
+  state.city = city;
+  lastKey = '';
+  document.querySelectorAll('.city').forEach(g => g.classList.toggle('selected', g.dataset.id === city.id));
+  const sel = document.querySelector(`.city[data-id="${city.id}"]`);
+  if (sel) sel.parentNode.appendChild(sel); // bring to front
+  document.querySelectorAll('.chip').forEach(b => b.classList.toggle('active', b.dataset.id === city.id));
+  highlightCountry();
+}
+
+function setDigital(show) {
+  state.showDigital = show;
+  $('#digital').classList.toggle('show', show);
+  $('#digitalBtn').textContent = show ? '🙈 Hide digital time' : '👀 Show digital time';
+  if (show) sfx.pop();
+}
+
+/* =========================================================
+   Map
+   ========================================================= */
+const PALETTE = ['#ffd6a5', '#caffbf', '#a0e7e5', '#bdb2ff', '#ffc6ff', '#fdffb6', '#ffadad'];
+const map = { project: null, path: null, night: null, sun: null, countries: [] };
+
+async function buildMap() {
+  const svg = $('#map');
+  const W = 960, H = 500;
+  const defs = el('defs', {}, svg);
+  const lg = el('linearGradient', { id: 'oceanGrad', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  el('stop', { offset: '0%', 'stop-color': '#9fd3ff' }, lg);
+  el('stop', { offset: '100%', 'stop-color': '#cfeaff' }, lg);
+
+  const hasD3 = !!(window.d3 && d3.geoNaturalEarth1);
+  if (hasD3) {
+    const proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
+    map.project = proj; map.path = d3.geoPath(proj);
+    el('path', { d: map.path({ type: 'Sphere' }), class: 'ocean' }, svg);
+    el('path', { d: map.path(d3.geoGraticule10()), class: 'grat' }, svg);
+  } else {
+    map.project = ([lo, la]) => [(lo + 180) / 360 * W, (90 - la) / 180 * H];
+    el('rect', { x: 0, y: 0, width: W, height: H, rx: 18, class: 'ocean' }, svg);
+  }
+  const land = el('g', {}, svg);
+  map.night = el('path', { class: 'night' }, svg);
+  map.sun = el('text', { class: 'sun' }, svg); map.sun.textContent = '☀️';
+  const cityG = el('g', {}, svg);
+
+  for (const c of CITIES) {
+    const [x, y] = map.project([c.lon, c.lat]);
+    const g = el('g', { class: 'city', 'data-id': c.id, transform: `translate(${x.toFixed(1)},${y.toFixed(1)})`, role: 'button', 'aria-label': c.name }, cityG);
+    el('circle', { r: 7, class: 'pulse' }, g);
+    el('circle', { r: 7, class: 'dot' }, g);
+    el('circle', { r: 16, fill: 'transparent' }, g);
+    const label = el('g', { class: 'label' }, g);
+    const text = `${c.flag} ${c.name}`;
+    const w = c.name.length * 8.6 + 40;
+    let lx = 0;
+    if (x - w / 2 < 4) lx = 4 - (x - w / 2);
+    if (x + w / 2 > W - 4) lx = (W - 4) - (x + w / 2);
+    const above = y > 50;
+    const ly = above ? -30 : 30;
+    el('rect', { x: lx - w / 2, y: ly - 13, width: w, height: 26, rx: 13 }, label);
+    el('text', { x: lx, y: ly + 1 }, label).textContent = text;
+    g.addEventListener('click', () => selectCity(c));
+  }
+
+  updateNight();
+  setInterval(updateNight, 60000);
+
+  if (hasD3 && window.topojson && window.WORLD_ATLAS) {
+    try {
+      const world = window.WORLD_ATLAS;
+      const obj = world.objects.countries;
+      const feats = topojson.feature(world, obj).features;
+      const nb = topojson.neighbors(obj.geometries);
+      const colors = [];
+      feats.forEach((f, i) => {
+        const used = new Set(nb[i].map(j => colors[j]));
+        let k = 0; while (used.has(k)) k++;
+        colors[i] = k;
+        const p = el('path', { d: map.path(f), class: 'country', fill: PALETTE[k % PALETTE.length], 'data-id': String(f.id).padStart(3, '0') }, land);
+        el('title', {}, p).textContent = f.properties.name;
+      });
+      highlightCountry();
+    } catch (e) {
+      $('#mapNote').textContent = '🗺️ Could not draw the country shapes. You can still tap the cities!';
+    }
+  } else {
+    $('#mapNote').textContent = '🗺️ The map files in shared/vendor are missing. You can still tap the cities!';
+  }
+}
+
+function highlightCountry() {
+  const id = String(state.city.iso).padStart(3, '0');
+  document.querySelectorAll('.country').forEach(p => p.classList.toggle('sel', p.dataset.id === id));
+}
+
+function updateNight() {
+  const now = new Date();
+  const start = Date.UTC(now.getUTCFullYear(), 0, 0);
+  const doy = (now - start) / 86400000;
+  const dec = -23.44 * Math.cos(2 * Math.PI * (doy + 10) / 365);
+  const utcH = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const norm = l => ((l + 540) % 360) - 180;
+  const sunLon = norm((12 - utcH) * 15);
+  const [sx, sy] = map.project([sunLon, dec]);
+  map.sun.setAttribute('x', sx); map.sun.setAttribute('y', sy);
+  if (map.path && window.d3) {
+    map.night.setAttribute('d', map.path(d3.geoCircle().center([norm(sunLon + 180), -dec]).radius(90)()));
+  }
+}
+
+function buildChips() {
+  const box = $('#chips');
+  for (const c of CITIES) {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.id = c.id; b.textContent = `${c.flag} ${c.name}`;
+    b.addEventListener('click', () => selectCity(c));
+    box.appendChild(b);
+  }
+}
+
+/* =========================================================
+   Quiz: shared
+   ========================================================= */
+function randomTime(level) {
+  const h = rand(12) + 1;
+  const m = {
+    oclock: () => 0,
+    half: () => [0, 30][rand(2)],
+    quarter: () => [0, 15, 30, 45][rand(4)],
+    five: () => rand(12) * 5,
+    any: () => rand(60),
+  }[level]();
+  return { h, m };
+}
+const fmtHM = t => `${t.h}:${pad(t.m)}`;
+const sameT = (a, b) => a.h === b.h && a.m === b.m;
+function buildLevels() {
+  const box = $('#levels');
+  for (const l of LEVELS) {
+    const b = document.createElement('button');
+    b.className = 'level'; b.dataset.id = l.id; b.textContent = l.label;
+    b.addEventListener('click', () => { state.level = l.id; store.set('tte.level', l.id); renderLevels(); sfx.pop(); newQuestion(); });
+    box.appendChild(b);
+  }
+  renderLevels();
+}
+function renderLevels() { document.querySelectorAll('.level').forEach(b => b.classList.toggle('active', b.dataset.id === state.level)); }
+function feedback(text, kind) { const f = $('#feedback'); f.textContent = text; f.className = 'feedback' + (kind ? ' ' + kind : ''); }
+function newQuestion() { if (state.mode === 'read') newRead(); else if (state.mode === 'set') newSet(); }
+function lastQ() { return state.mode === 'read' ? quiz : setq; }
+function avoidRepeat(fn) { // don't give the same time twice in a row
+  const prev = lastQ() && (lastQ().answer || lastQ().target);
+  let t, tries = 0;
+  do { t = fn(); } while (prev && sameT(t, prev) && ++tries < 10);
+  return t;
+}
+
+/* =========================================================
+   Quiz: read the clock
+   ========================================================= */
+let quiz = null;
+function newRead() {
+  const t = avoidRepeat(() => randomTime(state.level));
+  quiz = { answer: t, firstTry: true, done: false };
+  setAnglesForward(anglesFor(t.h, t.m, 0));
+  $('#bubble').textContent = `${KID}, look at the clock carefully! What time is it? 🤔`;
+  feedback('');
+  $('#nextBtn').hidden = true;
+
+  const opts = new Map();
+  const add = o => { const k = fmtHM(o); if (!opts.has(k)) opts.set(k, o); };
+  add({ ...t, correct: true });
+  if (t.m % 5 === 0) add({ h: t.m / 5 || 12, m: (t.h % 12) * 5, swap: true });   // hands mixed up
+  add({ h: t.h % 12 + 1, m: t.m });                                              // hour + 1
+  add({ h: (t.h + 10) % 12 + 1, m: t.m });                                       // hour − 1
+  let guard = 0;
+  while (opts.size < 6 && guard++ < 50) add(randomTime(state.level));
+  const list = [...opts.values()].slice(0, 4).sort(() => Math.random() - 0.5);
+
+  const box = $('#options'); box.innerHTML = '';
+  for (const o of list) {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = fmtHM(o);
+    b.addEventListener('click', () => answerRead(o, b));
+    box.appendChild(b);
+  }
+}
+function answerRead(o, btn) {
+  if (quiz.done || btn.disabled) return;
+  const t = quiz.answer;
+  if (o.correct) {
+    quiz.done = true;
+    btn.classList.add('right');
+    if (quiz.firstTry) addStar();
+    sfx.yay(); confetti();
+    const p = Kids.praise();
+    feedback(`${p} It's ${fmtHM(t)} — ${timeWords(t.h, t.m)}.`, 'good');
+    speak(`${Kids.forSpeech(p)} It's ${timeWords(t.h, t.m)}.`);
+    $('#nextBtn').hidden = false;
+  } else {
+    quiz.firstTry = false; Kids.resetStreak();
+    btn.classList.add('wrong'); btn.disabled = true;
+    sfx.oops();
+    let hint;
+    if (o.swap) hint = 'Oops, the hands got mixed up! 🔴 The SHORT hand tells the hour, 🔵 the LONG hand tells the minutes.';
+    else if (o.m === t.m) hint = 'The minutes are right! 👍 Now look again at the short 🔴 hand — which number has it just passed?';
+    else if (o.h === t.h) hint = 'The hour is right! 👍 Now count the minutes on the long 🔵 hand — count by 5s!';
+    else hint = 'Not quite! Start with the short 🔴 hand for the hour, then the long 🔵 hand for minutes.';
+    feedback(hint, 'hint');
+  }
+}
+
+/* =========================================================
+   Quiz: set the clock (drag the hands)
+   ========================================================= */
+let setq = null, dragging = null;
+const toTotal = t => (t.h % 12) * 60 + t.m;
+function newSet() {
+  const t = avoidRepeat(() => randomTime(state.level));
+  setq = { target: t, total: 0, done: false, firstTry: true };
+  if (toTotal(t) === 0) setq.total = 360; // start at 6:00 if the answer is 12:00
+  applyTotal();
+  $('#targetTime').textContent = fmtHM(t);
+  $('#targetWords').textContent = timeWords(t.h, t.m);
+  $('#bubble').textContent = `${KID}, drag the clock hands to show this time! ✋ Move the long 🔵 hand first.`;
+  feedback('');
+  $('#nextBtn').hidden = true;
+}
+function applyTotal() {
+  const tot = ((setq.total % 720) + 720) % 720;
+  setAngles({ h: tot * 0.5, m: (tot % 60) * 6, s: 0 });
+}
+function svgAngle(e) {
+  const svg = clockRefs.svg, pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return ((Math.atan2(p.x - C, -(p.y - C)) * 180 / Math.PI) + 360) % 360;
+}
+function handleDrag(e) {
+  const ang = svgAngle(e);
+  const step = state.level === 'any' ? 1 : 5;
+  const prev = setq.total;
+  if (dragging === 'minute') {
+    const nm = (Math.round(ang / 6 / step) * step) % 60;
+    let d = nm - (setq.total % 60);
+    if (d < -30) d += 60;
+    if (d > 30) d -= 60;
+    setq.total = ((setq.total + d) % 720 + 720) % 720;
+  } else {
+    const m = setq.total % 60;
+    const h = ((Math.round((ang - m * 0.5) / 30)) % 12 + 12) % 12;
+    setq.total = h * 60 + m;
+  }
+  if (setq.total !== prev) { sfx.tick(); applyTotal(); }
+}
+function initDrag() {
+  const svg = clockRefs.svg;
+  svg.addEventListener('pointerdown', e => {
+    if (state.mode !== 'set' || !setq || setq.done) return;
+    const h = e.target.closest && e.target.closest('[data-hand]');
+    dragging = h ? h.dataset.hand : 'minute';
+    try { svg.setPointerCapture(e.pointerId); } catch {}
+    handleDrag(e);
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', e => { if (dragging) handleDrag(e); });
+  const stop = () => { dragging = null; };
+  svg.addEventListener('pointerup', stop);
+  svg.addEventListener('pointercancel', stop);
+}
+function checkSet() {
+  if (!setq || setq.done) return;
+  const t = setq.target;
+  const m = setq.total % 60, h = Math.floor(setq.total / 60) % 12 || 12;
+  if (h === t.h && m === t.m) {
+    setq.done = true;
+    if (setq.firstTry) addStar();
+    sfx.yay(); confetti();
+    const p = Kids.praise();
+    feedback(`${p} That's ${timeWords(t.h, t.m)}!`, 'good');
+    speak(`${Kids.forSpeech(p)} That's ${timeWords(t.h, t.m)}.`);
+    $('#nextBtn').hidden = false;
+  } else {
+    setq.firstTry = false; Kids.resetStreak();
+    sfx.oops();
+    const where = t.m === 0 ? 'the 12' : t.m % 5 === 0 ? `the ${t.m / 5}` : `minute ${t.m}`;
+    let hint;
+    if (m === t.m) hint = `The long 🔵 hand is perfect! Now move the short 🔴 hand near the ${t.h}.`;
+    else if (h === t.h) hint = `The short 🔴 hand is good! Now the long 🔵 hand should point at ${where}.`;
+    else hint = `Almost! First point the long 🔵 hand at ${where}, then move the short 🔴 hand to the ${t.h}.`;
+    feedback(hint, 'hint');
+  }
+}
+function showMe() {
+  if (!setq || setq.done) return;
+  setq.firstTry = false; setq.done = true;
+  const from = setq.total, dist = ((toTotal(setq.target) - from) % 720 + 720) % 720, start = performance.now();
+  const t = setq.target;
+  sfx.whoosh();
+  (function step(now) {
+    const k = Math.min(1, (now - start) / 1200);
+    setq.total = from + dist * easeInOut(k);
+    applyTotal();
+    if (k < 1) requestAnimationFrame(step);
+    else {
+      setq.total = toTotal(t); applyTotal();
+      feedback(`🪄 Like this! ${fmtHM(t)} is ${timeWords(t.h, t.m)}. Try the next one!`, 'hint');
+      $('#nextBtn').hidden = false;
+    }
+  })(start);
+}
+
+/* =========================================================
+   Modes & wiring
+   ========================================================= */
+function setMode(mode) {
+  state.mode = mode;
+  document.body.className = 'mode-' + mode;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  const explore = mode === 'explore';
+  $('#mapPanel').hidden = !explore;
+  $('#factsPanel').hidden = !explore;
+  $('#quizPanel').hidden = explore;
+  document.querySelectorAll('.explore-only').forEach(e => e.hidden = !explore);
+  clockRefs.svg.classList.toggle('sec-off', !explore || !$('#secToggle').checked);
+  $('#readArea').hidden = mode !== 'read';
+  $('#setArea').hidden = mode !== 'set';
+  if (explore) { state.anim = { from: { ...state.angles }, start: performance.now() }; lastKey = ''; }
+  else newQuestion();
+}
+
+function init() {
+  buildClock();
+  buildChips();
+  buildLevels();
+  initDrag();
+  buildMap();
+
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { sfx.pop(); setMode(t.dataset.mode); }));
+  $('#digitalBtn').addEventListener('click', () => setDigital(!state.showDigital));
+  $('#freezeBtn').addEventListener('click', () => {
+    state.frozenAt = state.frozenAt ? null : new Date();
+    $('#freezeBtn').textContent = state.frozenAt ? '▶️ Unfreeze' : '⏸️ Freeze';
+    $('#freezeBtn').classList.toggle('on', !!state.frozenAt);
+    lastKey = ''; sfx.pop();
+  });
+  $('#speakBtn').addEventListener('click', () => {
+    const now = state.frozenAt || new Date();
+    const p = partsIn(state.city.tz, now), pod = partOfDay(p.h);
+    speak(`In ${state.city.name}, ${state.city.country}, it is ${timeWords(p.h, p.m)} ${podPhrase(pod)}.`, true);
+  });
+  $('#secToggle').addEventListener('change', e => clockRefs.svg.classList.toggle('sec-off', !e.target.checked));
+  $('#helperToggle').addEventListener('change', e => clockRefs.svg.classList.toggle('helper-off', !e.target.checked));
+  $('#homeBtn').addEventListener('click', () => selectCity(HOME));
+  $('#randomBtn').addEventListener('click', () => {
+    let c; do { c = CITIES[rand(CITIES.length)]; } while (c.id === state.city.id);
+    selectCity(c);
+  });
+  $('#nextBtn').addEventListener('click', () => { sfx.pop(); newQuestion(); });
+  $('#checkBtn').addEventListener('click', checkSet);
+  $('#showMeBtn').addEventListener('click', showMe);
+
+  selectCity(HOME, true);
+  setDigital(false);
+  requestAnimationFrame(frame);
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus Garden</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  body { background: linear-gradient(160deg, #d8f3dc 0%, #e9f5ff 50%, #fdf0ff 100%); background-attachment: fixed; }
+  main { max-width: 1100px; margin: 0 auto; padding: 0 18px 18px; display: flex; flex-direction: column; gap: 18px; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: center; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: 1fr; } }
+  .center { text-align: center; }
+  .label { font-size: 18px; color: var(--muted); margin: 8px 0 6px; }
+  .pick { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .pick button { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 7px 14px; font-size: 17px; font-weight: 600; cursor: pointer; }
+  .pick button.active { border-color: #2d9d5f; background: #e3f7ea; }
+  .pick button:disabled { opacity: .5; cursor: default; }
+  #pot { width: 100%; max-width: 380px; display: block; margin: 0 auto; }
+  .ring-text { font-size: 22px; font-weight: 700; fill: #2d6a4f; text-anchor: middle; }
+  .status { font-size: 22px; font-weight: 600; min-height: 34px; color: #2d6a4f; margin-top: 4px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .garden { display: flex; flex-wrap: wrap; gap: 6px; min-height: 60px; background: linear-gradient(180deg, #e3f7ea, #b7e4c7); border-radius: 18px; padding: 12px; align-items: flex-end; }
+  .garden span { font-size: 38px; line-height: 1; cursor: default; animation: pop .5s ease; }
+  .gstats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .gstat { background: #f1e9ff; border-radius: 16px; padding: 8px 14px; font-size: 16px; }
+  .gstat b { font-size: 20px; color: var(--purple); }
+
+  /* breathing bubble */
+  .breathe { display: flex; flex-direction: column; align-items: center; }
+  .bubble-ball {
+    width: 120px; height: 120px; border-radius: 50%; margin: 30px auto;
+    background: radial-gradient(circle at 35% 30%, #fff, #a0e7e5 40%, #6fb7f0);
+    box-shadow: 0 0 40px rgba(111,183,240,.6); transition: transform 4s ease-in-out;
+  }
+  .bubble-ball.in { transform: scale(2.1); }
+  .bubble-ball.hold { transform: scale(2.1); transition: none; }
+  .breath-word { font-size: 34px; font-weight: 700; color: #3a6ea5; min-height: 46px; }
+  .breath-count { font-size: 18px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌱</span>
+    <div><h1>Focus Garden</h1><small>Grow a flower with your focus, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="grow">🌻 Grow a Flower</button>
+  <button class="tab" data-tab="breathe">🫧 Calm Breathing</button>
+  <button class="tab" data-tab="garden">🏡 My Garden</button>
+</nav>
+
+<main>
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <!-- grow -->
+  <section class="card" data-panel="grow">
+    <div class="grid2">
+      <div>
+        <svg id="pot" viewBox="0 0 300 320" aria-label="Your growing plant"></svg>
+        <div class="center status" id="status"></div>
+      </div>
+      <div class="center">
+        <div class="label">What will you focus on?</div>
+        <div class="pick" id="actPick">
+          <button data-a="📖 Reading" class="active">📖 Reading</button>
+          <button data-a="✏️ Homework">✏️ Homework</button>
+          <button data-a="🎨 Drawing">🎨 Drawing</button>
+          <button data-a="🧩 Puzzle">🧩 Puzzle</button>
+          <button data-a="🎹 Practice">🎹 Practice</button>
+        </div>
+        <div class="label">For how long?</div>
+        <div class="pick" id="minPick">
+          <button data-m="1">1 minute (try it!)</button>
+          <button data-m="5" class="active">5 minutes</button>
+          <button data-m="10">10 minutes</button>
+          <button data-m="15">15 minutes</button>
+        </div>
+        <div class="row">
+          <button class="btn big green" id="startBtn">🌱 Plant & Start</button>
+          <button class="btn big red" id="stopBtn" hidden>🛑 Stop</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- breathe -->
+  <section class="card breathe" data-panel="breathe" hidden>
+    <div class="bubble-ball" id="ball"></div>
+    <div class="breath-word" id="breathWord">Ready?</div>
+    <div class="breath-count" id="breathCount">5 slow breaths</div>
+    <div class="row"><button class="btn big" id="breathBtn">🫧 Start breathing</button></div>
+  </section>
+
+  <!-- garden -->
+  <section class="card" data-panel="garden" hidden>
+    <h2 style="margin:0 0 10px">🏡 <span data-kid-name>Kavikuyil</span>'s garden</h2>
+    <div class="garden" id="garden"></div>
+    <div class="gstats" id="gstats"></div>
+    <div class="row"><button class="btn orange" id="clearBtn">🧹 Start a new garden</button></div>
+  </section>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why?</h3>
+    <p>Your brain is like a muscle. Every time you practise focusing, it gets a little stronger! 💪</p>
+    <p>If your mind wanders off, that's okay. Just notice it, and gently bring it back, like calling a puppy back to you. 🐶</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Imagine a tiny seed in warm soil. Each minute you focus, it drinks a little water and reaches up towards the sunshine.</p>
+    <p>A green shoot, two little leaves, a bud… and then, pop! A beautiful flower, grown by YOU.</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>Your brain has about <b>86 billion</b> tiny cells called neurons, all talking to each other.</p>
+    <p>When you practise something, the paths between them get stronger, like a path in the grass that gets clearer each time you walk on it.</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>What helps you focus? What makes it hard?</li>
+      <li>How did you feel when your flower bloomed?</li>
+      <li>What is something you want to get better at by practising?</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const FLOWERS = ['🌻', '🌷', '🌹', '🌼', '🌸', '🪻', '🌺', '💐'];
+const ENCOURAGE = [
+  "You're doing great! Keep going 🌱",
+  'Your plant is growing because of YOU! 🌿',
+  'If your mind wanders, gently bring it back 🐶',
+  'Slow and steady, like a tortoise 🐢',
+  'Your focus muscle is getting stronger 💪',
+  'Almost there… you can do it! ✨',
+];
+function kuyil(t, good) { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); }
+
+/* =========================================================
+   The pot + plant (grows from seed to flower)
+   ========================================================= */
+const P = {};
+(function buildPot() {
+  const s = $('#pot');
+  // progress ring
+  el('circle', { cx: 150, cy: 150, r: 140, fill: '#fff', opacity: .6 }, s);
+  el('circle', { cx: 150, cy: 150, r: 140, fill: 'none', stroke: '#e3f7ea', 'stroke-width': 12 }, s);
+  P.ring = el('circle', { cx: 150, cy: 150, r: 140, fill: 'none', stroke: '#52b788', 'stroke-width': 12, 'stroke-linecap': 'round',
+    'stroke-dasharray': 2 * Math.PI * 140, 'stroke-dashoffset': 2 * Math.PI * 140, transform: 'rotate(-90 150 150)' }, s);
+  P.sun = el('text', { x: 236, y: 70, 'font-size': 34, 'text-anchor': 'middle', opacity: .2 }, s); P.sun.textContent = '☀️';
+  // plant parts
+  P.stem = el('path', { stroke: '#2d9d5f', 'stroke-width': 7, fill: 'none', 'stroke-linecap': 'round' }, s);
+  P.leafL = el('path', { d: 'M0 0 q-34 -16 -46 4 q22 12 46 -4z', fill: '#52b788' }, s);
+  P.leafR = el('path', { d: 'M0 0 q34 -16 46 4 q-22 12 -46 -4z', fill: '#40916c' }, s);
+  P.flower = el('text', { 'text-anchor': 'middle', 'dominant-baseline': 'central' }, s);
+  P.seed = el('ellipse', { cx: 150, cy: 228, rx: 9, ry: 6, fill: '#8b5a2b' }, s);
+  // pot
+  el('path', { d: 'M92 232 h116 l-12 64 h-92 z', fill: '#e76f51' }, s);
+  el('rect', { x: 84, y: 222, width: 132, height: 18, rx: 6, fill: '#f4a261' }, s);
+  el('ellipse', { cx: 150, cy: 232, rx: 58, ry: 6, fill: '#6b4226' }, s);
+  P.text = el('text', { x: 150, y: 314, class: 'ring-text' }, s);
+})();
+function drawPlant(p, flowerEmoji) {
+  // p: 0 → 1
+  const circ = 2 * Math.PI * 140;
+  P.ring.setAttribute('stroke-dashoffset', circ * (1 - p));
+  P.sun.setAttribute('opacity', 0.2 + 0.8 * p);
+  P.seed.setAttribute('opacity', p < 0.08 ? 1 : 0);
+  const h = Math.max(0, (p - 0.05) / 0.95) * 150;          // stem height
+  const topY = 230 - h;
+  P.stem.setAttribute('d', h > 1 ? `M150 230 Q${150 + 10 * Math.sin(p * 6)} ${230 - h / 2} 150 ${topY}` : '');
+  const leaf = (elm, at, show) => {
+    const y = 230 - h * at;
+    const s = Math.max(0, Math.min(1, show));
+    elm.setAttribute('transform', `translate(150 ${y}) scale(${s})`);
+  };
+  leaf(P.leafL, 0.45, (p - 0.25) / 0.15);
+  leaf(P.leafR, 0.65, (p - 0.4) / 0.15);
+  if (p >= 1) { P.flower.textContent = flowerEmoji; P.flower.setAttribute('font-size', 78); }
+  else if (p > 0.75) { P.flower.textContent = '🌱'; P.flower.setAttribute('font-size', 20 + (p - 0.75) * 120); }
+  else P.flower.textContent = '';
+  P.flower.setAttribute('x', 150); P.flower.setAttribute('y', topY - (p >= 1 ? 26 : 6));
+}
+
+/* =========================================================
+   Focus timer
+   ========================================================= */
+const F = { mins: 5, act: '📖 Reading', running: false, done: 0, startedAt: 0, flower: '🌻', lastSay: 0, away: false };
+function pickGroup(id, cb) {
+  const box = $(id);
+  box.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    if (F.running) return;
+    box.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    Kids.sfx.pop(); cb(b);
+  }));
+}
+pickGroup('#actPick', b => { F.act = b.dataset.a; });
+pickGroup('#minPick', b => { F.mins = +b.dataset.m; drawIdle(); });
+function lockPickers(lock) { document.querySelectorAll('#actPick button, #minPick button').forEach(b => b.disabled = lock && !b.classList.contains('active')); }
+const fmtLeft = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+function drawIdle() {
+  drawPlant(0); P.text.textContent = `${F.mins}:00`;
+  $('#status').textContent = 'Plant a seed and start focusing!';
+}
+$('#startBtn').addEventListener('click', () => {
+  F.running = true; F.done = 0; F.last = performance.now(); F.lastSay = 0; F.away = false;
+  F.flower = FLOWERS[Kids.rand(FLOWERS.length)];
+  $('#startBtn').hidden = true; $('#stopBtn').hidden = false; lockPickers(true);
+  kuyil(`Let's grow a flower, ${Kids.name}! Focus on your ${F.act.split(' ').slice(1).join(' ').toLowerCase()} ${F.act.split(' ')[0]}. I'll be quiet now. 🤫`);
+  $('#status').textContent = `${F.act}… focusing 🌱`;
+  Kids.sfx.pop();
+});
+$('#stopBtn').addEventListener('click', () => {
+  if (!F.running) return;
+  const mins = F.done / 60;
+  stopFocus();
+  if (mins >= 1) saveFlower('🌱', mins, false);
+  kuyil(mins >= 1
+    ? `That's okay, ${Kids.name}! You focused for ${Math.round(mins)} minute${Math.round(mins) > 1 ? 's' : ''}, and a little sprout 🌱 went into your garden. Every try makes your focus stronger. 💪`
+    : `That's okay, ${Kids.name}! Every try makes your focus stronger. Want to try again? 💪`);
+});
+function stopFocus() {
+  F.running = false;
+  $('#startBtn').hidden = false; $('#stopBtn').hidden = true; lockPickers(false);
+  drawIdle();
+}
+// If she leaves the page, the timer waits for her (no punishment, just a gentle note)
+document.addEventListener('visibilitychange', () => {
+  if (!F.running) return;
+  if (document.hidden) F.away = true;
+  else if (F.away) { F.away = false; F.last = performance.now(); kuyil('Welcome back! Your plant waited for you. Let\'s keep growing 🌱'); }
+});
+function focusFrame(now) {
+  if (!F.running || F.away) { F.last = now; return; }
+  F.done += (now - F.last) / 1000; F.last = now;
+  const total = F.mins * 60, p = Math.min(1, F.done / total);
+  drawPlant(p, F.flower);
+  P.text.textContent = fmtLeft(Math.max(0, total - F.done));
+  // a quiet encouragement every couple of minutes (text only, no sound, so she isn't disturbed)
+  const every = Math.max(30, total / 4);
+  if (F.done - F.lastSay > every && p < 1) { F.lastSay = F.done; kuyil(ENCOURAGE[Kids.rand(ENCOURAGE.length)]); }
+  if (p >= 1) bloom();
+}
+function bloom() {
+  F.running = false;
+  $('#startBtn').hidden = false; $('#stopBtn').hidden = true; lockPickers(false);
+  P.text.textContent = '🎉';
+  const stars = Math.max(1, Math.round(F.mins / 5));
+  for (let i = 0; i < stars; i++) Kids.addStar();
+  Kids.sfx.yay(); Kids.confetti();
+  saveFlower(F.flower, F.mins, true);
+  const msg = `${Kids.praise()} You focused for ${F.mins} minute${F.mins > 1 ? 's' : ''} and grew a ${F.flower}! It's in your garden now.`;
+  kuyil(msg, true);
+  $('#status').textContent = `Your ${F.flower} bloomed! 🎉`;
+  Kids.banner(`${F.flower} You grew a flower!`);
+  Kids.speak(Kids.forSpeech(msg));
+  setTimeout(() => { if (!F.running) drawIdle(); }, 8000);
+}
+
+/* =========================================================
+   My garden (saved in this browser)
+   ========================================================= */
+const KEY = 'focus.garden';
+const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function saveFlower(e, mins, full) {
+  const g = Kids.store.get(KEY, []);
+  g.push({ e, mins: Math.round(mins), act: F.act, full, date: localDay(new Date()) });
+  Kids.store.set(KEY, g);
+  renderGarden();
+}
+function renderGarden() {
+  const g = Kids.store.get(KEY, []);
+  $('#garden').innerHTML = g.length ? g.map(f => `<span title="${f.act}, ${f.mins} min, ${f.date}">${f.e}</span>`).join('')
+    : '<div class="label">Your garden is empty. Grow your first flower! 🌱</div>';
+  const mins = g.reduce((a, f) => a + f.mins, 0);
+  const flowers = g.filter(f => f.full).length;
+  const days = new Set(g.map(f => f.date));
+  // streak: days in a row ending today (or yesterday)
+  let streak = 0, d = new Date();
+  if (!days.has(localDay(d))) d.setDate(d.getDate() - 1);
+  while (days.has(localDay(d))) { streak++; d.setDate(d.getDate() - 1); }
+  $('#gstats').innerHTML = `
+    <span class="gstat">🌸 Flowers: <b>${flowers}</b></span>
+    <span class="gstat">⏱️ Minutes focused: <b>${mins}</b></span>
+    <span class="gstat">🔥 Days in a row: <b>${streak}</b></span>`;
+}
+$('#clearBtn').addEventListener('click', () => {
+  if (!confirm('Start a new, empty garden? Your old flowers will be removed.')) return;
+  Kids.store.set(KEY, []); renderGarden(); Kids.sfx.pop();
+});
+
+/* =========================================================
+   Calm breathing: breathe in 4 s, hold 2 s, out 4 s, 5 times
+   ========================================================= */
+const B = { running: false, timer: null };
+$('#breathBtn').addEventListener('click', () => {
+  if (B.running) return;
+  B.running = true; $('#breathBtn').disabled = true;
+  let n = 0;
+  const ball = $('#ball');
+  const step = () => {
+    if (n >= 5) {
+      B.running = false; $('#breathBtn').disabled = false;
+      $('#breathWord').textContent = 'Well done 😌'; $('#breathCount').textContent = 'You feel calm and ready!';
+      ball.className = 'bubble-ball'; Kids.addStar(); Kids.sfx.yay();
+      kuyil(`Lovely, ${Kids.name}! A calm mind is ready to focus. Shall we grow a flower now? 🌻`, true);
+      return;
+    }
+    n++;
+    $('#breathCount').textContent = `Breath ${n} of 5`;
+    $('#breathWord').textContent = 'Breathe in… 🌬️'; ball.className = 'bubble-ball in';
+    B.timer = setTimeout(() => {
+      $('#breathWord').textContent = 'Hold… ✨'; ball.className = 'bubble-ball hold';
+      B.timer = setTimeout(() => {
+        $('#breathWord').textContent = 'Breathe out… 🍃'; ball.className = 'bubble-ball';
+        B.timer = setTimeout(step, 4000);
+      }, 2000);
+    }, 4000);
+  };
+  step();
+});
+
+/* =========================================================
+   Tabs
+   ========================================================= */
+const SAY = {
+  grow: `Hi ${Kids.name}! Pick what you'll focus on and for how long, then plant your seed. Your flower grows while you focus! 🌻`,
+  breathe: 'Let\'s calm down before we focus. Watch the bubble: breathe in as it grows, breathe out as it shrinks. 🫧',
+  garden: 'Here are all the flowers you grew with your focus! 🏡',
+};
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (!F.running) kuyil(SAY[b.dataset.tab]);
+}));
+
+function frame(now) { focusFrame(now); requestAnimationFrame(frame); }
+kuyil(SAY.grow);
+drawIdle();
+renderGarden();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

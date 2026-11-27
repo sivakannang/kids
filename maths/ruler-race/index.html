@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruler Race</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .ladder { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .step { border-radius: 20px; padding: 14px 10px; text-align: center; cursor: pointer; border: 3px solid transparent; transition: transform .15s; }
+  .step:hover { transform: translateY(-3px); }
+  .step.sel { border-color: var(--purple); }
+  .step .e { font-size: 44px; }
+  .step .v { font-size: 22px; font-weight: 700; }
+  .step .s { font-size: 14px; color: var(--muted); }
+  .detail { margin-top: 14px; font-size: 20px; text-align: center; background: #eef6ff; border-radius: 18px; padding: 12px; min-height: 56px; }
+  .arrow { text-align: center; font-size: 15px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">📏</span>
+    <div><h1>Ruler Race</h1><small>Centimetres, metres and kilometres, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card">
+    <h2 style="margin:0 0 10px">🪜 From tiny to HUGE: tap each step</h2>
+    <div class="ladder" id="ladder"></div>
+    <div class="detail" id="detail">Tap a step to learn about it!</div>
+  </section>
+  <section class="card">
+    <h2 style="margin:0 0 10px">🏁 Ruler Race quiz</h2>
+    <div id="quizBox"></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+$('#bubble').textContent = `${Kids.name}, small things are measured in centimetres, bigger things in metres, and far-away places in kilometres. Let's race!`;
+
+const STEPS = [
+  { e: '🐜', v: '1 cm', s: 'an ant', bg: '#ffe1ec', d: 'One centimetre (cm) is tiny: about as long as an ant 🐜, or as wide as your fingernail.' },
+  { e: '✏️', v: '10 cm', s: 'a short pencil', bg: '#fff3c4', d: '10 centimetres: about the length of a short pencil or your hand.' },
+  { e: '👧', v: '1 m = 100 cm', s: 'a big step', bg: '#d3f8e2', d: 'One metre (m) = 100 centimetres. A child of 6 is a little taller than 1 metre!' },
+  { e: '🏏', v: '20 m', s: 'a cricket pitch', bg: '#e3f2ff', d: 'A cricket pitch is about 20 metres long, from one wicket to the other. 🏏' },
+  { e: '🚶', v: '1 km = 1,000 m', s: 'a 15-minute walk', bg: '#e8defe', d: 'One kilometre (km) = 1,000 metres. Walking 1 km takes about 15 minutes. 🚶' },
+  { e: '🚗', v: '145 km', s: 'Bangalore → Mysore', bg: '#ffe9d6', d: 'Bangalore to Mysore is about 145 km by road: about 3 hours in a car. 🚗' },
+  { e: '🌍', v: '40,000 km', s: 'around the Earth', bg: '#d6f5f5', d: 'All the way around the Earth is about 40,000 km. A car would need about 3 weeks, driving day and night!' },
+];
+let seen = new Set();
+STEPS.forEach((s, i) => {
+  const d = document.createElement('div');
+  d.className = 'step'; d.style.background = s.bg;
+  d.innerHTML = `<div class="e">${s.e}</div><div class="v">${s.v}</div><div class="s">${s.s}</div>`;
+  d.addEventListener('click', () => {
+    document.querySelectorAll('.step').forEach(x => x.classList.toggle('sel', x === d));
+    $('#detail').textContent = s.d; Kids.sfx.pop(); Kids.speak(Kids.forSpeech(s.d));
+    seen.add(i);
+    if (seen.size === STEPS.length) { Kids.addStar(); Kids.banner('🪜 You climbed from 1 cm to 40,000 km!'); seen = new Set([-1]); }
+  });
+  $('#ladder').appendChild(d);
+});
+
+/* ---------- quiz ---------- */
+const THINGS = [
+  { e: '🐜', n: 'an ant', u: 'cm', cm: 1 }, { e: '✏️', n: 'a pencil', u: 'cm', cm: 18 }, { e: '👟', n: 'your shoe', u: 'cm', cm: 18 },
+  { e: '📕', n: 'a book', u: 'cm', cm: 28 }, { e: '👧', n: 'how tall you are', u: 'm', cm: 115 }, { e: '🚌', n: 'a bus', u: 'm', cm: 1200 },
+  { e: '🦒', n: 'a giraffe', u: 'm', cm: 500 }, { e: '🏊', n: 'a swimming pool', u: 'm', cm: 2500 }, { e: '🏏', n: 'a cricket pitch', u: 'm', cm: 2000 },
+  { e: '🚗', n: 'Bangalore to Mysore', u: 'km', cm: 145e5 }, { e: '✈️', n: 'Bangalore to Delhi', u: 'km', cm: 1740e5 }, { e: '🌍', n: 'around the Earth', u: 'km', cm: 4e9 },
+];
+const UNIT_NAME = { cm: 'centimetres (cm)', m: 'metres (m)', km: 'kilometres (km)' };
+const show = cm => cm >= 1e5 ? `${(cm / 1e5).toLocaleString('en-IN')} km` : cm >= 100 ? `${cm / 100} m` : `${cm} cm`;
+const MAKERS = [
+  () => { const t = THINGS[R(THINGS.length)];
+    return { q: `${t.e} What would you use to measure ${t.n}?`, choices: ['cm', 'm', 'km'].map(u => ({ label: UNIT_NAME[u], ok: u === t.u })),
+      yay: `We measure ${t.n} in ${UNIT_NAME[t.u]}.`, hint: 'Small things → cm. Big things → m. Far places → km.' }; },
+  () => { let a, b; do { a = THINGS[R(THINGS.length)]; b = THINGS[R(THINGS.length)]; } while (a.cm === b.cm);
+    const longer = a.cm > b.cm ? a : b;
+    return { q: 'Which is LONGER?', choices: [a, b].map(t => ({ label: `<span class="ce">${t.e}</span>${t.n}`, ok: t === longer })),
+      yay: `${longer.n[0].toUpperCase() + longer.n.slice(1)} is longer: about ${show(longer.cm)}.`, hint: 'Think: would you measure it in cm, m or km?' }; },
+  () => { const pairs = [[100, 50], [100, 120], [1000 * 100, 900 * 100], [1e5, 2000 * 100], [10, 1], [250, 200]];
+    const [x, y] = pairs[R(pairs.length)], longer = Math.max(x, y);
+    return { q: `Which is longer: <b>${show(x)}</b> or <b>${show(y)}</b>?`, choices: [x, y].map(v => ({ label: show(v), ok: v === longer })),
+      yay: `${show(longer)} is longer.`, hint: 'Remember: 1 m = 100 cm and 1 km = 1,000 m.' }; },
+  () => { const qs = [['How many centimetres in 1 metre?', 100, [10, 100, 1000, 60], '1 metre = 100 centimetres.'],
+      ['How many metres in 1 kilometre?', 1000, [10, 100, 1000, 60], '1 kilometre = 1,000 metres.'],
+      ['Half a metre is how many centimetres?', 50, [5, 50, 500, 25], 'Half of 100 cm is 50 cm.'],
+      ['2 metres is how many centimetres?', 200, [20, 200, 2000, 12], '2 metres = 200 centimetres.']];
+    const [q, a, o, yay] = qs[R(qs.length)];
+    return { q, choices: shuffle(o).map(v => ({ label: v.toLocaleString('en-IN'), ok: v === a })), yay, hint: '1 m = 100 cm. 1 km = 1,000 m.' }; },
+  () => { const t = [THINGS[1], THINGS[4], THINGS[6], THINGS[9]][R(4)];
+    const opts = shuffle([t.cm, t.cm / 100, t.cm * 100, t.cm * 1000].map(v => Math.round(v * 100) / 100).filter(v => v >= 0.1)).slice(0, 4);
+    if (!opts.includes(t.cm)) opts[0] = t.cm;
+    return { q: `${t.e} About how long is ${t.n}?`, choices: shuffle(opts).map(v => ({ label: show(v), ok: v === t.cm })),
+      yay: `${t.n[0].toUpperCase() + t.n.slice(1)} is about ${show(t.cm)}.`, hint: 'Picture it in your mind. Would it fit on your hand? In your room?' }; },
+];
+Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)](), { rounds: 10 });
+
+Kids.learn({
+  why: ['We use different units so the numbers stay easy. A pencil is 18 cm, not 0.00018 km!',
+    '<b>centi</b> means one hundredth: 100 centimetres make a metre. <b>kilo</b> means a thousand: 1,000 metres make a kilometre.'],
+  imagine: ['Imagine you are an ant 🐜 walking along a pencil. It feels like a long road!',
+    'Now imagine you are a giant who can step from Bangalore to Mysore. For you, a pencil is smaller than a grain of sand.'],
+  wow: ['If you laid 1 lakh pencils end to end, they would stretch about 18 km!', 'Mount Everest is almost 9 km tall: about as tall as 10 Burj Khalifas stacked up! 🏔️'],
+  talk: ['Find something at home that is about 1 metre long.', 'How far is your school from home? Is it more or less than 1 km?', 'Which is the longest journey you have ever made?'],
+});
+</script>
+</body>
+</html>

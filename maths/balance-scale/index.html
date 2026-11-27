@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Balance Scale</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  #scale { background: linear-gradient(180deg, #e9f5ff, #fff7e6); cursor: default; }
+  #scale text.item { cursor: pointer; }
+  .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+  .item-btn { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 6px 4px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 14px; color: var(--ink); }
+  .item-btn .e { display: block; font-size: 32px; }
+  .item-btn:active { transform: scale(.95); }
+  .side-pick button.active { border-color: var(--purple); background: #f1e9ff; }
+  .totals { display: flex; justify-content: space-between; font-size: 20px; font-weight: 600; margin-top: 8px; }
+  .totals b { color: var(--purple); }
+  .verdict { text-align: center; font-size: 24px; font-weight: 700; min-height: 34px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">⚖️</span>
+    <div><h1>Balance Scale</h1><small>Heavy or light? Grams and kilograms, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <svg id="scale" class="svgbox" viewBox="0 0 800 420" aria-label="Balance scale"></svg>
+      <div class="totals"><span>⬅️ Left: <b id="tl">0 g</b></span><span>Right: <b id="tr">0 g</b> ➡️</span></div>
+      <div class="verdict" id="verdict"></div>
+      <div class="label center">Put things on the… <span class="pick side-pick" id="sidePick" style="display:inline-flex">
+        <button data-s="L" class="active">⬅️ Left</button><button data-s="R">Right ➡️</button></span></div>
+      <div class="items" id="items"></div>
+      <div class="row"><button class="btn orange" id="emptyBtn">🧹 Empty the scale</button></div>
+      <div class="hint">Tap a thing on the scale to take it off.</div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl;
+const ITEMS = [
+  { id: 'straw', e: '🍓', n: 'strawberry', g: 20 },
+  { id: 'banana', e: '🍌', n: 'banana', g: 100 },
+  { id: 'apple', e: '🍎', n: 'apple', g: 200 },
+  { id: 'teddy', e: '🧸', n: 'teddy', g: 250 },
+  { id: 'book', e: '📕', n: 'book', g: 500 },
+  { id: 'coconut', e: '🥥', n: 'coconut', g: 1000 },
+  { id: 'melon', e: '🍉', n: 'watermelon', g: 3000 },
+  { id: 'w100', e: '🔘', n: '100 g weight', g: 100, weight: true },
+  { id: 'w500', e: '🟠', n: '500 g weight', g: 500, weight: true },
+  { id: 'w1k', e: '⬛', n: '1 kg weight', g: 1000, weight: true },
+];
+const byId = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+const pans = { L: [], R: [] };
+let side = 'L', tilt = 0;
+const fmtG = g => g >= 1000 ? `${(g / 1000).toLocaleString('en-IN')} kg` : `${g} g`;
+const total = s => pans[s].reduce((a, id) => a + byId[id].g, 0);
+
+ITEMS.forEach(it => {
+  const b = document.createElement('button');
+  b.className = 'item-btn';
+  b.innerHTML = `<span class="e">${it.e}</span>${it.n}<br>${fmtG(it.g)}`;
+  b.addEventListener('click', () => {
+    if (pans[side].length >= 12) { Kids.sfx.oops(); return; }
+    pans[side].push(it.id); Kids.sfx.pop(); changed();
+  });
+  $('#items').appendChild(b);
+});
+$('#sidePick').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  side = b.dataset.s; Kids.sfx.pop();
+  $('#sidePick').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+}));
+$('#emptyBtn').addEventListener('click', () => { pans.L = []; pans.R = []; Kids.sfx.whoosh(); changed(); });
+
+/* ---------- drawing ---------- */
+const svg = $('#scale'), PX = 400, PY = 150, ARM = 270;
+function draw() {
+  svg.innerHTML = '';
+  el('rect', { x: 0, y: 390, width: 800, height: 30, fill: '#c9a227', opacity: .35 }, svg);
+  el('path', { d: `M${PX} ${PY} L${PX - 50} 392 L${PX + 50} 392 Z`, fill: '#8d6e63' }, svg);
+  const a = tilt * Math.PI / 180;
+  const ends = { L: [PX - ARM * Math.cos(a), PY - ARM * Math.sin(a)], R: [PX + ARM * Math.cos(a), PY + ARM * Math.sin(a)] };
+  el('line', { x1: ends.L[0], y1: ends.L[1], x2: ends.R[0], y2: ends.R[1], stroke: '#5d4037', 'stroke-width': 12, 'stroke-linecap': 'round' }, svg);
+  el('circle', { cx: PX, cy: PY, r: 12, fill: '#ffd166', stroke: '#5d4037', 'stroke-width': 4 }, svg);
+  // pointer
+  el('line', { x1: PX, y1: PY, x2: PX + 70 * Math.sin(a), y2: PY - 70 * Math.cos(a), stroke: '#ef476f', 'stroke-width': 4 }, svg);
+  for (const s of ['L', 'R']) {
+    const [x, y] = ends[s], py = y + 110;
+    el('line', { x1: x, y1: y, x2: x - 70, y2: py, stroke: '#795548', 'stroke-width': 2 }, svg);
+    el('line', { x1: x, y1: y, x2: x + 70, y2: py, stroke: '#795548', 'stroke-width': 2 }, svg);
+    el('path', { d: `M${x - 90} ${py} Q${x} ${py + 34} ${x + 90} ${py} Z`, fill: '#b0bec5', stroke: '#78909c', 'stroke-width': 3 }, svg);
+    pans[s].forEach((id, i) => {
+      const row = Math.floor(i / 4), col = i % 4;
+      const t = el('text', { x: x - 54 + col * 36, y: py - 4 - row * 32, 'font-size': 30, 'text-anchor': 'middle', class: 'item' }, svg);
+      t.textContent = byId[id].e;
+      t.addEventListener('click', () => { pans[s].splice(i, 1); Kids.sfx.pop(); changed(); });
+    });
+  }
+}
+function targetTilt() {
+  const l = total('L'), r = total('R');
+  if (l === r) return 0;
+  return Math.max(-16, Math.min(16, (r - l) / Math.max(l, r) * 24));
+}
+let animating = false;
+function animate() {
+  const t = targetTilt();
+  tilt += (t - tilt) * 0.12;
+  if (Math.abs(t - tilt) < 0.05) tilt = t;
+  draw();
+  if (tilt !== t) requestAnimationFrame(animate); else animating = false;
+}
+function changed() {
+  const l = total('L'), r = total('R');
+  $('#tl').textContent = fmtG(l); $('#tr').textContent = fmtG(r);
+  $('#verdict').textContent = !l && !r ? '' : l === r ? '⚖️ Balanced! Both sides are the same!' : l > r ? '⬅️ The LEFT side is heavier' : 'The RIGHT side is heavier ➡️';
+  if (l && l === r) Kids.sfx.yay();
+  if (!animating) { animating = true; requestAnimationFrame(animate); }
+  ch.check({ l, r, L: pans.L, R: pans.R });
+}
+
+/* ---------- challenges ---------- */
+const only = (arr, pred) => arr.length > 0 && arr.every(pred);
+const count = (arr, id) => arr.filter(x => x === id).length;
+const ch = Kids.challenges([
+  { ask: 'Make the LEFT side heavier ⬅️', hint: 'Put something heavy on the left side.', ok: c => c.l > c.r, yay: 'The heavier side goes DOWN!' },
+  { ask: 'Balance 1 apple 🍎 using only weights 🔘', hint: 'An apple is 200 g. How many 100 g weights is that?',
+    ok: c => c.l === c.r && [[c.L, c.R], [c.R, c.L]].some(([a, b]) => a.length === 1 && a[0] === 'apple' && only(b, id => byId[id].weight)),
+    yay: '1 apple = 200 g = two 100 g weights!' },
+  { ask: 'How many bananas 🍌 balance a 1 kg weight ⬛?', hint: 'Put the 1 kg weight on one side, and add bananas to the other side.',
+    ok: c => c.l === c.r && [[c.L, c.R], [c.R, c.L]].some(([a, b]) => a.length === 1 && a[0] === 'w1k' && only(b, id => id === 'banana')),
+    yay: '10 bananas = 1 kg = 1,000 grams!' },
+  { ask: 'Balance the coconut 🥥 with apples 🍎', hint: 'A coconut is 1,000 g and an apple is 200 g.',
+    ok: c => c.l === c.r && [[c.L, c.R], [c.R, c.L]].some(([a, b]) => a.length === 1 && a[0] === 'coconut' && only(b, id => id === 'apple')),
+    yay: '5 apples weigh the same as 1 coconut!' },
+  { ask: 'Which is heavier, the teddy 🧸 or the book 📕? Put them on different sides!', hint: 'Teddy on one side, book on the other.',
+    ok: c => [[c.L, c.R], [c.R, c.L]].some(([a, b]) => a.length === 1 && a[0] === 'teddy' && b.length === 1 && b[0] === 'book'),
+    yay: 'The book is heavier! Big and soft things can be light.' },
+  { ask: 'Balance the watermelon 🍉 with the FEWEST things you can', hint: 'A watermelon is 3 kg. Which weights are the biggest?',
+    ok: c => c.l === c.r && [[c.L, c.R], [c.R, c.L]].some(([a, b]) => a.length === 1 && a[0] === 'melon' && b.length <= 3),
+    yay: '3 kg = three 1 kg weights. Clever!' },
+], { title: 'Balance Boss' });
+
+Kids.learn({
+  why: ['A balance scale is like a seesaw. The heavier side goes down, and when both sides weigh the same, it stays flat.',
+    'We measure how heavy things are in <b>grams</b> (g) and <b>kilograms</b> (kg). 1 kilogram = 1,000 grams.'],
+  imagine: ['Imagine sitting on a seesaw with an elephant 🐘. Whoosh, up you go!',
+    'Now imagine sitting with a feather 🪶. Bump, down you go! How many friends would you need to balance the elephant?'],
+  wow: ['A blue whale can weigh about 1,50,000 kg: as much as 30 elephants!', 'A hummingbird weighs only about 3 grams, about as much as a coin. 🐦'],
+  talk: ['What is the heaviest thing you can lift?', 'Is a big thing always heavier than a small thing? Can you think of a big, light thing?', 'Find two things at home that you think weigh the same.'],
+});
+draw();
+</script>
+</body>
+</html>

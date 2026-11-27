@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Ladder</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  main { max-width: 1150px; margin: 0 auto; padding: 0 18px 18px; display: flex; flex-direction: column; gap: 18px; }
+  .climb { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 820px) { .climb { grid-template-columns: 1fr; } }
+
+  /* the ladder */
+  .ladder { position: relative; padding: 10px 46px; }
+  .ladder::before, .ladder::after { content: ''; position: absolute; top: 0; bottom: 0; width: 14px; border-radius: 7px; background: linear-gradient(90deg, #c47b3b, #a0612b); }
+  .ladder::before { left: 30px; } .ladder::after { right: 30px; }
+  .rungs { display: flex; flex-direction: column-reverse; gap: 8px; position: relative; z-index: 1; }
+  .rung {
+    display: flex; align-items: center; gap: 10px; border: none; cursor: pointer; text-align: left;
+    background: #f3e3c9; border-radius: 12px; padding: 7px 12px; font-size: 18px; font-weight: 600; color: var(--ink);
+    box-shadow: 0 4px 0 #d9b98a; transition: transform .15s, background .2s;
+  }
+  .rung:hover { transform: translateX(4px); }
+  .rung .e { font-size: 24px; width: 30px; text-align: center; }
+  .rung .k { margin-left: auto; font-size: 26px; opacity: 0; transition: opacity .3s; }
+  .rung.seen { background: #fff1d6; }
+  .rung.cur { background: #ffd166; box-shadow: 0 4px 0 #e0a800; transform: scale(1.04); }
+  .rung.cur .k { opacity: 1; animation: bob 1.6s ease-in-out infinite; }
+  .rung.seen .tick { display: inline; }
+  .tick { display: none; color: #04a57c; font-size: 16px; }
+
+  /* rung details */
+  .info .head { display: flex; align-items: center; gap: 14px; }
+  .info .big-e { font-size: 74px; line-height: 1; }
+  .info h2 { margin: 0; font-size: 36px; color: var(--purple); }
+  .info .eq { font-size: 24px; font-weight: 600; margin-top: 4px; }
+  .group { display: flex; flex-wrap: wrap; gap: 4px; margin: 14px 0; min-height: 30px; }
+  .group span { font-size: 18px; animation: pop .4s ease both; }
+  .group.small span { font-size: 13px; }
+  .egs { margin: 0; padding-left: 22px; font-size: 19px; line-height: 1.6; }
+  .secs { margin-top: 14px; background: #eef6ff; border-radius: 18px; padding: 12px 16px; font-size: 19px; }
+  .secs b { color: var(--blue); font-size: 24px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+
+  /* quiz */
+  .q { text-align: center; font-size: 30px; font-weight: 600; margin: 6px 0 18px; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .choice {
+    border: none; border-radius: 22px; padding: 18px 10px; font-size: 26px; font-weight: 700; color: #fff; cursor: pointer;
+    box-shadow: 0 6px 0 rgba(0,0,0,.18); transition: transform .1s, opacity .3s;
+  }
+  .choice .ce { display: block; font-size: 46px; }
+  .choice:nth-child(1) { background: #ef476f; } .choice:nth-child(2) { background: #118ab2; }
+  .choice:nth-child(3) { background: #ff9f1c; } .choice:nth-child(4) { background: #9b5de5; }
+  .choice:active { transform: translateY(4px); }
+  .choice.wrong { opacity: .35; animation: shake .45s; cursor: default; }
+  .choice.right { background: #06d6a0 !important; outline: 5px solid #ffd166; animation: pop .5s; }
+  .feedback { min-height: 56px; margin-top: 16px; font-size: 21px; font-weight: 500; text-align: center; border-radius: 18px; padding: 12px; }
+  .feedback.good { background: #d3f8e2; color: #036b4f; }
+  .feedback.hint { background: #fff3c4; color: #7a5600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🪜</span>
+    <div><h1>Time Ladder</h1><small>Climb from a tiny second all the way up to a thousand years, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="climb">🪜 Climb the Ladder</button>
+  <button class="tab" data-tab="quiz">❓ Ladder Quiz</button>
+</nav>
+
+<main>
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <section class="card" data-panel="climb">
+    <div class="climb">
+      <div class="ladder"><div class="rungs" id="rungs"></div></div>
+      <div class="info">
+        <div class="head"><span class="big-e" id="iE"></span><div><h2 id="iName"></h2><div class="eq" id="iEq"></div></div></div>
+        <div class="group" id="iGroup"></div>
+        <ul class="egs" id="iEgs"></ul>
+        <div class="secs" id="iSecs"></div>
+        <div class="row">
+          <button class="btn big orange" id="downBtn">⬇️ Climb down</button>
+          <button class="btn big green" id="upBtn">⬆️ Climb up</button>
+          <button class="btn big purple" id="readBtn">🔊 Read it</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" data-panel="quiz" hidden>
+    <div class="dots" id="dots"></div>
+    <div class="q" id="q"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="row"><button class="btn big orange" id="nextBtn" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<section class="learn">
+  <div class="lcard why" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤔 Why?</h3>
+    <p>Some of time's big steps come from the sky! A <b>day</b> is one spin of the Earth. A <b>month</b> is about one trip of the Moon around the Earth. A <b>year</b> is one trip of the Earth around the Sun.</p>
+    <p>Seconds, minutes, hours and weeks were made up by people, to help us share and plan our time.</p>
+  </div>
+  <div class="lcard imagine" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🌠 Imagine…</h3>
+    <p>Imagine a magic ladder. On the bottom step, a hummingbird flaps its wings in one second. Climb up… the Sun crosses the sky in a day. Climb higher… a mango tree grows tall over many years.</p>
+    <p>At the very top, you can see a temple that has stood for a thousand years!</p>
+  </div>
+  <div class="lcard wow" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>🤩 Wow!</h3>
+    <p>One year has more than <b>3 crore seconds</b> (31,536,000)!</p>
+    <p>The Big Temple in Thanjavur was built more than 1,000 years ago. That's more than 30,000,000,000 seconds old!</p>
+  </div>
+  <div class="lcard talk" data-say>
+    <button class="say" title="Read aloud">🔊</button>
+    <h3>💬 Talk together</h3>
+    <ul>
+      <li>What is something that takes a minute? An hour? A whole day?</li>
+      <li>What will you be doing one year from now? Ten years from now?</li>
+      <li>Who is the oldest person you know? How many decades old are they?</li>
+    </ul>
+  </div>
+</section>
+
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const rand = Kids.rand;
+const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
+
+/* =========================================================
+   The rungs of the ladder (bottom → top)
+   ========================================================= */
+const DAY = 86400;
+const RUNGS = [
+  { id: 'second', e: '⏱️', name: 'Second', secs: 1, eq: 'The tiniest step!',
+    egs: ['One clap 👏', 'One heartbeat ❤️ (or a bit less)', 'Saying "one-elephant" 🐘'] },
+  { id: 'minute', e: '⏲️', name: 'Minute', secs: 60, n: 60, of: 'seconds', dot: '⏱️',
+    egs: ['Brushing your teeth takes about 2 minutes 🪥', 'Boiling an egg takes about 10 minutes 🥚', 'Washing your hands takes less than 1 minute 🧼'] },
+  { id: 'hour', e: '🕐', name: 'Hour', secs: 3600, n: 60, of: 'minutes', dot: '⏲️',
+    egs: ['A class at school is a bit less than an hour 📚', 'A long cartoon movie is about 1½ hours 🎬', 'The short hand of the clock moves from one number to the next 🕑'] },
+  { id: 'day', e: '🌍', name: 'Day', secs: DAY, n: 24, of: 'hours', dot: '🕐',
+    egs: ['One full spin of the Earth 🌍', 'From one sunrise to the next 🌅', 'Morning, afternoon, evening and night 🌙'] },
+  { id: 'week', e: '📅', name: 'Week', secs: 7 * DAY, n: 7, of: 'days', dot: '🌍',
+    egs: ['Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday', 'From one Sunday to the next Sunday 🎈', '5 school days + 2 weekend days 🎒'] },
+  { id: 'month', e: '🌙', name: 'Month', secs: 30 * DAY, n: 30, of: 'days (28 to 31)', dot: '🌍',
+    egs: ['About one trip of the Moon around the Earth 🌙', 'From one full moon to the next 🌕', 'January, February, March… there are 12 of them'] },
+  { id: 'year', e: '☀️', name: 'Year', secs: 365 * DAY, n: 12, of: 'months (365 days)', dot: '🌙',
+    egs: ['One trip of the Earth all the way around the Sun ☀️', 'From one birthday to the next 🎂', 'Every 4 years there is a leap year with 366 days!'] },
+  { id: 'decade', e: '🎂', name: 'Decade', secs: 3650 * DAY, n: 10, of: 'years', dot: '☀️',
+    egs: ['10 birthdays 🎂', 'A baby grows into a 10-year-old 🧒', 'A small mango tree grows big and gives lots of mangoes 🥭'] },
+  { id: 'century', e: '🌳', name: 'Century', secs: 36500 * DAY, n: 10, of: 'decades (100 years)', dot: '🎂',
+    egs: ['The first aeroplane flew a little more than 100 years ago ✈️', 'A banyan tree can live for hundreds of years 🌳', 'A few very old grandparents live to be 100! 👵'] },
+  { id: 'millennium', e: '🛕', name: 'Millennium', secs: 365000 * DAY, n: 10, of: 'centuries (1,000 years)', dot: '🌳',
+    egs: ['The Big Temple in Thanjavur is more than 1,000 years old 🛕', 'It was built by a Chola king, long, long ago 👑'] },
+];
+const fmtN = n => Math.round(n).toLocaleString('en-IN');
+
+/* =========================================================
+   Climb
+   ========================================================= */
+const climb = { i: 0, seen: new Set([0]), top: false };
+const rungsBox = $('#rungs');
+RUNGS.forEach((r, i) => {
+  const b = document.createElement('button');
+  b.className = 'rung';
+  b.innerHTML = `<span class="e">${r.e}</span>${r.name} <span class="tick">✓</span><span class="k">🐦</span>`;
+  b.addEventListener('click', () => goTo(i));
+  rungsBox.appendChild(b);
+});
+function renderClimb() {
+  const r = RUNGS[climb.i];
+  [...rungsBox.children].forEach((b, i) => { b.classList.toggle('cur', i === climb.i); b.classList.toggle('seen', climb.seen.has(i)); });
+  $('#iE').textContent = r.e;
+  $('#iName').textContent = `1 ${r.name}`;
+  $('#iEq').textContent = r.n ? `= ${r.n} ${r.of}` : r.eq;
+  const g = $('#iGroup');
+  g.className = 'group' + (r.n > 30 ? ' small' : '');
+  g.innerHTML = r.n ? Array.from({ length: r.n }, (_, k) => `<span style="animation-delay:${k * 0.015}s">${r.dot}</span>`).join('') : '<span>👏</span>';
+  $('#iEgs').innerHTML = r.egs.map(x => `<li>${x}</li>`).join('');
+  $('#iSecs').innerHTML = r.secs === 1 ? 'Everything on the ladder is built from seconds!' :
+    `⏱️ One ${r.name.toLowerCase()} has <b>${fmtN(r.secs)}</b> seconds${r.id === 'month' ? ' (if it has 30 days)' : ''}!`;
+  $('#downBtn').disabled = climb.i === 0;
+  $('#upBtn').disabled = climb.i === RUNGS.length - 1;
+}
+function sayRung() {
+  const r = RUNGS[climb.i];
+  const text = r.n ? `One ${r.name} equals ${r.n} ${r.of.replace(/\(.*\)/, '')}. For example: ${r.egs[0]}` : `One second. ${r.egs.join('. ')}`;
+  Kids.speak(Kids.forSpeech(text), true);
+}
+function goTo(i) {
+  if (i < 0 || i >= RUNGS.length) return;
+  climb.i = i; climb.seen.add(i);
+  Kids.sfx.pop(); renderClimb();
+  const r = RUNGS[i];
+  if (i === RUNGS.length - 1 && !climb.top) {
+    climb.top = true; Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+    Kids.banner(`🛕 You climbed to the top: 1,000 years!`);
+    kuyil(`${Kids.praise()} You climbed all the way up to a MILLENNIUM: one thousand years!`, true);
+  } else if (climb.seen.size === RUNGS.length && !climb.allSeen) {
+    climb.allSeen = true; Kids.addStar();
+  } else {
+    kuyil(r.n ? `${r.n} ${r.of.replace(/ \(.*\)/, '')} make one ${r.name.toLowerCase()}. Keep climbing! ⬆️` : SAY.climb);
+  }
+}
+$('#upBtn').addEventListener('click', () => goTo(climb.i + 1));
+$('#downBtn').addEventListener('click', () => goTo(climb.i - 1));
+$('#readBtn').addEventListener('click', sayRung);
+
+/* =========================================================
+   Quiz
+   ========================================================= */
+const HOW_MANY = [
+  ['How many seconds in a minute?', 60, [30, 60, 100, 24]],
+  ['How many minutes in an hour?', 60, [12, 60, 100, 30]],
+  ['How many hours in a day?', 24, [12, 24, 60, 7]],
+  ['How many days in a week?', 7, [5, 7, 10, 30]],
+  ['How many months in a year?', 12, [10, 12, 24, 7]],
+  ['How many days in a year?', 365, [100, 365, 30, 1000]],
+  ['How many years in a decade?', 10, [10, 100, 5, 12]],
+  ['How many years in a century?', 100, [10, 100, 1000, 60]],
+];
+const Q_PER_ROUND = 8;
+const quiz = { n: 0, results: [], cur: null };
+function makeQuestion() {
+  if (Math.random() < 0.5) {
+    const [q, ans, opts] = HOW_MANY[rand(HOW_MANY.length)];
+    return { q, choices: shuffle(opts).map(o => ({ label: String(o), ok: o === ans })),
+      yay: q.replace('How many', `There are ${ans}`).replace('?', '!'), hint: 'Climb the ladder to check! 🪜' };
+  }
+  let a = rand(RUNGS.length), b;
+  do { b = a + (rand(2) ? 1 : -1) * (1 + rand(3)); } while (b < 0 || b >= RUNGS.length);
+  const longer = Math.random() < 0.6;
+  const want = (RUNGS[a].secs > RUNGS[b].secs) === longer ? a : b;
+  return {
+    q: `Which is ${longer ? 'LONGER ⬆️' : 'SHORTER ⬇️'}?`,
+    choices: [a, b].map(i => ({ label: `<span class="ce">${RUNGS[i].e}</span>a ${RUNGS[i].name.toLowerCase()}`, ok: i === want })),
+    yay: `A ${RUNGS[want].name.toLowerCase()} is ${longer ? 'longer' : 'shorter'}. It is ${longer ? 'higher' : 'lower'} on the ladder!`,
+    hint: 'Higher on the ladder means longer. 🪜',
+  };
+}
+function renderDots() {
+  $('#dots').innerHTML = Array.from({ length: Q_PER_ROUND }, (_, i) =>
+    `<span class="${i < quiz.results.length ? (quiz.results[i] ? 'ok' : 'cur') : ''}"></span>`).join('');
+}
+function newQuestion() {
+  if (quiz.n >= Q_PER_ROUND) {
+    const score = quiz.results.filter(Boolean).length;
+    Kids.banner(`🪜 ${score} out of ${Q_PER_ROUND} first time!`);
+    if (score >= Q_PER_ROUND - 1) Kids.confetti();
+    kuyil(`You finished the quiz, ${Kids.name}! ${score} out of ${Q_PER_ROUND} right on the first try. Let's play again!`, true);
+    quiz.n = 0; quiz.results = [];
+  }
+  const prev = quiz.cur && quiz.cur.q + quiz.cur.choices.map(c => c.label).sort().join();
+  let tries = 0;
+  do { quiz.cur = makeQuestion(); }
+  while (prev && quiz.cur.q + quiz.cur.choices.map(c => c.label).sort().join() === prev && ++tries < 20);
+  quiz.first = true; quiz.done = false;
+  $('#q').textContent = quiz.cur.q;
+  $('#feedback').textContent = ''; $('#feedback').className = 'feedback';
+  $('#nextBtn').hidden = true;
+  const box = $('#choices'); box.innerHTML = '';
+  quiz.cur.choices.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'choice'; b.innerHTML = c.label;
+    b.addEventListener('click', () => answer(c, b));
+    box.appendChild(b);
+  });
+  renderDots();
+}
+function answer(c, b) {
+  if (quiz.done || b.disabled) return;
+  if (c.ok) {
+    quiz.done = true; b.classList.add('right');
+    quiz.results.push(quiz.first); quiz.n++;
+    if (quiz.first) Kids.addStar();
+    Kids.sfx.yay();
+    const msg = `${Kids.praise()} ${quiz.cur.yay}`;
+    $('#feedback').textContent = msg; $('#feedback').className = 'feedback good';
+    Kids.speak(Kids.forSpeech(msg));
+    $('#nextBtn').hidden = false; renderDots();
+  } else {
+    quiz.first = false; Kids.resetStreak(); Kids.sfx.oops();
+    b.classList.add('wrong'); b.disabled = true;
+    $('#feedback').textContent = `Not quite! ${quiz.cur.hint}`; $('#feedback').className = 'feedback hint';
+  }
+}
+$('#nextBtn').addEventListener('click', () => { Kids.sfx.pop(); newQuestion(); });
+
+/* =========================================================
+   Tabs + Kuyil
+   ========================================================= */
+const SAY = {
+  climb: `Let's climb the Time Ladder, ${Kids.name}! Start at the bottom with one tiny second, then press ⬆️ to climb up.`,
+  quiz: 'Quiz time! Think about the ladder: higher steps are longer. 🪜',
+};
+function kuyil(t, good) { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); }
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  kuyil(SAY[b.dataset.tab]);
+  if (b.dataset.tab === 'quiz' && !quiz.cur) newQuestion();
+}));
+
+kuyil(SAY.climb);
+renderClimb();
+</script>
+</body>
+</html>

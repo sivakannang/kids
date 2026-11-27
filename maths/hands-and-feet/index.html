@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hands &amp; Feet</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  #stage { background: linear-gradient(180deg, #fffaf0, #fff1d6); }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 17px; }
+  .tbl td, .tbl th { padding: 6px 8px; border-bottom: 2px solid #f1ecff; text-align: left; }
+  .tbl th { color: var(--muted); font-size: 15px; }
+  .tbl b { color: var(--purple); font-size: 20px; }
+  .count { font-size: 40px; font-weight: 700; color: var(--purple); text-align: center; min-height: 52px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">✋</span>
+    <div><h1>Hands &amp; Feet</h1><small>Measure things with hands, feet and paper clips, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="label center">1. What shall we measure?</div>
+      <div class="pick" id="objPick"></div>
+      <div class="label center">2. What shall we measure it with?</div>
+      <div class="pick" id="unitPick"></div>
+      <svg id="stage" class="svgbox" viewBox="0 0 800 260" style="margin-top:14px"></svg>
+      <div class="count" id="count"></div>
+      <div class="row"><button class="btn big green" id="measureBtn">📐 Measure!</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">📋 My measurements</h3>
+      <table class="tbl"><thead><tr><th>Thing</th><th>Measured with</th><th>Answer</th></tr></thead><tbody id="log"></tbody></table>
+      <div class="hint" id="logHint">Measure something to fill the table!</div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Part of the Curiosity Journey 🌌</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl, K = Kids.name;
+const OBJECTS = [
+  { id: 'pencil', e: '✏️', name: 'pencil', cm: 18, color: '#ffd166' },
+  { id: 'book', e: '📕', name: 'book', cm: 28, color: '#ef476f' },
+  { id: 'snake', e: '🐍', name: 'toy snake', cm: 60, color: '#06d6a0' },
+  { id: 'door', e: '🚪', name: 'door (how wide)', cm: 90, color: '#c47b3b' },
+  { id: 'table', e: '🪑', name: 'table', cm: 120, color: '#9b5de5' },
+  { id: 'bed', e: '🛏️', name: 'bed', cm: 190, color: '#118ab2' },
+];
+const UNITS = [
+  { id: 'clip', e: '📎', name: 'paper clips', cm: 3 },
+  { id: 'kidhand', e: '✋', name: `${K}'s hands`, cm: 12 },
+  { id: 'kidfoot', e: '🦶', name: `${K}'s feet`, cm: 17 },
+  { id: 'bighand', e: '🖐️', name: "a grown-up's hands", cm: 20 },
+  { id: 'elephant', e: '🐘', name: "an elephant's feet", cm: 45 },
+  { id: 'cm', e: '📏', name: 'a ruler (centimetres)', cm: 1, ruler: true },
+];
+let obj = OBJECTS[5], unit = UNITS[1], busy = false;
+const log = [];
+
+function picker(id, list, get, set) {
+  const box = $(id);
+  list.forEach(x => {
+    const b = document.createElement('button');
+    b.textContent = `${x.e} ${x.name}`;
+    b.addEventListener('click', () => { if (busy) return; set(x); Kids.sfx.pop(); render(); drawStage(); $('#count').textContent = ''; });
+    box.appendChild(b);
+  });
+  const render = () => [...box.children].forEach((b, i) => b.classList.toggle('active', list[i] === get()));
+  render();
+}
+picker('#objPick', OBJECTS, () => obj, x => obj = x);
+picker('#unitPick', UNITS, () => unit, x => unit = x);
+
+/* ---------- the measuring stage ---------- */
+const stage = $('#stage'), X0 = 60, W = 680;
+function drawStage(n) {
+  stage.innerHTML = '';
+  const ppc = W / obj.cm;                              // pixels per centimetre for this object
+  el('rect', { x: X0, y: 110, width: W, height: 46, rx: 14, fill: obj.color, opacity: .85 }, stage);
+  const t = el('text', { x: X0 + W / 2, y: 98, 'font-size': 26, 'text-anchor': 'middle', 'font-weight': 700, fill: '#2b2d42' }, stage);
+  t.textContent = `${obj.e} the ${obj.name}`;
+  el('line', { x1: X0, y1: 60, x2: X0, y2: 230, stroke: '#2b2d42', 'stroke-width': 2, 'stroke-dasharray': '4 4' }, stage);
+  el('line', { x1: X0 + W, y1: 60, x2: X0 + W, y2: 230, stroke: '#2b2d42', 'stroke-width': 2, 'stroke-dasharray': '4 4' }, stage);
+  if (!n) return;
+  if (unit.ruler) {
+    // a ruler with centimetre ticks
+    el('rect', { x: X0, y: 172, width: Math.min(W, n * ppc), height: 44, fill: '#ffe08a', stroke: '#c9a227' }, stage);
+    for (let c = 0; c <= Math.min(n, obj.cm); c++) {
+      const x = X0 + c * ppc, big = c % 10 === 0, mid = c % 5 === 0;
+      if (!big && !mid && ppc < 2.5) continue;
+      el('line', { x1: x, y1: 172, x2: x, y2: 172 + (big ? 22 : mid ? 14 : 8), stroke: '#2b2d42', 'stroke-width': big ? 2 : 1 }, stage);
+      if (big) el('text', { x, y: 210, 'font-size': 13, 'text-anchor': 'middle' }, stage).textContent = c;
+    }
+  } else {
+    const w = unit.cm * ppc;
+    for (let i = 0; i < n; i++) {
+      const x = X0 + i * w, last = (i + 1) * unit.cm > obj.cm;
+      el('rect', { x: x + 1, y: 172, width: Math.max(2, w - 2), height: 44, rx: 8, fill: i % 2 ? '#e8defe' : '#d3f8e2', stroke: '#9b5de5', 'stroke-width': 1.5, opacity: last ? .55 : 1 }, stage);
+      if (w > 22) el('text', { x: x + w / 2, y: 202, 'font-size': Math.min(30, w * .7), 'text-anchor': 'middle' }, stage).textContent = unit.e;
+    }
+  }
+}
+// kid-friendly answer: whole, "and a half", or "a bit more than"
+function friendly(v) {
+  const whole = Math.floor(v), f = v - whole;
+  if (f < 0.2) return { text: `about ${whole}`, n: whole };
+  if (f < 0.75) return { text: `${whole} and a half`, n: whole + 0.5 };
+  return { text: `about ${whole + 1}`, n: whole + 1 };
+}
+$('#measureBtn').addEventListener('click', () => {
+  if (busy) return;
+  busy = true;
+  const v = obj.cm / unit.cm;
+  const total = Math.ceil(v - 1e-9);
+  const ans = unit.ruler ? { text: `${obj.cm}`, n: obj.cm } : friendly(v);
+  let i = 0;
+  const step = () => {
+    i = Math.min(total, i + (unit.ruler ? Math.max(1, Math.round(total / 40)) : 1));
+    drawStage(i);
+    $('#count').textContent = unit.ruler ? `${i} cm` : i;
+    unit.ruler ? (i % 10 === 0 && Kids.sfx.tick()) : Kids.sfx.tick();
+    if (i < total) setTimeout(step, unit.ruler ? 40 : Math.max(60, 900 / total)); else done(ans);
+  };
+  step();
+});
+function done(ans) {
+  busy = false;
+  const msg = unit.ruler ? `The ${obj.name} is ${obj.cm} centimetres long!` : `The ${obj.name} is ${ans.text} ${unit.name} long!`;
+  $('#count').textContent = unit.ruler ? `${obj.cm} cm` : `${ans.text} ${unit.e}`;
+  Kids.sfx.yay(); Kids.speak(Kids.forSpeech(msg));
+  log.unshift({ obj, unit, text: unit.ruler ? `${obj.cm} cm` : ans.text });
+  $('#log').innerHTML = log.slice(0, 10).map(r => `<tr><td>${r.obj.e} ${r.obj.name}</td><td>${r.unit.e} ${r.unit.name}</td><td><b>${r.text}</b></td></tr>`).join('');
+  $('#logHint').textContent = new Set(log.filter(r => r.obj === obj).map(r => r.text)).size > 1
+    ? `😮 The ${obj.name} got different answers! It depends on what you measure with.` : '';
+  ch.check({ obj: obj.id, unit: unit.id });
+}
+
+const ch = Kids.challenges([
+  { ask: 'Measure the BED 🛏️ with YOUR hands ✋', hint: 'Pick the bed, then pick your hands, then press Measure!',
+    ok: c => c.obj === 'bed' && c.unit === 'kidhand', yay: 'Your hands are small, so you need lots of them!' },
+  { ask: "Now measure the BED with a grown-up's hands 🖐️. Is the number the same?", hint: "Keep the bed, pick the grown-up's hands.",
+    ok: c => c.obj === 'bed' && c.unit === 'bighand', yay: 'A DIFFERENT number for the same bed! Bigger hands → smaller number.' },
+  { ask: 'Measure the TABLE 🪑 with tiny paper clips 📎', hint: 'Pick the table and the paper clips.',
+    ok: c => c.obj === 'table' && c.unit === 'clip', yay: 'Tiny paper clips give a BIG number: 40 of them!' },
+  { ask: 'Measure the TOY SNAKE 🐍 with an elephant\'s feet 🐘', hint: 'Pick the snake and the elephant.',
+    ok: c => c.obj === 'snake' && c.unit === 'elephant', yay: 'Elephant feet are huge, so the snake is only about 1 and a half elephant feet!' },
+  { ask: 'Measure the PENCIL ✏️ with the ruler 📏', hint: 'Pick the pencil and the ruler.',
+    ok: c => c.obj === 'pencil' && c.unit === 'cm', yay: 'With a ruler, EVERYONE gets the same answer: 18 cm! 📏' },
+  { ask: 'Measure the SAME thing with 3 different things 🔁', hint: 'Keep one thing, and measure it with 3 different units.',
+    start: d => { d.seen = {}; }, ok: (c, d) => { (d.seen[c.obj] = d.seen[c.obj] || new Set()).add(c.unit); return d.seen[c.obj].size >= 3; },
+    yay: 'Three different numbers for one thing! That\'s why people invented the ruler.' },
+], { title: 'Measuring Master' });
+
+Kids.learn({
+  why: ['Long ago, people measured with their bodies: hands, feet and arms. But everyone\'s hands are a different size, so everyone got a different answer!',
+    'So people agreed on ONE size that is the same for everyone: the <b>metre</b>, and the little <b>centimetre</b>. Now we all get the same answer with a ruler. 📏'],
+  imagine: ['Imagine a giant and an ant both measuring your bed. The giant says "2 steps!" The ant says "10,000 steps!"',
+    'Who is right? Both of them! They just used different units.'],
+  wow: ['The word <b>foot</b> (a unit some countries still use) really came from people\'s feet! It is about 30 cm long.',
+    'The world\'s official metre used to be a special metal bar kept safe in France. 🇫🇷'],
+  talk: ['Measure your bed with your hands, then let a grown-up measure it. Who got the bigger number?', 'What else could you measure with? Spoons? Toy cars?', 'Why is it useful that everyone uses the same centimetre?'],
+});
+drawStage();
+</script>
+</body>
+</html>
