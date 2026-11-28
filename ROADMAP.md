@@ -163,3 +163,6 @@ The games now have **two profiles**: Kavikuyil (PeriyaKutty, 1st std) and Praban
 | 👧👦 Both | 🙏 Gratitude Jar | `mind/` | Noticing good things |
 
 **Coming soon (on the home page):** Opposites · Who Am I? · Everyday Phrases · Aathichoodi · Patterns · Magnets · Recycling Sorter
+
+
+**Added after Round 5:** 🗺️ States & Countries (`world/`): Indian states and union territories, and countries of the world, with capitals, languages and greetings.
