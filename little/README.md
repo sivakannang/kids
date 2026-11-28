@@ -17,4 +17,7 @@ They use `shared/little.js` (letter sounds, big choices, the "🎤 I said it!" b
 | [sentence-builder](sentence-builder/) | Building describing sentences ("I see two big red balls") that draw a picture |
 
 **Tips for grown-ups:** keep it short (10–15 minutes), sit together, repeat the words with him, and praise the effort, not just right answers.
-**Ideas:** opposites, "Who am I?" animal riddles.
+| [opposites](opposites/) | 16 pairs of opposites: learn, find the opposite, act them out |
+| [who-am-i](who-am-i/) | Listening riddles: 3 clues, guess the picture (fewer clues = extra star) |
+
+**Ideas:** action words.

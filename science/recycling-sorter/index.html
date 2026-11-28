@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recycling Sorter</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .now { text-align: center; } .now .e { font-size: 110px; line-height: 1.1; } .now .n { font-size: 30px; font-weight: 700; }
+  .bins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .bin { border: none; border-radius: 24px 24px 30px 30px; padding: 14px 6px; color: #fff; font-family: inherit; font-weight: 700; font-size: 18px; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
+  .bin .e { display: block; font-size: 50px; } .bin small { display: block; font-weight: 500; font-size: 13px; opacity: .95; }
+  .bin.wet { background: #2d9d4f; } .bin.dry { background: #1e6fe0; } .bin.rej { background: #d62828; }
+  .bin.right { outline: 6px solid #ffd166; animation: pop .5s; } .bin.wrong { animation: shake .45s; }
+  .rrr { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .r3 { border-radius: 20px; padding: 12px; background: #f0faf3; } .r3 .e { font-size: 40px; } .r3 b { display: block; font-size: 20px; color: #2d6a4f; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">♻️</span>
+    <div><h1>Recycling Sorter</h1><small>Which bin does it go in, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="sort">🗑️ Sort the Rubbish</button>
+  <button class="tab" data-tab="rrr">🌍 Reduce, Reuse, Recycle</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="sort">
+      <div class="now" id="now"></div>
+      <div class="bins">
+        <button class="bin wet" data-b="wet"><span class="e">🟢</span>Wet waste<small>food, peels, flowers</small></button>
+        <button class="bin dry" data-b="dry"><span class="e">🔵</span>Dry waste<small>paper, plastic, metal, glass</small></button>
+        <button class="bin rej" data-b="rej"><span class="e">🔴</span>Reject / hazardous<small>batteries, medicines, diapers</small></button>
+      </div>
+      <div class="result" id="res"></div>
+      <div class="stats" id="stats"></div>
+    </section>
+    <section class="card" data-panel="rrr" hidden>
+      <div class="rrr">
+        <div class="r3"><div class="e">🛍️</div><b>Reduce</b>Use less: carry a cloth bag, use both sides of the paper, and turn off lights and taps.</div>
+        <div class="r3"><div class="e">🫙</div><b>Reuse</b>Use things again: jars become pencil holders, old clothes become dusters, boxes become toys!</div>
+        <div class="r3"><div class="e">♻️</div><b>Recycle</b>Dry waste like paper, plastic, metal and glass can be melted or mashed and made into new things.</div>
+        <div class="r3"><div class="e">🌱</div><b>Compost</b>Wet waste turns into rich soil (compost) for plants, if we keep it separate. Worms help!</div>
+      </div>
+    </section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// [picture, name, bin, why]   (the 3-bin way we sort rubbish at home in Bengaluru)
+const ITEMS = [
+  ['🍌', 'banana peel', 'wet', 'Fruit peels rot and become compost.'], ['🥕', 'vegetable peels', 'wet', 'Kitchen scraps go in wet waste.'], ['🥚', 'egg shells', 'wet', 'Egg shells are great for compost.'],
+  ['🍚', 'leftover rice', 'wet', 'Leftover food is wet waste.'], ['🍵', 'used tea leaves', 'wet', 'Tea leaves make plants happy!'], ['🌼', 'old flowers', 'wet', 'Flowers from the pooja room go in wet waste.'], ['🍂', 'dry leaves', 'wet', 'Garden leaves rot into compost, so they go with wet waste.'],
+  ['📰', 'newspaper', 'dry', 'Paper can be recycled into new paper.'], ['🧴', 'plastic bottle', 'dry', 'Clean plastic can be recycled.'], ['🥛', 'rinsed milk packet', 'dry', 'Rinse milk packets, then they go in dry waste.'],
+  ['🍾', 'glass bottle', 'dry', 'Glass can be melted and made new again.'], ['🥫', 'tin can', 'dry', 'Metal cans can be recycled many times.'], ['📦', 'cardboard box', 'dry', 'Flatten boxes and recycle them.'], ['👕', 'old cloth', 'dry', 'Clean cloth is dry waste, or give it away to be reused!'],
+  ['🔋', 'battery', 'rej', 'Batteries have harmful chemicals. They need special handling.'], ['💊', 'old medicines', 'rej', 'Old medicines must not go in normal bins.'], ['👶', 'used diaper', 'rej', 'Diapers and sanitary waste go in the reject bin, wrapped up.'],
+  ['💡', 'broken tube light', 'rej', 'Tube lights have harmful stuff inside. Handle with care!'], ['🩹', 'used bandage', 'rej', 'Used bandages are sanitary waste.'], ['📱', 'broken phone', 'rej', 'Old electronics (e-waste) go to special e-waste collection.'],
+];
+const BIN = { wet: '🟢 wet waste', dry: '🔵 dry waste', rej: '🔴 reject / hazardous' };
+let cur = null, first = true, done = false, sorted = 0, firstRight = 0, binsUsed = new Set(), queue = [];
+function next() {
+  if (!queue.length) queue = shuffle(ITEMS.slice());
+  cur = queue.pop(); first = true; done = false;
+  $('#now').innerHTML = `<div class="e">${cur[0]}</div><div class="n">${cur[1]}</div>`;
+  document.querySelectorAll('.bin').forEach(b => b.classList.remove('right', 'wrong'));
+  $('#res').className = 'result'; $('#res').textContent = 'Which bin? Tap it!';
+}
+document.querySelectorAll('.bin').forEach(b => b.addEventListener('click', () => {
+  if (done) return;
+  if (b.dataset.b === cur[2]) {
+    done = true; b.classList.add('right'); sorted++; binsUsed.add(cur[2]);
+    if (first) { firstRight++; Kids.addStar(); }
+    Kids.sfx.yay(); $('#res').className = 'result good'; $('#res').textContent = `${Kids.praise()} ${cur[1]} → ${BIN[cur[2]]}. ${cur[3]}`;
+    Kids.speak(Kids.forSpeech(`${cur[1]} goes in ${BIN[cur[2]]}. ${cur[3]}`));
+    $('#stats').innerHTML = `<div class="stat"><b>${sorted}</b>sorted</div><div class="stat"><b>${firstRight}</b>right first time</div>`;
+    ch.check({ sorted, first, bin: cur[2], bins: binsUsed.size });
+    setTimeout(next, 2600);
+  } else {
+    first = false; b.classList.add('wrong'); Kids.sfx.oops(); Kids.resetStreak();
+    $('#res').className = 'result hint'; $('#res').textContent = cur[2] === 'wet' ? 'Hmm! Can it rot and turn into soil?' : cur[2] === 'dry' ? 'Hmm! Can it be cleaned and made into something new?' : 'Hmm! Could it be harmful or dirty? Think again!';
+  }
+}));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'rrr') ch.check({ rrr: true });
+}));
+const ch = Kids.challenges([
+  { ask: 'Sort your first piece of rubbish 🗑️', hint: 'Tap the bin you think is right.', ok: c => c.sorted >= 1, yay: 'You are helping the Earth!' },
+  { ask: 'Use all 3 bins 🟢🔵🔴', hint: 'Keep sorting until you have used every bin.', ok: c => c.bins >= 3, yay: 'Wet, dry and reject: you know them all!' },
+  { ask: 'Sort 10 things 🏆', hint: 'Keep going!', ok: c => c.sorted >= 10, yay: 'Ten things sorted! A real Eco Hero!' },
+  { ask: 'Read about Reduce, Reuse, Recycle 🌍', hint: 'Open the second tab.', ok: c => c.rrr, yay: 'The three Rs!' },
+], { title: 'Eco Hero' });
+Kids.learn({
+  why: ['When we keep wet waste, dry waste and harmful waste apart, each kind can be handled the right way: wet waste becomes compost, dry waste gets recycled.',
+    'Mixed-up rubbish goes to big landfills, where it can make the land, water and air dirty.'],
+  imagine: ['Imagine a plastic bottle you put in dry waste being washed, melted and turned into a T-shirt or a park bench! ♻️'],
+  wow: ['A banana peel can turn into compost in a few weeks, but a plastic bag can stay around for hundreds of years.',
+    'Recycling one aluminium can saves enough energy to run a TV for a few hours!'],
+  talk: ['Help sort the rubbish at home today. Which bin fills up fastest?', 'What could you reuse instead of throwing away?', 'Can we start a small compost pot for plants?'],
+});
+next();
+</script>
+</body>
+</html>

@@ -92,10 +92,11 @@ const SUBJECTS = [
     { emoji: '📚', name: 'Story Time', about: 'Listen to stories and answer questions', path: 'little/story-time/index.html' },
     { emoji: '🎵', name: 'Rhyme & Sing', about: 'Action songs to sing and clap, and rhyming pictures', path: 'little/rhyme-and-sing/index.html' },
     { emoji: '🎨', name: 'Colours & Shapes', about: 'Learn colours and shapes, then find the red circle!', path: 'little/colours-shapes/index.html' },
-    { emoji: '👀', name: 'Sight Words', about: 'the, and, is, I… flash cards, find it, balloon pop', path: 'little/sight-words/index.html', tag: 'New!' },
-    { emoji: '🧱', name: 'Sentence Builder', about: 'Put words together: I see two big red balls!', path: 'little/sentence-builder/index.html', tag: 'New!' },
-    { emoji: '↔️', name: 'Opposites', about: 'Big and small, hot and cold, up and down' },
-    { emoji: '🐣', name: 'Who Am I?', about: 'Listen to clues and guess the animal' },
+    { emoji: '👀', name: 'Sight Words', about: 'the, and, is, I… flash cards, find it, balloon pop', path: 'little/sight-words/index.html' },
+    { emoji: '🧱', name: 'Sentence Builder', about: 'Put words together: I see two big red balls!', path: 'little/sentence-builder/index.html' },
+    { emoji: '↔️', name: 'Opposites', about: 'Big and small, hot and cold: learn, find and act them out', path: 'little/opposites/index.html', tag: 'New!' },
+    { emoji: '🐣', name: 'Who Am I?', about: 'Listen to the clues and guess!', path: 'little/who-am-i/index.html', tag: 'New!' },
+    { emoji: '🏃', name: 'Action Words', about: 'Run, jump, eat, sleep: words for doing' },
   ]},
   { id: 'langs', title: '🗣️ Languages: Tamil, Hindi, Kannada', color: 'c-teal', items: [
     { emoji: '🗣️', name: 'Word Explorer', about: 'One picture, four languages: English, தமிழ், हिंदी, ಕನ್ನಡ', path: 'languages/word-explorer/index.html' },
@@ -103,9 +104,9 @@ const SUBJECTS = [
     { emoji: 'ಅ', name: 'Kannada Swaragalu', about: 'The Kannada vowels: ಅ ಆ ಇ ಈ…', path: 'kannada/swaragalu/index.html' },
     { emoji: 'क', name: 'Hindi Vyanjan', about: 'Hindi consonants: क ख ग… in 5 mouth families', path: 'hindi/vyanjan/index.html' },
     { emoji: 'ಕ', name: 'Kannada Vyanjanagalu', about: 'Kannada consonants: ಕ ಖ ಗ… with picture words', path: 'kannada/vyanjanagalu/index.html' },
-    { emoji: 'का', name: 'Hindi Matras', about: 'Vowel signs: क का कि की…, and first words', path: 'hindi/matras/index.html', tag: 'New!' },
-    { emoji: 'ಕಾ', name: 'Kannada Kagunita', about: 'Vowel signs: ಕ ಕಾ ಕಿ ಕೀ…, and first words', path: 'kannada/kagunita/index.html', tag: 'New!' },
-    { emoji: '🗨️', name: 'Everyday Phrases', about: 'Hello, thank you, how are you? in 4 languages' },
+    { emoji: 'का', name: 'Hindi Matras', about: 'Vowel signs: क का कि की…, and first words', path: 'hindi/matras/index.html' },
+    { emoji: 'ಕಾ', name: 'Kannada Kagunita', about: 'Vowel signs: ಕ ಕಾ ಕಿ ಕೀ…, and first words', path: 'kannada/kagunita/index.html' },
+    { emoji: '🗨️', name: 'Everyday Phrases', about: 'Hello, thank you, how are you? in 4 languages', path: 'languages/everyday-phrases/index.html', tag: 'New!' },
   ]},
   { id: 'english', title: '🔤 English', color: 'c-purple', items: [
     { emoji: '📖', name: 'Common Words', about: 'Class 1 reading word list to print and read together', path: 'english/class-1-basics/common-words.pdf', tag: 'Print' },
@@ -119,8 +120,9 @@ const SUBJECTS = [
     { emoji: '🔢', name: 'Tamil Numbers & Colours', about: 'ஒன்று to பத்து, and colours in Tamil', path: 'tamil/numbers-colours/index.html' },
     { emoji: 'க்', name: 'Mei Ezhuthukkal', about: 'The 18 Tamil consonants, hard, soft and in-between', path: 'tamil/mei-ezhuthukkal/index.html' },
     { emoji: '🐘', name: 'Tamil Animal Words', about: '33 animals and birds in Tamil', path: 'tamil/animal-words/index.html' },
-    { emoji: 'கா', name: 'Uyirmei Letters', about: 'க் + ஆ = கா: how Tamil letters join, and first words', path: 'tamil/uyirmei/index.html', tag: 'New!' },
-    { emoji: '📜', name: 'Aathichoodi', about: 'Avvaiyar\'s little lines of wisdom' },
+    { emoji: 'கா', name: 'Uyirmei Letters', about: 'க் + ஆ = கா: how Tamil letters join, and first words', path: 'tamil/uyirmei/index.html' },
+    { emoji: '📜', name: 'Aathichoodi', about: 'Avvaiyar\'s little lines of wisdom, அ to ஃ', path: 'tamil/aathichoodi/index.html', tag: 'New!' },
+    { emoji: '📖', name: 'Tamil Stories', about: 'Short stories to read in Tamil' },
   ]},
   { id: 'time', title: '⏰ Time', color: 'c-blue', items: [
     { emoji: '⏰', name: 'Tick-Tock World Explorer', about: 'Read the clock and travel the world’s time zones', path: 'maths/world-clock/index.html' },
@@ -136,8 +138,9 @@ const SUBJECTS = [
     { emoji: '🔷', name: 'Shapes Hunt', about: 'Find circles, squares and triangles all around you', path: 'maths/shapes-hunt/index.html' },
     { emoji: '🔟', name: 'Number Bonds', about: 'Pairs that make 10: ten frames and bubble pop', path: 'maths/number-bonds/index.html' },
     { emoji: '✖️', name: 'Times Tables', about: 'Jump along the number line with the frog', path: 'maths/times-tables/index.html' },
-    { emoji: '🍕', name: 'Fraction Pizza', about: 'Halves, thirds and quarters: cut, eat and share', path: 'maths/fraction-pizza/index.html', tag: 'New!' },
-    { emoji: '🔁', name: 'Patterns', about: 'What comes next? 🔴🔵🔴🔵…' },
+    { emoji: '🍕', name: 'Fraction Pizza', about: 'Halves, thirds and quarters: cut, eat and share', path: 'maths/fraction-pizza/index.html' },
+    { emoji: '🔁', name: 'Patterns', about: 'What comes next? 🔴🔵🔴🔵… and number patterns', path: 'maths/patterns/index.html', tag: 'New!' },
+    { emoji: '⚡', name: 'Mental Maths Sprint', about: 'Quick sums against the clock' },
   ]},
   { id: 'measuring', title: '📏 Measuring', color: 'c-orange', items: [
     { emoji: '✋', name: 'Hands & Feet', about: 'Measure with hands, feet and paper clips. Why do we need rulers?', path: 'maths/hands-and-feet/index.html' },
@@ -154,9 +157,10 @@ const SUBJECTS = [
     { emoji: '🌦️', name: 'Weather Watch', about: 'Rain, clouds, wind, rainbows and a weather diary', path: 'science/weather-watch/index.html' },
     { emoji: '🌱', name: 'How Plants Grow', about: 'Grow a seed into a plant, and learn its parts', path: 'science/how-plants-grow/index.html' },
     { emoji: '🫀', name: 'My Body', about: 'Heart, lungs, bones and brain, and count your heartbeat', path: 'science/my-body/index.html' },
-    { emoji: '🌋', name: 'Volcanoes', about: 'Make one erupt, see inside, and find India\'s only active volcano', path: 'science/volcanoes/index.html', tag: 'New!' },
-    { emoji: '🧲', name: 'Magnets', about: 'What sticks and what doesn\'t?' },
-    { emoji: '♻️', name: 'Recycling Sorter', about: 'Which bin does it go in?' },
+    { emoji: '🌋', name: 'Volcanoes', about: 'Make one erupt, see inside, and find India\'s only active volcano', path: 'science/volcanoes/index.html' },
+    { emoji: '🧲', name: 'Magnets', about: 'Guess and test what sticks, and push and pull', path: 'science/magnets/index.html', tag: 'New!' },
+    { emoji: '♻️', name: 'Recycling Sorter', about: 'Wet, dry or reject? Sort the rubbish!', path: 'science/recycling-sorter/index.html', tag: 'New!' },
+    { emoji: '🌾', name: 'Seasons of India', about: 'Summer, monsoon, winter and harvest festivals' },
   ]},
   { id: 'space', title: '🚀 Space', color: 'c-purple', items: [
     { emoji: '🪐', name: 'Planet Jump', about: 'Jump on the Moon, Mars and Jupiter: gravity is different everywhere!', path: 'science/planet-jump/index.html' },
@@ -164,7 +168,8 @@ const SUBJECTS = [
     { emoji: '🚀', name: 'Rocket Launch', about: 'Orbit and escape velocity: how fast to leave a planet?', path: 'science/rocket-launch/index.html' },
     { emoji: '💡', name: 'Light Travel', about: 'How fast is light? What is a light year?', path: 'science/light-travel/index.html' },
     { emoji: '✨', name: 'Star Patterns', about: 'Join the stars: Saptarishi, Orion and more', path: 'science/star-patterns/index.html' },
-    { emoji: '🌑', name: 'Eclipse!', about: 'Move the Moon to make solar and lunar eclipses', path: 'science/eclipse/index.html', tag: 'New!' },
+    { emoji: '🌑', name: 'Eclipse!', about: 'Move the Moon to make solar and lunar eclipses', path: 'science/eclipse/index.html' },
+    { emoji: '🪐', name: 'Build a Solar System', about: 'Put the planets in order around the Sun' },
   ]},
   { id: 'universe', title: '🌌 Universe', color: 'c-blue', items: [
     { emoji: '⭐', name: 'Life of a Star', about: 'Stars are born, shine, and change: supernovas and more', path: 'science/life-of-a-star/index.html' },
@@ -174,6 +179,7 @@ const SUBJECTS = [
   ]},
   { id: 'world', title: '🗺️ World', color: 'c-red', items: [
     { emoji: '🗺️', name: 'States & Countries', about: 'Indian states and countries: capitals, languages and hello!', path: 'world/states-and-countries/index.html', tag: 'New!' },
+    { emoji: '🪔', name: 'Festivals of India', about: 'Pongal, Diwali, Eid, Christmas and more' },
     { emoji: '🚩', name: 'Flag Quiz', about: 'Flags, countries, capitals and continents', path: 'world/flag-quiz/index.html' },
     { emoji: '🌏', name: 'Continents Puzzle', about: 'Put the 7 continents in their places', path: 'world/continents-puzzle/index.html' },
     { emoji: '🏛️', name: 'Famous Landmarks', about: 'Taj Mahal, Eiffel Tower, pyramids and more', path: 'world/famous-landmarks/index.html' },
@@ -192,7 +198,7 @@ const SUBJECTS = [
     { emoji: '🌠', name: 'Imagine Time', about: 'Close your eyes for a calm imagination journey', path: 'mind/imagine-time/index.html' },
     { emoji: '😊', name: 'Feelings Check-in', about: 'How do I feel today? Name it and share it', path: 'mind/feelings-check-in/index.html' },
     { emoji: '💝', name: 'Kindness Diary', about: 'Kind things I did, and kind things done for me', path: 'mind/kindness-diary/index.html' },
-    { emoji: '🙏', name: 'Gratitude Jar', about: 'Three good things about today', path: 'mind/gratitude-jar/index.html', tag: 'New!' },
+    { emoji: '🙏', name: 'Gratitude Jar', about: 'Three good things about today', path: 'mind/gratitude-jar/index.html' },
   ]},
 ];
 
@@ -212,14 +218,14 @@ SUBJECTS.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 /* ---------- today's practice: 3 short games a day, a new mix every day ---------- */
 const PLAN = {
   kavikuyil: [
-    ['hindi/swar', 'hindi/vyanjan', 'hindi/matras', 'kannada/kagunita', 'tamil/uyirmei', 'kannada/swaragalu', 'kannada/vyanjanagalu', 'tamil/uyir-ezhuthukkal', 'tamil/mei-ezhuthukkal', 'tamil/animal-words', 'languages/word-explorer', 'tamil/numbers-colours'],
+    ['hindi/swar', 'hindi/vyanjan', 'hindi/matras', 'kannada/kagunita', 'tamil/uyirmei', 'tamil/aathichoodi', 'languages/everyday-phrases', 'kannada/swaragalu', 'kannada/vyanjanagalu', 'tamil/uyir-ezhuthukkal', 'tamil/mei-ezhuthukkal', 'tamil/animal-words', 'languages/word-explorer', 'tamil/numbers-colours'],
     ['maths/time-words', 'maths/birthday-calendar', 'maths/world-clock', 'maths/money-shop', 'maths/time-ladder'],
-    ['english/word-match', 'english/story-time', 'english/rhyme-time', 'maths/number-bonds', 'maths/times-tables', 'science/weather-watch', 'science/how-plants-grow', 'world/continents-puzzle', 'world/states-and-countries', 'mind/feelings-check-in', 'maths/fraction-pizza', 'science/volcanoes', 'science/eclipse', 'mind/gratitude-jar', 'science/planet-jump', 'mind/focus-garden'],
+    ['english/word-match', 'english/story-time', 'english/rhyme-time', 'maths/number-bonds', 'maths/times-tables', 'science/weather-watch', 'science/how-plants-grow', 'world/continents-puzzle', 'world/states-and-countries', 'mind/feelings-check-in', 'maths/fraction-pizza', 'maths/patterns', 'science/magnets', 'science/recycling-sorter', 'science/volcanoes', 'science/eclipse', 'mind/gratitude-jar', 'science/planet-jump', 'mind/focus-garden'],
   ],
   prabanjan: [
-    ['little/letter-sounds', 'little/blend-it', 'little/trace-it', 'little/sight-words'],
+    ['little/letter-sounds', 'little/blend-it', 'little/trace-it', 'little/sight-words', 'little/opposites'],
     ['little/number-friends', 'maths/counting-fun', 'little/trace-it'],
-    ['little/story-time', 'little/rhyme-and-sing', 'little/sentence-builder', 'little/picture-talk', 'little/colours-shapes', 'science/animal-homes'],
+    ['little/story-time', 'little/rhyme-and-sing', 'little/sentence-builder', 'little/who-am-i', 'little/picture-talk', 'little/colours-shapes', 'science/animal-homes'],
   ],
 }[P.id];
 const allItems = SUBJECTS.flatMap(sub => sub.items.filter(i => i.path));
