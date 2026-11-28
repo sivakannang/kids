@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blend It</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .train { display: flex; justify-content: center; align-items: center; gap: 46px; min-height: 140px; transition: gap .8s cubic-bezier(.34,1.4,.64,1); margin-top: 6px; }
+  .train.blended { gap: 2px; }
+  .car { width: 104px; height: 120px; border: none; border-radius: 24px; font-size: 80px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 7px 0 rgba(0,0,0,.18); font-family: inherit; transition: transform .2s; }
+  .car.on { transform: translateY(-12px) scale(1.06); }
+  .reveal { text-align: center; min-height: 150px; }
+  .reveal .p { font-size: 110px; line-height: 1.1; animation: pop .6s; }
+  .reveal .w { font-size: 46px; font-weight: 700; color: var(--purple); }
+  .progress { text-align: center; font-size: 18px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🚂</span>
+    <div><h1>Blend It</h1><small>Push the sounds together to make a word, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card">
+    <div class="pick" id="levels"><button data-l="2" class="active">🐣 2 letters</button><button data-l="3">🐥 3 letters</button></div>
+    <div class="train" id="train"></div>
+    <div class="row">
+      <button class="btn big green" id="blendBtn">🚂 Blend!</button>
+      <button class="btn big purple" id="slowBtn">🐢 Say it slowly</button>
+    </div>
+    <div class="reveal" id="reveal"></div>
+    <div class="row"><button class="btn big saidit" id="said" hidden>🎤 I read it!</button></div>
+    <div class="navrow"><span></span><span class="progress" id="prog"></span><button class="btn orange" id="next">➡️</button></div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/little.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const { SOUND } = Little;
+const TWO = [['at', '📍', 'at the park'], ['in', '📥', 'in the box'], ['on', '🔛', 'on the table'], ['up', '⬆️', 'go up!'], ['it', '👉', 'look at it'], ['is', '✅', 'it is fun'], ['am', '🙋', 'I am happy'], ['an', '🍎', 'an apple']];
+const THREE = [['cat', '🐱'], ['dog', '🐶'], ['pig', '🐷'], ['sun', '☀️'], ['hat', '🎩'], ['bat', '🦇'], ['bus', '🚌'], ['cup', '☕'], ['pen', '🖊️'], ['net', '🥅'],
+  ['map', '🗺️'], ['fan', '🪭'], ['bed', '🛏️'], ['hen', '🐔'], ['fox', '🦊'], ['box', '📦'], ['bug', '🐛'], ['log', '🪵'], ['rat', '🐀'], ['van', '🚐'], ['web', '🕸️'], ['pot', '🍯']];
+const COLORS = ['#ef476f', '#118ab2', '#ff9f1c'];
+let level = 2, list = Kids.shuffle(TWO), idx = 0, blended = false;
+const say = t => { $('#bubble').textContent = t; };
+const word = () => list[idx];
+
+function show() {
+  const [w] = word(); blended = false;
+  $('#train').classList.remove('blended'); $('#reveal').innerHTML = ''; $('#said').hidden = true;
+  $('#train').innerHTML = '';
+  w.split('').forEach((c, k) => {
+    const b = document.createElement('button'); b.className = 'car'; b.textContent = c; b.style.background = COLORS[k % 3];
+    b.addEventListener('click', () => { b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 300); Little.say(SOUND[c], 0.7); });
+    $('#train').appendChild(b);
+  });
+  $('#prog').textContent = `Word ${idx + 1} of ${list.length}`;
+  say(`Tap each letter to hear its sound. Then press Blend! 🚂`);
+  Little.say('Tap each letter, then blend!');
+}
+function slowly() {
+  const [w] = word(), cars = [...document.querySelectorAll('.car')];
+  w.split('').forEach((c, k) => setTimeout(() => { cars[k].classList.add('on'); setTimeout(() => cars[k].classList.remove('on'), 400); }, k * 900));
+  Little.sayList([...w.split('').map(c => SOUND[c]), w], 0.6);
+}
+$('#slowBtn').addEventListener('click', slowly);
+$('#blendBtn').addEventListener('click', () => {
+  const [w, pic, sentence] = word();
+  $('#train').classList.add('blended'); Kids.sfx.whoosh();
+  setTimeout(() => {
+    $('#reveal').innerHTML = `<div class="p">${pic}</div><div class="w">${w}</div>${sentence ? `<div class="label">${sentence}</div>` : ''}`;
+    Little.sayList([...w.split('').map(c => SOUND[c]), `${w}!`, sentence || `${w}!`], 0.7);
+    say(`${w.split('').map(c => SOUND[c]).join(' - ')} → "${w}"! Now YOU read it! 🎤`);
+    $('#said').hidden = false; blended = true;
+  }, 800);
+});
+Little.saidIt($('#said'), c => {
+  say(`${c} You read "${word()[0]}"! 🎉 Press ➡️ for the next word.`); $('#said').hidden = true;
+  const n = Kids.store.get('little.blended', 0) + 1; Kids.store.set('little.blended', n);
+  if (n % 5 === 0) setTimeout(() => Kids.banner(`📚 ${n} words read! You're a reader, ${Kids.nick}!`), 900);
+});
+$('#next').addEventListener('click', () => { idx = (idx + 1) % list.length; if (idx === 0) list = Kids.shuffle(level === 2 ? TWO : THREE); Kids.sfx.pop(); show(); });
+$('#levels').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  level = +b.dataset.l; list = Kids.shuffle(level === 2 ? TWO : THREE); idx = 0; Kids.sfx.pop();
+  $('#levels').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); show();
+}));
+show();
+</script>
+</body>
+</html>

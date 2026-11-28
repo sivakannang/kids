@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kavikuyil's Learning World</title>
-<link rel="stylesheet" href="shared/kids.css">
+<title>Our Learning World</title>
+<link rel="stylesheet" href="shared/kids.css?v=3">
 <style>
   main { max-width: 1200px; margin: 0 auto; padding: 0 18px 10px; }
   .hello { text-align: center; margin: 4px 0 22px; font-size: 22px; color: var(--muted); }
@@ -32,6 +32,26 @@
   .c-orange { background: linear-gradient(135deg, #ffb347, #ff8a00); }
   .c-pink   { background: linear-gradient(135deg, #f774c4, #e0409e); }
   .c-red    { background: linear-gradient(135deg, #ff7a93, #ef476f); }
+  .c-teal   { background: linear-gradient(135deg, #48cae4, #0096c7); }
+  .c-sun    { background: linear-gradient(135deg, #ffd166, #f8961e); }
+  .who h2 { text-align: center; margin: 4px 0 12px; font-size: 26px; }
+  .kids { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .kidcard { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); background: #fff; border-radius: 26px; padding: 12px 22px; border: 5px solid transparent; box-shadow: 0 6px 0 rgba(0,0,0,.08); transition: transform .15s; }
+  .kidcard:hover { transform: translateY(-3px); }
+  .kidcard .av { font-size: 56px; }
+  .kidcard b { font-size: 24px; display: block; }
+  .kidcard small { color: var(--muted); font-size: 15px; }
+  .kidcard.on { border-color: var(--purple); background: #f6f1ff; }
+  .practice { margin: 0 0 26px; }
+  .practice h2 { margin: 0 0 4px; font-size: 24px; }
+  .ptasks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 10px; }
+  .ptask { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); background: #f6f3ff; border-radius: 20px; padding: 12px 14px; border: 3px solid transparent; }
+  .ptask .e { font-size: 40px; }
+  .ptask b { display: block; font-size: 18px; }
+  .ptask small { color: var(--muted); }
+  .ptask.done { background: #d3f8e2; border-color: #06d6a0; }
+  .ptask .chk { margin-left: auto; font-size: 28px; }
+  .pstat { font-size: 17px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -39,93 +59,116 @@
 <header>
   <div class="logo">
     <span class="big">🌈</span>
-    <div><h1><span data-kid-name>Kavikuyil</span>'s Learning World</h1><small>Pick a game and let's play & learn!</small></div>
+    <div><h1>Kavikuyil &amp; Prabanjan's Learning World</h1><small>Pick a game and let's play &amp; learn!</small></div>
   </div>
   <div class="badges" data-kids-badges></div>
 </header>
 
 <main>
+  <section class="who">
+    <h2>👋 Who's learning today?</h2>
+    <div class="kids" id="kids"></div>
+  </section>
   <div class="hello" id="hello"></div>
+  <section class="card practice" id="practice"></section>
   <div id="subjects"></div>
 </main>
 
-<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span></footer>
+<footer>Made with ❤️ for PeriyaKutty &amp; ChinnaKutty</footer>
 
-<script src="shared/kids.js"></script>
+<script src="shared/kids.js?v=3"></script>
 <script>
 /* =========================================================
    Add a new project here: give it a link (path) to make it
    playable, or leave path out to show it as "coming soon".
    ========================================================= */
 const SUBJECTS = [
-  { title: '🔤 English', color: 'c-purple', items: [
+  { id: 'little', title: '🧸 ChinnaKutty\'s Corner (LKG)', color: 'c-sun', items: [
+    { emoji: '🔤', name: 'Letter Sounds', about: 'Phonics: s a t p i n… and the vowel friends', path: 'little/letter-sounds/index.html', tag: 'New!' },
+    { emoji: '🚂', name: 'Blend It', about: 'Push sounds together: a-t at, c-a-t cat!', path: 'little/blend-it/index.html', tag: 'New!' },
+    { emoji: '✍️', name: 'Trace It', about: 'Write letters and numbers with your finger', path: 'little/trace-it/index.html', tag: 'New!' },
+    { emoji: '🖼️', name: 'Picture Talk', about: 'Animals, birds, fruits, vehicles, and tell a story', path: 'little/picture-talk/index.html', tag: 'New!' },
+    { emoji: '🔢', name: 'Number Friends', about: 'Learn, find and count 1 to 10 (and 20)', path: 'little/number-friends/index.html', tag: 'New!' },
+    { emoji: '📚', name: 'Story Time', about: 'Listen to stories and answer questions', path: 'little/story-time/index.html', tag: 'New!' },
+    { emoji: '🎵', name: 'Rhyme & Sing', about: 'Action songs and rhyming words' },
+    { emoji: '🎨', name: 'Colours & Shapes', about: 'Find the red circle!' },
+  ]},
+  { id: 'langs', title: '🗣️ Languages: Tamil, Hindi, Kannada', color: 'c-teal', items: [
+    { emoji: '🗣️', name: 'Word Explorer', about: 'One picture, four languages: English, தமிழ், हिंदी, ಕನ್ನಡ', path: 'languages/word-explorer/index.html', tag: 'New!' },
+    { emoji: 'अ', name: 'Hindi Swar', about: 'The Hindi vowels: अ आ इ ई…', path: 'hindi/swar/index.html', tag: 'New!' },
+    { emoji: 'ಅ', name: 'Kannada Swaragalu', about: 'The Kannada vowels: ಅ ಆ ಇ ಈ…', path: 'kannada/swaragalu/index.html', tag: 'New!' },
+    { emoji: 'क', name: 'Hindi Vyanjan', about: 'Hindi consonants: क ख ग…' },
+    { emoji: 'ಕ', name: 'Kannada Vyanjanagalu', about: 'Kannada consonants: ಕ ಖ ಗ…' },
+  ]},
+  { id: 'english', title: '🔤 English', color: 'c-purple', items: [
     { emoji: '📖', name: 'Common Words', about: 'Class 1 reading word list to print and read together', path: 'english/class-1-basics/common-words.pdf', tag: 'Print' },
-    { emoji: '🧩', name: 'Word Match', about: 'Match pictures and words, and spell them', path: 'english/word-match/index.html', tag: 'New!' },
-    { emoji: '🔊', name: 'Phonics Fun', about: 'A says a, as in apple! Letters and their sounds', path: 'english/phonics-fun/index.html', tag: 'New!' },
+    { emoji: '🧩', name: 'Word Match', about: 'Match pictures and words, and spell them', path: 'english/word-match/index.html' },
+    { emoji: '🔊', name: 'Phonics Fun', about: 'A says a, as in apple! Letters and their sounds', path: 'english/phonics-fun/index.html' },
     { emoji: '📚', name: 'Story Time', about: 'Read-along picture stories' },
     { emoji: '🔁', name: 'Rhyme Time', about: 'Find words that rhyme: cat, hat, bat!' },
   ]},
-  { title: '🌺 Tamil', color: 'c-pink', items: [
-    { emoji: 'அ', name: 'Uyir Ezhuthukkal', about: 'The 12 Tamil vowels with words and pictures', path: 'tamil/uyir-ezhuthukkal/index.html', tag: 'New!' },
-    { emoji: '🔢', name: 'Tamil Numbers & Colours', about: 'ஒன்று to பத்து, and colours in Tamil', path: 'tamil/numbers-colours/index.html', tag: 'New!' },
+  { id: 'tamil', title: '🌺 Tamil', color: 'c-pink', items: [
+    { emoji: 'அ', name: 'Uyir Ezhuthukkal', about: 'The 12 Tamil vowels with words and pictures', path: 'tamil/uyir-ezhuthukkal/index.html' },
+    { emoji: '🔢', name: 'Tamil Numbers & Colours', about: 'ஒன்று to பத்து, and colours in Tamil', path: 'tamil/numbers-colours/index.html' },
     { emoji: 'க', name: 'Mei Ezhuthukkal', about: 'The 18 Tamil consonants' },
     { emoji: '🐘', name: 'Tamil Animal Words', about: 'Animal names in Tamil' },
   ]},
-  { title: '⏰ Time', color: 'c-blue', items: [
+  { id: 'time', title: '⏰ Time', color: 'c-blue', items: [
     { emoji: '⏰', name: 'Tick-Tock World Explorer', about: 'Read the clock and travel the world’s time zones', path: 'maths/world-clock/index.html' },
     { emoji: '⏱️', name: 'How Long Is a Second?', about: 'Feel seconds, guess 10 seconds, tap race, fill the time jars', path: 'maths/how-long-is-a-second/index.html' },
     { emoji: '🪜', name: 'Time Ladder', about: 'Climb from a second up to a thousand years', path: 'maths/time-ladder/index.html' },
     { emoji: '🎂', name: 'My Life in Numbers', about: 'How many days, hours and heartbeats old are you?', path: 'maths/my-life-in-numbers/index.html' },
     { emoji: '📅', name: 'Birthday & Calendar', about: 'Days, weeks, months and a birthday countdown', path: 'maths/birthday-calendar/index.html' },
+    { emoji: '🗓️', name: 'Time Words', about: 'Yesterday, day after tomorrow, next week… on a real calendar', path: 'maths/time-words/index.html', tag: 'New!' },
   ]},
-  { title: '🔢 Numbers', color: 'c-orange', items: [
-    { emoji: '🍎', name: 'Counting Fun', about: 'Tap and count, how many?, and adding', path: 'maths/counting-fun/index.html', tag: 'New!' },
-    { emoji: '🛒', name: 'Money Shop', about: 'Buy toys with ₹ coins and notes, and work out the change', path: 'maths/money-shop/index.html', tag: 'New!' },
+  { id: 'numbers', title: '🔢 Numbers', color: 'c-orange', items: [
+    { emoji: '🍎', name: 'Counting Fun', about: 'Tap and count, how many?, and adding', path: 'maths/counting-fun/index.html' },
+    { emoji: '🛒', name: 'Money Shop', about: 'Buy toys with ₹ coins and notes, and work out the change', path: 'maths/money-shop/index.html' },
     { emoji: '🔷', name: 'Shapes Hunt', about: 'Find circles, squares and triangles all around you' },
     { emoji: '🔟', name: 'Number Bonds', about: 'Pairs that make 10' },
     { emoji: '✖️', name: 'Times Tables', about: 'Jump along the number line' },
   ]},
-  { title: '📏 Measuring', color: 'c-orange', items: [
+  { id: 'measuring', title: '📏 Measuring', color: 'c-orange', items: [
     { emoji: '✋', name: 'Hands & Feet', about: 'Measure with hands, feet and paper clips. Why do we need rulers?', path: 'maths/hands-and-feet/index.html' },
     { emoji: '📏', name: 'Ruler Race', about: 'Centimetres, metres and kilometres', path: 'maths/ruler-race/index.html' },
     { emoji: '⚖️', name: 'Balance Scale', about: 'Heavy or light? Grams and kilograms', path: 'maths/balance-scale/index.html' },
     { emoji: '🏁', name: 'Speed Race', about: 'From a snail to the speed of light', path: 'maths/speed-race/index.html' },
     { emoji: '🌡️', name: 'Hot & Cold', about: 'Thermometers and temperature' },
   ]},
-  { title: '🌍 Earth & Sky', color: 'c-green', items: [
+  { id: 'earth', title: '🌍 Earth & Sky', color: 'c-green', items: [
     { emoji: '🌍', name: 'Spin the Earth', about: 'Why do we have day and night? Why 24 hours?', path: 'science/spin-the-earth/index.html' },
     { emoji: '☀️', name: 'Around the Sun', about: 'Why is a year 365 days? Why do we have seasons?', path: 'science/around-the-sun/index.html' },
     { emoji: '🌙', name: 'Moon Phases', about: 'Why does the Moon change shape? Amavasai to Pournami', path: 'science/moon-phases/index.html' },
-    { emoji: '🐾', name: 'Animal Homes', about: 'Who lives where? Match animals to their homes', path: 'science/animal-homes/index.html', tag: 'New!' },
+    { emoji: '🐾', name: 'Animal Homes', about: 'Who lives where? Match animals to their homes', path: 'science/animal-homes/index.html' },
     { emoji: '🌦️', name: 'Weather Watch', about: 'Rain, clouds, wind and rainbows' },
     { emoji: '🌱', name: 'How Plants Grow', about: 'From a seed to a tree' },
     { emoji: '🫀', name: 'My Body', about: 'Heart, lungs, bones and brain' },
   ]},
-  { title: '🚀 Space', color: 'c-purple', items: [
+  { id: 'space', title: '🚀 Space', color: 'c-purple', items: [
     { emoji: '🪐', name: 'Planet Jump', about: 'Jump on the Moon, Mars and Jupiter: gravity is different everywhere!', path: 'science/planet-jump/index.html' },
     { emoji: '🔭', name: 'Planet Trip', about: 'How big are the planets, and how far away?', path: 'science/planet-trip/index.html' },
     { emoji: '🚀', name: 'Rocket Launch', about: 'Orbit and escape velocity: how fast to leave a planet?', path: 'science/rocket-launch/index.html' },
     { emoji: '💡', name: 'Light Travel', about: 'How fast is light? What is a light year?', path: 'science/light-travel/index.html' },
     { emoji: '✨', name: 'Star Patterns', about: 'Find constellations in the night sky' },
   ]},
-  { title: '🌌 Universe', color: 'c-blue', items: [
+  { id: 'universe', title: '🌌 Universe', color: 'c-blue', items: [
     { emoji: '⭐', name: 'Life of a Star', about: 'Stars are born, shine, and change: supernovas and more', path: 'science/life-of-a-star/index.html' },
     { emoji: '⚫', name: 'Black Hole', about: 'Squeeze the Earth until even light can’t escape!', path: 'science/black-hole/index.html' },
     { emoji: '🔭', name: 'Zoom Out!', about: 'From you all the way out to the whole universe', path: 'science/zoom-out/index.html' },
     { emoji: '🫧', name: 'Many Universes?', about: 'A big “what if…?” story, and make your own universe', path: 'science/many-universes/index.html' },
   ]},
-  { title: '🗺️ World', color: 'c-red', items: [
-    { emoji: '🚩', name: 'Flag Quiz', about: 'Flags, countries, capitals and continents', path: 'world/flag-quiz/index.html', tag: 'New!' },
+  { id: 'world', title: '🗺️ World', color: 'c-red', items: [
+    { emoji: '🚩', name: 'Flag Quiz', about: 'Flags, countries, capitals and continents', path: 'world/flag-quiz/index.html' },
     { emoji: '🌏', name: 'Continents Puzzle', about: 'Put the 7 continents in their places' },
     { emoji: '🏛️', name: 'Famous Landmarks', about: 'Taj Mahal, Eiffel Tower, pyramids and more' },
   ]},
-  { title: '🎨 Art & Music', color: 'c-red', items: [
-    { emoji: '🖍️', name: 'Drawing Pad', about: 'Draw, stamp, mirror-paint and colour in pictures', path: 'art-and-music/drawing-pad/index.html', tag: 'New!' },
-    { emoji: '🎹', name: 'Little Piano', about: 'Play Sa Re Ga Ma, Twinkle Twinkle, and record your own tune', path: 'art-and-music/little-piano/index.html', tag: 'New!' },
+  { id: 'art', title: '🎨 Art & Music', color: 'c-red', items: [
+    { emoji: '🖍️', name: 'Drawing Pad', about: 'Draw, stamp, mirror-paint and colour in pictures', path: 'art-and-music/drawing-pad/index.html' },
+    { emoji: '🎹', name: 'Little Piano', about: 'Play Sa Re Ga Ma, Twinkle Twinkle, and record your own tune', path: 'art-and-music/little-piano/index.html' },
     { emoji: '🎨', name: 'Colour Mixing', about: 'Red + yellow = ?' },
     { emoji: '🥁', name: 'Rhythm Game', about: 'Clap and drum along to the beat' },
   ]},
-  { title: '🧠 Growing Me', color: 'c-pink', items: [
+  { id: 'mind', title: '🧠 Growing Me', color: 'c-pink', items: [
     { emoji: '🌱', name: 'Focus Garden', about: 'Grow a flower while you focus, plus calm breathing', path: 'mind/focus-garden/index.html' },
     { emoji: '🪜', name: 'Goal Ladder', about: 'Climb one small step towards a goal every day', path: 'mind/goal-ladder/index.html' },
     { emoji: '🫙', name: 'Dream Jar', about: 'Draw your dreams and keep them safe', path: 'mind/dream-jar/index.html' },
@@ -135,6 +178,54 @@ const SUBJECTS = [
     { emoji: '💝', name: 'Kindness Diary', about: 'Kind things I did, and kind things done for me' },
   ]},
 ];
+
+/* ---------- who is playing ---------- */
+const P = Kids.profile;
+document.getElementById('kids').innerHTML = Kids.profiles.map(k => `
+  <a class="kidcard ${k.id === P.id ? 'on' : ''}" href="index.html?kid=${k.id}">
+    <span class="av">${k.emoji}</span><span><b>${k.name}</b><small>${k.nick} · ${k.grade} · ⭐ ${Kids.starsOf(k.id)}</small></span></a>`).join('');
+
+/* ---------- each child sees their own subjects first ---------- */
+const ORDER = {
+  kavikuyil: ['langs', 'tamil', 'time', 'english', 'numbers', 'measuring', 'earth', 'space', 'universe', 'world', 'mind', 'art', 'little'],
+  prabanjan: ['little', 'numbers', 'english', 'art', 'earth', 'tamil', 'langs', 'world', 'time', 'measuring', 'space', 'universe', 'mind'],
+}[P.id];
+SUBJECTS.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+
+/* ---------- today's practice: 3 short games a day, a new mix every day ---------- */
+const PLAN = {
+  kavikuyil: [
+    ['hindi/swar', 'kannada/swaragalu', 'languages/word-explorer', 'tamil/uyir-ezhuthukkal', 'tamil/numbers-colours'],
+    ['maths/time-words', 'maths/birthday-calendar', 'maths/world-clock', 'maths/money-shop', 'maths/time-ladder'],
+    ['english/word-match', 'science/spin-the-earth', 'science/planet-jump', 'maths/speed-race', 'science/moon-phases', 'world/flag-quiz', 'mind/focus-garden'],
+  ],
+  prabanjan: [
+    ['little/letter-sounds', 'little/blend-it', 'little/trace-it'],
+    ['little/number-friends', 'maths/counting-fun', 'little/trace-it'],
+    ['little/story-time', 'little/picture-talk', 'science/animal-homes', 'little/picture-talk'],
+  ],
+}[P.id];
+const allItems = SUBJECTS.flatMap(sub => sub.items.filter(i => i.path));
+const dayNo = Math.floor(new Date(new Date().toDateString()) / 86400000);
+const picks = [...new Set(PLAN.map((pool, k) => pool[(dayNo + k) % pool.length]))];
+const doneToday = Kids.store.get(`day.${Kids.today()}`, {});
+const tasks = picks.map(key => ({ key, item: allItems.find(i => i.path.startsWith(key + '/')), done: !!doneToday[key] })).filter(t => t.item);
+const allDone = tasks.every(t => t.done);
+// streak of days with all practice done
+let days = Kids.store.get('practice.days', []);
+if (allDone && !days.includes(Kids.today())) { days.push(Kids.today()); Kids.store.set('practice.days', days); }
+let streak = 0; { const d = new Date(); if (!days.includes(Kids.today())) d.setDate(d.getDate() - 1);
+  const key = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  while (days.includes(key(d))) { streak++; d.setDate(d.getDate() - 1); } }
+document.getElementById('practice').innerHTML = `
+  <h2>📝 ${P.nick}'s practice for today</h2>
+  <div class="pstat">${allDone ? `🎉 All done! Wonderful, ${P.nick}!` : `Finish these ${tasks.length} little games (win at least one ⭐ in each).`} ${streak ? ` · 🔥 ${streak} day${streak > 1 ? 's' : ''} in a row` : ''}</div>
+  <div class="ptasks">${tasks.map(t => `<a class="ptask ${t.done ? 'done' : ''}" href="${t.item.path}">
+    <span class="e">${t.item.emoji}</span><span><b>${t.item.name}</b><small>${t.item.about}</small></span><span class="chk">${t.done ? '✅' : '⬜'}</span></a>`).join('')}</div>`;
+if (allDone && !Kids.store.get(`practice.cheered.${Kids.today()}`, false)) {
+  Kids.store.set(`practice.cheered.${Kids.today()}`, true);
+  setTimeout(() => { Kids.confetti(); Kids.banner(`🏆 All of today's practice done, ${P.nick}!`); Kids.speak(`Hooray! All of today's practice is done, ${P.nick}! I am so proud of you!`); }, 600);
+}
 
 const box = document.getElementById('subjects');
 for (const s of SUBJECTS) {
@@ -157,7 +248,7 @@ for (const s of SUBJECTS) {
 const h = new Date().getHours();
 const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 document.getElementById('hello').innerHTML =
-  `${greet}, <b>${Kids.name}</b>! 👋 You have <b>⭐ ${Kids.stars}</b> stars. What shall we learn today?`;
+  `${greet}, <b>${P.name}</b> (${P.nick})! 👋 You have <b>⭐ ${Kids.stars}</b> stars. What shall we learn today?`;
 </script>
 </body>
 </html>

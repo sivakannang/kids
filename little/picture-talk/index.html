@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Picture Talk</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .cats { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .cat { border: 4px solid #eee; background: #fff; border-radius: 22px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-size: 18px; font-weight: 700; }
+  .cat .e { display: block; font-size: 38px; }
+  .cat.active { border-color: var(--purple); background: #f1e9ff; }
+  .learn-card { text-align: center; }
+  .learn-card .name { font-size: 54px; font-weight: 700; color: var(--purple); }
+  .scene { font-size: 64px; text-align: center; line-height: 1.25; background: linear-gradient(180deg, #bde0fe, #d8f3dc); border-radius: 26px; padding: 16px; letter-spacing: 6px; }
+  .prompt { font-size: 28px; font-weight: 600; text-align: center; min-height: 80px; margin-top: 12px; }
+  .dots2 { text-align: center; font-size: 22px; letter-spacing: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🖼️</span>
+    <div><h1>Picture Talk</h1><small>Look, listen and talk, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">👀 Look &amp; Say</button>
+  <button class="tab" data-tab="find">🔍 Find It</button>
+  <button class="tab" data-tab="talk">💬 Tell Me a Story</button>
+</nav>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card" id="catCard"><div class="cats" id="cats"></div></section>
+
+  <section class="card learn-card" data-panel="learn">
+    <div class="giant-pic" id="lPic"></div>
+    <div class="name" id="lName"></div>
+    <div class="row">
+      <button class="btn big purple" id="lHear">🔊 Hear it</button>
+      <button class="btn big green saidit" id="lSaid">🎤 I said it!</button>
+    </div>
+    <div class="navrow"><button class="btn orange" id="lPrev">⬅️</button><span class="dots2" id="lDots"></span><button class="btn orange" id="lNext">➡️</button></div>
+  </section>
+
+  <section class="card center" data-panel="find" hidden>
+    <div class="row" style="margin-top:0"><button class="btn big purple" id="fHear">🔊 Listen</button></div>
+    <div class="bigchoices" id="fChoices"></div>
+    <div class="row"><button class="btn big orange" id="fNext" hidden>Next ➡️</button></div>
+  </section>
+
+  <section class="card" data-panel="talk" hidden>
+    <div class="pick" id="scenes"></div>
+    <div class="scene" id="scene" style="margin-top:12px"></div>
+    <div class="prompt" id="prompt"></div>
+    <div class="row">
+      <button class="btn big purple" id="tHear">🔊 Ask me again</button>
+      <button class="btn big green saidit" id="tSaid">🎤 I answered!</button>
+    </div>
+    <div class="label center">👨‍👩‍👦 Grown-ups: listen to the answer, ask "what else?", and help with new words. Any answer is a good answer!</div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/little.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const CATS = {
+  '🐶 Animals': [['🐶','dog','Woof woof!'],['🐱','cat','Meow!'],['🐄','cow','Moo!'],['🐘','elephant','It has a long trunk.'],['🦁','lion','Roar! The king of the jungle.'],['🐯','tiger','It has stripes.'],['🐒','monkey','It loves bananas.'],['🐴','horse','Neigh! It runs fast.'],['🐰','rabbit','It hops, hop hop!'],['🦒','giraffe','It has a very long neck.'],['🦓','zebra','Black and white stripes!'],['🐻','bear','It is big and furry.'],['🐐','goat','Maa maa!'],['🐫','camel','It lives in the desert.']],
+  '🦜 Birds': [['🦜','parrot','It can copy words!'],['🦚','peacock','It has beautiful feathers. It is India\'s national bird!'],['🦉','owl','Hoot hoot! It is awake at night.'],['🦆','duck','Quack quack!'],['🐔','hen','It lays eggs.'],['🐧','penguin','It cannot fly, but it swims!'],['🦅','eagle','It flies very high.'],['🦢','swan','It is white and swims gracefully.'],['🕊️','dove','A bird of peace.'],['🦩','flamingo','A pink bird that stands on one leg.']],
+  '🍎 Fruits': [['🍎','apple','Red and crunchy.'],['🍌','banana','Long and yellow.'],['🥭','mango','The king of fruits!'],['🍇','grapes','Small and round.'],['🍊','orange','Juicy!'],['🍉','watermelon','Green outside, red inside.'],['🍓','strawberry','Red and sweet.'],['🍍','pineapple','Spiky outside, sweet inside.'],['🥥','coconut','Hard outside, water inside!'],['🍒','cherry','Small and red.']],
+  '🥕 Vegetables': [['🥕','carrot','Orange and crunchy. Rabbits love it!'],['🍅','tomato','Red and round.'],['🥔','potato','It grows under the ground.'],['🧅','onion','It can make you cry!'],['🌽','corn','Yellow and sweet.'],['🍆','brinjal','Purple and shiny.'],['🥒','cucumber','Long, green and cool.'],['🥦','broccoli','It looks like a little tree.'],['🌶️','chilli','Very, very spicy!']],
+  '🚗 Vehicles': [['🚗','car','Vroom vroom!'],['🚌','bus','Many people ride in it.'],['🛺','auto-rickshaw','It has three wheels!'],['🚲','bicycle','Two wheels and pedals.'],['🚂','train','Choo choo!'],['✈️','aeroplane','It flies in the sky.'],['⛵','boat','It sails on water.'],['🚚','truck','It carries big things.'],['🚑','ambulance','It helps sick people.'],['🚒','fire engine','It puts out fires.'],['🚁','helicopter','Its blades go round and round.'],['🚀','rocket','It goes to space!']],
+  '👂 My Body': [['👁️','eye','I see with my eyes.'],['👂','ear','I hear with my ears.'],['👃','nose','I smell with my nose.'],['👄','mouth','I eat and talk with my mouth.'],['🦷','tooth','I brush my teeth.'],['✋','hand','I clap with my hands.'],['🦶','foot','I walk with my feet.'],['🦵','leg','I run with my legs.'],['👅','tongue','I taste with my tongue.']],
+  '🌻 Plants': [['🌳','tree','It is tall and gives us shade.'],['🌸','flower','It smells nice.'],['🌻','sunflower','It looks at the sun!'],['🌹','rose','A red flower.'],['🌵','cactus','It is prickly!'],['🍃','leaf','Leaves are green.'],['🌴','coconut tree','Coconuts grow on it.'],['🌱','seed','A baby plant!'],['🌷','tulip','A colourful flower.']],
+};
+const SCENES = [
+  ['🛝 At the park', '🌳☀️🌳\n👦⚽🐕\n🛝🌼🦋', ['What do you see in the picture?', 'What is the boy playing with?', 'What is the dog doing?', 'What colour is the butterfly?', 'What would YOU play at the park?']],
+  ['🍳 In the kitchen', '👩🍳🥛\n🍌🍎🍞\n🐱🪑🍽️', ['Who is in the kitchen?', 'What is Amma cooking?', 'Which fruits can you see?', 'Where is the cat?', 'What is your favourite food?']],
+  ['🚜 On the farm', '🌾☀️🌾\n🐄🐔🐐\n🚜🏡🌽', ['Which animals live on the farm?', 'What does the cow say?', 'What is the tractor for?', 'What grows in the field?', 'Which farm animal do you like best?']],
+  ['🌧️ Rainy day', '☁️🌧️☁️\n👦☂️🐸\n💧🌈💧', ['What is the weather like?', 'Why does the boy have an umbrella?', 'Which animal loves the rain?', 'What comes after the rain?', 'What do you like to do on a rainy day?']],
+  ['🏖️ At the beach', '☀️⛵🌊\n👧🏰🦀\n🐚🍦🐚', ['Where are they?', 'What is the girl making?', 'Can you find the crab?', 'What is floating on the water?', 'What would you do at the beach?']],
+  ['🎂 Birthday party', '🎈🎉🎈\n🥳🎂🎁\n🍰🎊🍭', ['Whose birthday is it?', 'How many balloons can you see?', 'What is in the box?', 'What do we sing at a birthday?', 'What would you like for your birthday?']],
+];
+let cat = Object.keys(CATS)[0], li = 0;
+const say = t => { $('#bubble').textContent = t; };
+const items = () => CATS[cat];
+function renderCats() {
+  $('#cats').innerHTML = '';
+  Object.keys(CATS).forEach(c => { const [e, ...n] = c.split(' '); const b = document.createElement('button'); b.className = 'cat' + (c === cat ? ' active' : '');
+    b.innerHTML = `<span class="e">${e}</span>${n.join(' ')}`;
+    b.addEventListener('click', () => { cat = c; li = 0; Kids.sfx.pop(); renderCats(); showLearn(); if (!$('[data-panel="find"]').hidden) newFind(); }); $('#cats').appendChild(b); });
+}
+/* ---------- look & say ---------- */
+function showLearn() {
+  const [p, n, fact] = items()[li];
+  $('#lPic').textContent = p; $('#lName').textContent = n;
+  $('#lDots').textContent = items().map((_, k) => k === li ? '🟣' : '⚪').join('');
+  say(`This is ${/^[aeiou]/.test(n) ? 'an' : 'a'} ${n}! ${fact} Can you say "${n}"? 🎤`);
+  Little.sayList([`${/^[aeiou]/.test(n) ? 'An' : 'A'} ${n}!`, fact, `Can you say ${n}?`]);
+}
+$('#lHear').addEventListener('click', () => { const [, n, fact] = items()[li]; Little.sayList([n, fact]); });
+$('#lPrev').addEventListener('click', () => { li = (li - 1 + items().length) % items().length; Kids.sfx.pop(); showLearn(); });
+$('#lNext').addEventListener('click', () => { li = (li + 1) % items().length; Kids.sfx.pop(); showLearn(); });
+Little.saidIt($('#lSaid'), c => { say(`${c} You said "${items()[li][1]}"! 🎉 Press ➡️ for the next one.`); });
+
+/* ---------- find it (listening) ---------- */
+let target = null, first = true;
+function newFind() {
+  const list = items(); target = list[R(list.length)]; first = true;
+  const o = new Set([target]); while (o.size < 3) o.add(list[R(list.length)]);
+  $('#fNext').hidden = true;
+  Little.choose($('#fChoices'), shuffle([...o]).map(x => ({ label: x[0], ok: x === target, pic: true })), () => {
+    if (first) Kids.addStar();
+    const c = Little.cheer(); say(`${c} That's the ${target[1]}! ${target[2]}`); Little.sayList([c, `That's the ${target[1]}!`]); Kids.confetti(); $('#fNext').hidden = false;
+  }, () => { first = false; say('Not that one. Look again! 👀'); Little.say(`Try again. Where is the ${target[1]}?`); });
+  fHear();
+}
+function fHear() { say(`Where is the ${target[1]}? Tap it! 👆`); Little.say(`Where is the ${target[1]}?`); }
+$('#fHear').addEventListener('click', fHear);
+$('#fNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
+
+/* ---------- tell me a story ---------- */
+let sc = 0, pi = 0;
+function renderScenes() {
+  $('#scenes').innerHTML = '';
+  SCENES.forEach((s, k) => { const b = document.createElement('button'); b.textContent = s[0]; b.className = k === sc ? 'active' : '';
+    b.addEventListener('click', () => { sc = k; pi = 0; Kids.sfx.pop(); renderScenes(); showScene(); }); $('#scenes').appendChild(b); });
+}
+function showScene() {
+  const [, art, qs] = SCENES[sc];
+  $('#scene').innerHTML = art.replace(/\n/g, '<br>');
+  $('#prompt').textContent = `${pi + 1}. ${qs[pi]}`;
+  say('Look at the picture and tell a grown-up your answer! 💬');
+  Little.say(qs[pi]);
+}
+$('#tHear').addEventListener('click', () => Little.say(SCENES[sc][2][pi]));
+Little.saidIt($('#tSaid'), c => {
+  const qs = SCENES[sc][2];
+  if (pi < qs.length - 1) { pi++; setTimeout(showScene, 1200); say(`${c} Great talking! Next question… 💬`); }
+  else { say(`${c} You told the whole story! 📖 Pick another picture.`); Kids.banner(`💬 Wonderful storytelling, ${Kids.nick}!`); pi = 0; }
+});
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  $('#catCard').hidden = b.dataset.tab === 'talk';
+  if (b.dataset.tab === 'learn') showLearn();
+  if (b.dataset.tab === 'find') newFind();
+  if (b.dataset.tab === 'talk') { renderScenes(); showScene(); }
+}));
+renderCats(); showLearn();
+</script>
+</body>
+</html>

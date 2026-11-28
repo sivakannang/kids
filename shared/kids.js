@@ -12,16 +12,41 @@
      <div class="lcard" data-say><button class="say">🔊</button>…</div>
        → the 🔊 button reads the card's heading, paragraphs and list aloud
 
-   Stars are shared by every app (they live in the browser's storage).
+   Two children use the games. Each has their own stars and saved work.
+   The home page picks who is playing (or add ?kid=prabanjan to any link).
    ========================================================= */
 (function () {
-  const KID = 'Kavikuyil';
-
-  const store = {
+  const PROFILES = [
+    { id: 'kavikuyil', name: 'Kavikuyil', nick: 'PeriyaKutty', emoji: '👧', color: '#9b5de5', grade: '1st std' },
+    { id: 'prabanjan', name: 'Prabanjan', nick: 'ChinnaKutty', emoji: '👦', color: '#118ab2', grade: 'LKG' },
+  ];
+  const GLOBAL = new Set(['kids.sound', 'kids.profile']);
+  const raw = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
+  // who is playing? (?kid=… in the link wins, then the last choice)
+  let pid = raw.get('kids.profile', 'kavikuyil');
+  try { const q = new URLSearchParams(location.search).get('kid'); if (q && PROFILES.some(p => p.id === q)) { pid = q; raw.set('kids.profile', q); } } catch {}
+  const PROFILE = PROFILES.find(p => p.id === pid) || PROFILES[0];
+  const KID = PROFILE.name, NICK = PROFILE.nick;
+
+  // each child's data is kept under their own name; Kavikuyil keeps her older saved data too
+  const keyOf = k => GLOBAL.has(k) ? k : `${PROFILE.id}:${k}`;
+  const store = {
+    key: keyOf,
+    get(k, d) {
+      if (GLOBAL.has(k)) return raw.get(k, d);
+      const v = raw.get(keyOf(k), undefined);
+      if (v !== undefined) return v;
+      return PROFILE.id === 'kavikuyil' ? raw.get(k, d) : d;
+    },
+    set(k, v) { raw.set(keyOf(k), v); },
+  };
   const rand = n => Math.floor(Math.random() * n);
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  // which game is this? e.g. "little/letter-sounds" (used for today's practice)
+  const GAME = (() => { const parts = location.pathname.split('/').filter(Boolean); if (parts[parts.length - 1] && parts[parts.length - 1].includes('.')) parts.pop(); return parts.slice(-2).join('/'); })();
 
   // carry over stars earned before the shared helper existed
   const oldStars = store.get('tte.stars', null);
@@ -64,15 +89,25 @@
   };
 
   /* ---------- read aloud ---------- */
-  function speak(text, force = false) {
+  function speak(text, force = false, rate = 0.9) {
     if ((!state.sound && !force) || !('speechSynthesis' in window)) return;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.9; u.pitch = 1.15;
+      u.rate = rate; u.pitch = 1.15;
       speechSynthesis.speak(u);
     } catch {}
   }
+  // read aloud in another language (lang: 'ta', 'hi', 'kn', 'en'); returns false if this device has no such voice
+  function voiceFor(lang) { try { return speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith(lang)) || null; } catch { return null; } }
+  function speakLang(text, lang, force = true, rate = 0.8) {
+    if ((!state.sound && !force) || !('speechSynthesis' in window)) return false;
+    if (lang === 'en') { speak(text, force, rate); return true; }
+    const v = voiceFor(lang);
+    if (!v) return false;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.voice = v; u.lang = v.lang; u.rate = rate; speechSynthesis.speak(u); return true; } catch { return false; }
+  }
+  try { speechSynthesis.getVoices(); } catch {}
 
   /* ---------- confetti & banner (elements are created on demand) ---------- */
   let canvas, cctx, particles = [], running = false;
@@ -112,8 +147,8 @@
   }
 
   /* ---------- praise, stars & badges ---------- */
-  const PRAISE = [`Super, ${KID}! 🌟`, `Awesome, ${KID}! 🎉`, 'You got it! 🥳', `Brilliant, ${KID}! 💫`,
-    `${KID} the superstar! ⭐`, 'Wow, well done! 🦄', `High five, ${KID}! 🙌`];
+  const PRAISE = [`Super, ${KID}! 🌟`, `Awesome, ${NICK}! 🎉`, 'You got it! 🥳', `Brilliant, ${KID}! 💫`,
+    `${NICK} the superstar! ⭐`, 'Wow, well done! 🦄', `High five, ${KID}! 🙌`, `So clever, ${NICK}! 🧠`, `I'm so proud of you, ${KID}! 💖`];
   const praise = () => PRAISE[rand(PRAISE.length)];
   const forSpeech = s => s.replace(/[^\w\s!?.,']/g, '').trim();
 
@@ -132,6 +167,9 @@
   }
   function addStar() {
     state.stars++; state.streak++;
+    // remember that this game was practised today (for "Today's practice" on the home page)
+    const dk = `day.${today()}`, done = store.get(dk, {});
+    done[GAME] = (done[GAME] || 0) + 1; store.set(dk, done);
     store.set('kids.stars', state.stars);
     renderBadges(true);
     if (state.stars % 10 === 0) setTimeout(() => banner(`🏆 ${state.stars} stars! ${KID}, you earned a trophy!`), 400);
@@ -290,6 +328,7 @@
     if (!badgeBox) return;
     const home = badgeBox.dataset.home;
     badgeBox.innerHTML = `
+      <a class="badge" href="${home || 'index.html'}" title="${PROFILE.name} (${PROFILE.nick}). Tap 🏠 to switch child." style="text-decoration:none;color:inherit">${PROFILE.emoji} ${PROFILE.nick}</a>
       <span class="badge" data-b="stars" title="Stars earned in all games"></span>
       <span class="badge" data-b="trophy" title="Trophies (1 for every 10 stars)" hidden></span>
       <span class="badge" data-b="streak" title="Correct in a row" hidden></span>
@@ -302,7 +341,10 @@
   else mount();
 
   window.Kids = {
-    name: KID, store, rand, sfx, speak, forSpeech, confetti, banner, praise, addStar, resetStreak,
+    name: KID, nick: NICK, profile: PROFILE, profiles: PROFILES, today, game: GAME,
+    setProfile(id) { raw.set('kids.profile', id); },
+    starsOf(id) { const k = id === 'kavikuyil' ? [`${id}:kids.stars`, 'kids.stars'] : [`${id}:kids.stars`]; for (const x of k) { const v = raw.get(x, undefined); if (v !== undefined) return v; } return 0; },
+    store, rand, sfx, speak, speakLang, voiceFor, forSpeech, confetti, banner, praise, addStar, resetStreak,
     learn, challenges, quiz, shuffle, svgEl, birthday, setBirthday,
     get stars() { return state.stars; },
     get sound() { return state.sound; },

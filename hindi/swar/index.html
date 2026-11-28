@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>हिंदी स्वर · Hindi Swar</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big" style="font-family:'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif">अ</span>
+    <div><h1>Hindi Swar <span style="font-family:'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif">हिंदी स्वर</span></h1><small>The Hindi vowels, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📖 Learn</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main data-letters></main>
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · हिंदी 🪷</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/letters.js?v=3"></script>
+<script>
+Kids.lettersGame({
+  lang: 'hi', langName: 'Hindi', font: "'Kohinoor Devanagari', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif",
+  letters: [
+    ['अ', 'a', 'short', 'अदरक', 'adrak', 'ginger', '🫚'],
+    ['आ', 'aa', 'long', 'आम', 'aam', 'mango', '🥭'],
+    ['इ', 'i', 'short', 'इमारत', 'imaarat', 'building', '🏢'],
+    ['ई', 'ee', 'long', 'ईंट', 'eent', 'brick', '🧱'],
+    ['उ', 'u', 'short', 'उल्लू', 'ullu', 'owl', '🦉'],
+    ['ऊ', 'oo', 'long', 'ऊन', 'oon', 'wool', '🧶'],
+    ['ऋ', 'ri', 'extra', 'ऋषि', 'rishi', 'wise sage', '🧘'],
+    ['ए', 'e', 'long', 'एक', 'ek', 'one', '1️⃣'],
+    ['ऐ', 'ai', 'long', 'ऐनक', 'ainak', 'spectacles', '👓'],
+    ['ओ', 'o', 'long', 'ओस', 'os', 'dew drops', '💧'],
+    ['औ', 'au', 'long', 'औरत', 'aurat', 'woman', '👩'],
+    ['अं', 'an', 'extra', 'अंगूर', 'angoor', 'grapes', '🍇'],
+    ['अः', 'ah', 'extra', '', '', 'A soft breathy "h" at the end, like in दुःख (dukh).', ''],
+  ],
+});
+Kids.learn({
+  why: ['Hindi is written in the <b>Devanagari</b> script. Do you see the line on top of the letters? It is called the shirorekha, and it joins the letters of a word together!',
+    'स्वर (swar) are the vowels. Some are short sounds, like अ, and some are long sounds, like आ.'],
+  imagine: ['Imagine each letter hanging from a washing line, like clothes drying in the sun. That top line holds them all together!'],
+  wow: ['Hindi is spoken by more than 50 crore people, and it is one of the official languages of India.', 'Sanskrit, Marathi and Nepali are also written in Devanagari.'],
+  talk: ['Which Hindi words do you already know? (Maybe "namaste"?)', 'Can you find Hindi writing on a sign or a packet at home?', 'Which letter looks the most fun to write?'],
+});
+</script>
+</body>
+</html>

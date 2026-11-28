@@ -1,6 +1,8 @@
-# 🌈 Kavikuyil's Learning World
+# 🌈 Kavikuyil & Prabanjan's Learning World
 
-Small, playful learning games and practice material, grouped by subject like school.
+Small, playful learning games for Kavikuyil (PeriyaKutty, 1st std) and Prabanjan (ChinnaKutty, LKG), grouped by subject like school.
+
+The home page asks **who is learning today**; each child has their own stars, saved work and 3 practice games a day. A link can pick the child too: `index.html?kid=prabanjan`.
 
 **Start here:** open [`index.html`](index.html) in a browser. It's the home page with a tile for every game.
 
@@ -30,7 +32,10 @@ kids/
 ├── science/            Earth, space & universe games (spin-the-earth, rocket-launch, black-hole, zoom-out…)
 ├── world/
 ├── art-and-music/
-└── mind/               focus-garden, goal-ladder, dream-jar, why-jar, imagine-time
+├── mind/               focus-garden, goal-ladder, dream-jar, why-jar, imagine-time
+├── little/             ChinnaKutty's Corner (LKG): letter-sounds, blend-it, trace-it, picture-talk, number-friends, story-time
+├── hindi/, kannada/    swar, swaragalu (vowels)
+└── languages/          word-explorer (English, Tamil, Hindi, Kannada)
 ```
 
 Each subject folder has a `README.md` listing its projects and ideas for new ones.
@@ -42,3 +47,4 @@ Each subject folder has a `README.md` listing its projects and ideas for new one
 3. Put pictures and sounds in an `assets/` folder inside the game. Put any library in `shared/vendor/`. Never load from the internet.
 4. Add a `README.md` to the game (what it teaches, age).
 5. Add a tile in the `SUBJECTS` list in the root `index.html`, and a row in the subject's `README.md`.
+6. If you change anything in `shared/`, bump the `?v=3` number on the shared links in every page (so tablets and phones fetch the new version instead of an old cached copy).
