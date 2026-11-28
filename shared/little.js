@@ -4,20 +4,14 @@
    ========================================================= */
 (function () {
   const K = Kids;
-  // how each letter SOUNDS (spelled so the computer voice says the sound, not the letter name)
-  const SOUND = { a: 'ah', b: 'buh', c: 'kuh', d: 'duh', e: 'eh', f: 'fff', g: 'guh', h: 'huh', i: 'ih', j: 'juh', k: 'kuh', l: 'lll', m: 'mmm',
-    n: 'nnn', o: 'aw', p: 'puh', q: 'kwuh', r: 'rrr', s: 'sss', t: 'tuh', u: 'uh', v: 'vvv', w: 'wuh', x: 'ks', y: 'yuh', z: 'zzz' };
-  // a picture word and a little action for every letter
-  const LETTERS = {
-    s: ['sun', '☀️', 'hissing like a snake 🐍'], a: ['ant', '🐜', 'like the start of ant'], t: ['tiger', '🐯', 'like a ticking clock'],
-    i: ['insect', '🐞', 'like the start of insect'], p: ['pig', '🐷', 'like popping bubbles'], n: ['nest', '🪺', 'like a buzzing aeroplane'],
-    c: ['cat', '🐱', 'like a click'], k: ['kite', '🪁', 'like a kick'], e: ['egg', '🥚', 'like the start of egg'], h: ['hat', '🎩', 'like a puppy panting'],
-    r: ['rabbit', '🐰', 'like a puppy growling'], m: ['mango', '🥭', 'like yummy food: mmm!'], d: ['dog', '🐶', 'like a drum'],
-    g: ['goat', '🐐', 'like water going down a drain'], o: ['octopus', '🐙', 'like the start of octopus'], u: ['umbrella', '☂️', 'like the start of umbrella'],
-    l: ['lion', '🦁', 'like licking a lollipop'], f: ['fish', '🐟', 'like air hissing out'], b: ['ball', '⚽', 'like a bouncing ball'],
-    j: ['juice', '🧃', 'like jumping jelly'], z: ['zebra', '🦓', 'like a buzzing bee'], w: ['watch', '⌚', 'like blowing on a candle'],
-    v: ['van', '🚐', 'like a van engine'], y: ['yo-yo', '🪀', 'like saying yes'], x: ['box', '📦', 'at the end of box'], q: ['queen', '👸', 'like a quacking duck'],
-  };
+  // how each letter SOUNDS and its picture word come from Kids.phonics (shared with Phonics Fun)
+  const ACT = { s: 'hissing like a snake 🐍', a: 'like the start of apple', t: 'like a ticking clock', i: 'like the start of igloo', p: 'like popping bubbles',
+    n: 'like a buzzing aeroplane', c: 'like a click', k: 'like a kick', e: 'like the start of egg', h: 'like a puppy panting', r: 'like a puppy growling',
+    m: 'like yummy food: mmm!', d: 'like a drum', g: 'like water going down a drain', o: 'like the start of octopus', u: 'like the start of umbrella',
+    l: 'like licking a lollipop', f: 'like air hissing out', b: 'like a bouncing ball', j: 'like jumping jelly', z: 'like a buzzing bee', w: 'like blowing on a candle',
+    v: 'like a van engine', y: 'like saying yes', x: 'at the end of box', q: 'like a quacking duck' };
+  const SOUND = {}, LETTERS = {};
+  for (const [l, [snd, word, pic]] of Object.entries(K.phonics)) { SOUND[l] = snd; LETTERS[l] = [word, pic, ACT[l]]; }
   const CHEERS = ['Yay!', 'Super!', 'Wow!', 'Well done!', 'Brilliant!', 'Clap clap!', 'You did it!'];
   const cheer = () => `${CHEERS[K.rand(CHEERS.length)]} ${K.rand(2) ? K.nick : K.name}!`;
 

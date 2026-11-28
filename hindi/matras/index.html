@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>मात्राएँ · Hindi Matras</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big" style="font-family:'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif">का</span>
+    <div><h1>Hindi Matras <span style="font-family:'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif">मात्राएँ</span></h1><small>Add a vowel sign to a letter and it says something new, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="chart">🧩 Letter Chart</button>
+  <button class="tab" data-tab="read">📖 Read Words</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main data-barakhadi></main>
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · हिंदी 🪷</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script src="../../shared/barakhadi.js?v=5"></script>
+<script>
+Kids.barakhadi({
+  lang: 'hi', langName: 'Hindi', font: "'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif",
+  consonants: [['क','k'],['ख','kh'],['ग','g'],['घ','gh'],['च','ch'],['ज','j'],['ट','T'],['ड','D'],['त','t'],['द','d'],['न','n'],['प','p'],['ब','b'],['भ','bh'],['म','m'],['य','y'],['र','r'],['ल','l'],['व','v'],['स','s'],['ह','h']],
+  vowels: [['अ','','a'],['आ','ा','aa'],['इ','ि','i'],['ई','ी','ee'],['उ','ु','u'],['ऊ','ू','oo'],['ऋ','ृ','ri'],['ए','े','e'],['ऐ','ै','ai'],['ओ','ो','o'],['औ','ौ','au'],['अं','ं','an'],['अः','ः','ah']],
+  words: [['कमल','kamal','lotus','🪷'],['घर','ghar','house','🏠'],['आम','aam','mango','🥭'],['किताब','kitaab','book','📖'],['बिल्ली','billi','cat','🐱'],['मछली','machhli','fish','🐟'],
+    ['दूध','doodh','milk','🥛'],['फूल','phool','flower','🌸'],['गुड़िया','gudiya','doll','🪆'],['पेड़','ped','tree','🌳'],['केला','kela','banana','🍌'],['मेज़','mez','table','🪑'],
+    ['मोर','mor','peacock','🦚'],['नाव','naav','boat','⛵'],['सौ','sau','hundred','💯'],['चिड़िया','chidiya','bird','🐦']],
+});
+Kids.learn({
+  why: ['A मात्रा (matra) is a little vowel sign. When you stick it to a letter, the letter changes its sound: क (ka) + ा = का (kaa).',
+    'This whole chart, from क to कः, is called the बारहखड़ी (baarahkhadi). Once you know it, you can read almost any Hindi word!'],
+  imagine: ['Imagine the matras are hats, shoes and bags for the letters. ि is a hat in front, ु is a shoe underneath, े is a feather on top. Dress up a letter!'],
+  wow: ['The sign ि comes BEFORE the letter when you write it, but you say it AFTER: कि = k + i. Tricky!', 'The same 12 signs work on every letter. Learn them once, use them everywhere!'],
+  talk: ['Can you read your own name in Hindi with a grown-up?', 'Find a Hindi word on a packet or sign and spot the matras.', 'Which sign is your favourite?'],
+});
+</script>
+</body>
+</html>

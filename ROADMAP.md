@@ -145,4 +145,21 @@ The games now have **two profiles**: Kavikuyil (PeriyaKutty, 1st std) and Praban
 | 👧👦 Both | 😊 Feelings Check-in | `mind/` | Naming and handling feelings |
 | 👧👦 Both | 💝 Kindness Diary | `mind/` | Kindness and thankfulness |
 
-**Coming soon (on the home page):** Sight Words · Sentence Builder · Hindi Matras · Kannada Kagunita · Uyirmei Letters · Fraction Pizza · Volcanoes · Eclipse! · Gratitude Jar
+---
+
+## 🔤 Round 5: phonics fix + the next coming-soon games (✅ done)
+**Phonics fix:** Phonics Fun now plays letter SOUNDS (not names), and all phonics games share one table (`Kids.phonics` in `shared/kids.js`) that follows the school list: a-apple, b-ball… z-zebra.
+
+| For | Game | Where | Discovers |
+|---|---|---|---|
+| 👦 Prabanjan | 👀 Sight Words | `little/` | I, the, is, and… by sight |
+| 👦 Prabanjan | 🧱 Sentence Builder | `little/` | Describing sentences that draw a picture |
+| 👧 Kavikuyil | का Hindi Matras | `hindi/` | Vowel signs and first Hindi words |
+| 👧 Kavikuyil | ಕಾ Kannada Kagunita | `kannada/` | Vowel signs and first Kannada words |
+| 👧 Kavikuyil | கா Uyirmei Letters | `tamil/` | How Tamil letters join, first Tamil words |
+| 👧 Kavikuyil | 🍕 Fraction Pizza | `maths/` | Halves, thirds, quarters, fair sharing |
+| 👧👦 Both | 🌋 Volcanoes | `science/` | Magma, lava, eruptions |
+| 👧 Kavikuyil | 🌑 Eclipse! | `science/` | Solar and lunar eclipses |
+| 👧👦 Both | 🙏 Gratitude Jar | `mind/` | Noticing good things |
+
+**Coming soon (on the home page):** Opposites · Who Am I? · Everyday Phrases · Aathichoodi · Patterns · Magnets · Recycling Sorter

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sight Words</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .flash { font-size: 110px; font-weight: 700; text-align: center; color: var(--purple); line-height: 1.2; min-height: 140px; }
+  .sent { text-align: center; font-size: 30px; color: var(--muted); }
+  .sent b { color: var(--red); }
+  .known { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .known span { border-radius: 999px; padding: 4px 12px; font-size: 18px; font-weight: 600; background: #eee9fa; color: var(--muted); }
+  .known span.ok { background: #d3f8e2; color: #036b4f; }
+  .bigchoice.word { font-size: 40px; min-width: 150px; }
+  .bal { position: relative; height: 360px; border-radius: 24px; background: linear-gradient(#bde0fe, #e0f7ff); overflow: hidden; }
+  .bl { position: absolute; bottom: -120px; width: 110px; height: 130px; border-radius: 50% 50% 48% 48%; border: none; color: #fff; font-size: 28px; font-weight: 700; cursor: pointer; font-family: inherit; animation: rise linear forwards; }
+  .bl::after { content: ''; position: absolute; left: 50%; bottom: -40px; width: 2px; height: 40px; background: #999; }
+  @keyframes rise { to { transform: translateY(-520px); } }
+  .bl.pop { animation: none; transform: scale(1.4); opacity: 0; transition: all .25s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">👀</span>
+    <div><h1>Sight Words</h1><small>Words to know in a blink, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="cards">🃏 Flash Cards</button>
+  <button class="tab" data-tab="find">👂 Find the Word</button>
+  <button class="tab" data-tab="pop">🎈 Balloon Pop</button>
+</nav>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+  <section class="card center"><div class="pick" id="lvl"></div></section>
+
+  <section class="card" data-panel="cards">
+    <div class="flash" id="flash"></div>
+    <div class="sent" id="sent"></div>
+    <div class="row">
+      <button class="btn big purple" id="hear">🔊 Hear it</button>
+      <button class="btn big green saidit" id="read">🎤 I read it!</button>
+    </div>
+    <div class="navrow"><button class="btn orange" id="prev">⬅️</button><span class="hint" id="pos"></span><button class="btn orange" id="next">➡️</button></div>
+    <h3 class="center" style="margin:14px 0 6px">⭐ Words I can read</h3>
+    <div class="known" id="known"></div>
+  </section>
+
+  <section class="card center" data-panel="find" hidden>
+    <div class="row" style="margin-top:0"><button class="btn big purple" id="fHear">🔊 Listen</button></div>
+    <div class="bigchoices" id="fChoices"></div>
+    <div class="row"><button class="btn big orange" id="fNext" hidden>Next ➡️</button></div>
+  </section>
+
+  <section class="card" data-panel="pop" hidden>
+    <div class="center"><button class="btn big purple" id="pHear">🔊 Pop the word…</button> <b id="pScore" style="font-size:22px"></b></div>
+    <div class="bal" id="bal" style="margin-top:10px"></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script src="../../shared/little.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, NICK = Kids.nick;
+// the first sight words schools teach, in small sets, each with a little sentence
+const LEVELS = [
+  { n: '⭐ 1', w: [['I', 'I am happy.'], ['a', 'I see a cat.'], ['the', 'Look at the sun.'], ['is', 'It is big.'], ['it', 'I like it.'], ['in', 'The fish is in the water.'], ['to', 'I go to school.'], ['and', 'Mum and Dad.']] },
+  { n: '⭐ 2', w: [['see', 'I see a dog.'], ['go', 'Let us go!'], ['can', 'I can jump.'], ['me', 'Look at me!'], ['my', 'This is my ball.'], ['we', 'We play.'], ['up', 'Look up!'], ['no', 'No, thank you.']] },
+  { n: '⭐ 3', w: [['look', 'Look at the bird.'], ['said', '"Hello," said Mum.'], ['you', 'I love you.'], ['big', 'A big elephant.'], ['come', 'Come here!'], ['here', 'I am here.'], ['play', 'I play with my friend.'], ['run', 'I can run fast.']] },
+  { n: '⭐ 4', w: [['what', 'What is this?'], ['where', 'Where is my shoe?'], ['one', 'One red ball.'], ['two', 'Two little birds.'], ['like', 'I like mangoes.'], ['help', 'Help me, please.'], ['was', 'It was fun.'], ['this', 'This is a book.']] },
+];
+const KEY = 'sight.known';
+const known = new Set(Kids.store.get(KEY, []));
+let lv = 0, i = 0;
+const W = () => LEVELS[lv].w;
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+LEVELS.forEach((L, k) => { const b = document.createElement('button'); b.textContent = L.n; b.className = k === lv ? 'active' : '';
+  b.addEventListener('click', () => { lv = k; i = 0; Kids.sfx.pop(); [...$('#lvl').children].forEach(x => x.classList.toggle('active', x === b)); refresh(); }); $('#lvl').appendChild(b); });
+
+/* ---------- flash cards ---------- */
+function card() {
+  const [w, s] = W()[i];
+  $('#flash').textContent = w;
+  $('#sent').innerHTML = s.replace(new RegExp(`\\b${w}\\b`, w === 'I' ? '' : 'i'), m => `<b>${m}</b>`);
+  $('#pos').textContent = `${i + 1} / ${W().length}`;
+  $('#read').disabled = false;
+  say(`This word is "${w}". Can you read it? 👀`);
+  Little.sayList([w, s]);
+  drawKnown();
+}
+function drawKnown() { $('#known').innerHTML = LEVELS.flatMap(L => L.w.map(x => x[0])).map(w => `<span class="${known.has(w) ? 'ok' : ''}">${w}</span>`).join(''); }
+$('#hear').addEventListener('click', () => { const [w, s] = W()[i]; Little.sayList([w, s]); });
+$('#prev').addEventListener('click', () => { i = (i + W().length - 1) % W().length; Kids.sfx.pop(); card(); });
+$('#next').addEventListener('click', () => { i = (i + 1) % W().length; Kids.sfx.pop(); card(); });
+Little.saidIt($('#read'), c => {
+  const w = W()[i][0]; known.add(w); Kids.store.set(KEY, [...known]); $('#read').disabled = true; drawKnown();
+  say(`${c} You can read "${w}"! ⭐`, true);
+  if (W().every(x => known.has(x[0]))) { Kids.banner(`🏆 All of level ${lv + 1}, ${NICK}!`); }
+  setTimeout(() => { if (document.querySelector('.tab.active').dataset.tab === 'cards') { i = (i + 1) % W().length; card(); } }, 1600);
+});
+
+/* ---------- find the word ---------- */
+let target = null, fFirst = true;
+function newFind() {
+  target = W()[R(W().length)]; fFirst = true; $('#fNext').hidden = true;
+  const others = shuffle(W().filter(x => x !== target)).slice(0, 2);
+  Little.choose($('#fChoices'), shuffle([target, ...others]).map(x => ({ label: x[0], ok: x === target })), () => {
+    if (fFirst) Kids.addStar(); const c = Little.cheer(); say(`${c} That says "${target[0]}"! 🎉`, true); Little.sayList([c, target[1]]); Kids.confetti(); $('#fNext').hidden = false;
+  }, () => { fFirst = false; say('Not that one. Listen again! 👂'); Little.say(`Find ${target[0]}`); });
+  $('#fChoices').querySelectorAll('.bigchoice').forEach(b => b.classList.add('word'));
+  fHear();
+}
+function fHear() { say(`Find the word "${target[0]}"! 👆`); Little.sayList([`Find the word: ${target[0]}.`, target[1]]); }
+$('#fHear').addEventListener('click', fHear);
+$('#fNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
+
+/* ---------- balloon pop ---------- */
+const COLS = ['#ef476f', '#ff9f1c', '#06d6a0', '#118ab2', '#9b5de5', '#f15bb5'];
+let pTarget = null, pTimer = null, popped = 0;
+function startPop() {
+  clearInterval(pTimer); $('#bal').innerHTML = ''; popped = 0; $('#pScore').textContent = '';
+  newPTarget();
+  pTimer = setInterval(launch, 1100); launch();
+}
+function newPTarget() { pTarget = W()[R(W().length)][0]; $('#pHear').textContent = `🔊 Pop the word "${pTarget}"`; Little.say(`Pop ${pTarget}!`); say(`Pop every balloon that says "${pTarget}"! 🎈`); }
+function launch() {
+  if (document.querySelector('.tab.active').dataset.tab !== 'pop') { clearInterval(pTimer); return; }
+  const w = R(3) === 0 ? pTarget : W()[R(W().length)][0];
+  const b = document.createElement('button'); b.className = 'bl'; b.textContent = w; b.style.background = COLS[R(COLS.length)];
+  b.style.left = 4 + Math.random() * 78 + '%'; b.style.animationDuration = 6 + Math.random() * 3 + 's';
+  b.addEventListener('click', () => {
+    if (b.classList.contains('pop')) return;
+    if (w === pTarget) { b.classList.add('pop'); Kids.sfx.pop(); popped++; $('#pScore').textContent = `🎈 ${popped}`;
+      if (popped % 3 === 0) { Kids.addStar(); Kids.sfx.yay(); say(`${Little.cheer()} 3 more "${pTarget}" balloons! Now a new word…`, true); setTimeout(newPTarget, 1200); } }
+    else { Kids.sfx.oops(); say(`That one says "${w}". Look for "${pTarget}"! 👀`); }
+    setTimeout(() => b.remove(), 300);
+  });
+  $('#bal').appendChild(b); setTimeout(() => b.remove(), 9500);
+}
+$('#pHear').addEventListener('click', () => Little.say(`Pop ${pTarget}!`));
+
+function refresh() { const t = document.querySelector('.tab.active').dataset.tab; t === 'cards' ? card() : t === 'find' ? newFind() : startPop(); }
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab !== 'pop') clearInterval(pTimer);
+  refresh();
+}));
+Kids.learn({
+  why: ['Sight words are the little words that come in almost every sentence: I, the, is, and… Many can\'t be sounded out, so we learn them by sight.',
+    'When he knows these by heart, reading books becomes much faster and more fun!'],
+  wow: ['Just 25 small words make up about a third of everything we read!', 'Learning 2 or 3 new words a day is plenty. Go back to old words often.'],
+  talk: ['Point to sight words in his storybooks: "Can you find the word THE?"', 'Stick a sight word on the fridge each day.', 'Make silly sentences together with his words: "I see a big cat!"'],
+}, { why: '🤔 Why? (for grown-ups)', talk: '💬 Try at home' });
+card();
+</script>
+</body>
+</html>

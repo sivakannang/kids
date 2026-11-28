@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fraction Pizza</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  #pizza { width: 340px; max-width: 90%; display: block; margin: 0 auto; }
+  #pizza .sl { cursor: pointer; transition: transform .25s; transform-origin: 170px 170px; }
+  #pizza .sl.eaten { opacity: .12; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; font-size: 46px; font-weight: 700; line-height: 1; vertical-align: middle; color: var(--purple); }
+  .frac i { width: 60px; height: 5px; background: currentColor; margin: 4px 0; border-radius: 3px; }
+  .bigfrac { text-align: center; font-size: 22px; margin-top: 8px; }
+  .friends { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+  .friend { background: #f8f6ff; border-radius: 18px; padding: 8px 12px; text-align: center; min-width: 90px; }
+  .friend .e { font-size: 40px; } .friend .s { font-size: 22px; min-height: 30px; }
+  .choice .frac { color: #fff; font-size: 34px; } .choice .frac i { width: 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🍕</span>
+    <div><h1>Fraction Pizza</h1><small>Halves, thirds and quarters, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="eat">🍕 Cut &amp; Eat</button>
+  <button class="tab" data-tab="share">👫 Share Fairly</button>
+  <button class="tab" data-tab="quiz">❓ Pizza Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="pick" id="cuts"></div>
+      <svg id="pizza" viewBox="0 0 340 340" style="margin-top:10px"></svg>
+      <div class="bigfrac" id="fr"></div>
+      <div class="row" data-panel="eat"><button class="btn orange" id="newPizza">🍕 Fresh pizza</button></div>
+      <div data-panel="share" hidden>
+        <div class="label center">How many friends are sharing?</div>
+        <div class="pick" id="nFriends"></div>
+        <div class="friends" id="friends"></div>
+        <div class="row"><button class="btn big green" id="deal">🍽️ Share the slices</button></div>
+      </div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Numbers 🔢</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+const NAME = { 1: 'whole', 2: 'half', 3: 'third', 4: 'quarter', 6: 'sixth', 8: 'eighth' };
+const PLURAL = { 1: 'wholes', 2: 'halves', 3: 'thirds', 4: 'quarters', 6: 'sixths', 8: 'eighths' };
+const frac = (a, b) => `<span class="frac">${a}<i></i>${b}</span>`;
+const words = (a, b) => b === 1 ? 'the whole pizza' : `${a} ${a === 1 ? NAME[b] : PLURAL[b]}`;
+let n = 4, eaten = new Set();
+function pizza(svg, parts, eatenSet, onTap) {
+  svg.innerHTML = '';
+  const cx = 170, cy = 170, r = 150;
+  el('circle', { cx, cy, r: r + 8, fill: '#e9a05a' }, svg);
+  for (let i = 0; i < parts; i++) {
+    const a0 = -Math.PI / 2 + i * 2 * Math.PI / parts, a1 = a0 + 2 * Math.PI / parts;
+    const g = el('g', { class: 'sl' + (eatenSet.has(i) ? ' eaten' : '') }, svg);
+    const d = parts === 1 ? `M ${cx - r} ${cy} a ${r} ${r} 0 1 0 ${2 * r} 0 a ${r} ${r} 0 1 0 ${-2 * r} 0` :
+      `M ${cx} ${cy} L ${cx + r * Math.cos(a0)} ${cy + r * Math.sin(a0)} A ${r} ${r} 0 ${parts === 1 ? 1 : 0} 1 ${cx + r * Math.cos(a1)} ${cy + r * Math.sin(a1)} Z`;
+    el('path', { d, fill: '#ffd166', stroke: '#c9731f', 'stroke-width': 4 }, g);
+    // toppings
+    for (let k = 0; k < 3; k++) { const t = a0 + (k + 1) * (a1 - a0) / 4, rr = r * (.35 + .2 * k + (i % 2) * .05);
+      el('circle', { cx: cx + rr * Math.cos(t), cy: cy + rr * Math.sin(t), r: 11, fill: k === 1 ? '#2dc653' : '#e63946' }, g); }
+    if (onTap) g.addEventListener('click', () => onTap(i));
+  }
+}
+const CUTS = [1, 2, 3, 4, 6, 8];
+CUTS.forEach(c => { const b = document.createElement('button'); b.textContent = c === 1 ? 'Whole' : `${c} slices`; b.className = c === n ? 'active' : '';
+  b.addEventListener('click', () => { n = c; eaten = new Set(); Kids.sfx.pop(); [...$('#cuts').children].forEach(x => x.classList.toggle('active', x === b)); drawEat(); if (mode === 'share') drawShare(); ch.check({ cut: n }); });
+  $('#cuts').appendChild(b); });
+let mode = 'eat';
+function drawEat() {
+  pizza($('#pizza'), n, eaten, i => {
+    if (mode !== 'eat') return;
+    eaten.has(i) ? eaten.delete(i) : eaten.add(i); Kids.sfx.pop(); drawEat();
+    const e = eaten.size;
+    if (e) Kids.speak(`You ate ${words(e, n)}.`);
+    ch.check({ n, e });
+  });
+  const e = eaten.size, left = n - e;
+  $('#fr').innerHTML = n === 1 ? (e ? '😋 You ate the whole pizza!' : `One whole pizza. Tap the slices buttons to cut it!`) :
+    `Cut into ${n} equal slices: each slice is ${frac(1, n)} (one ${NAME[n]}).<br>😋 Eaten: ${frac(e, n)} &nbsp; 🍕 Left: ${frac(left, n)}` + (e && e * 2 === n ? '<br>🎉 That is HALF the pizza!' : '');
+}
+$('#newPizza').addEventListener('click', () => { eaten = new Set(); Kids.sfx.whoosh(); drawEat(); });
+
+/* ---------- share fairly ---------- */
+const PALS = ['👧', '👦', '🧒', '👩', '👨', '👵', '👴', '🐶'];
+let friends = 2;
+for (let k = 2; k <= 4; k++) { const b = document.createElement('button'); b.textContent = `${k} friends`; b.className = k === friends ? 'active' : '';
+  b.addEventListener('click', () => { friends = k; Kids.sfx.pop(); [...$('#nFriends').children].forEach(x => x.classList.toggle('active', x === b)); drawShare(); }); $('#nFriends').appendChild(b); }
+function drawShare() {
+  pizza($('#pizza'), n, new Set());
+  $('#friends').innerHTML = Array.from({ length: friends }, (_, k) => `<div class="friend"><div class="e">${PALS[k]}</div><div class="s"></div></div>`).join('');
+  $('#fr').innerHTML = `${n} slice${n > 1 ? 's' : ''} for ${friends} friends. Can everyone get the same?`;
+}
+$('#deal').addEventListener('click', () => {
+  const each = Math.floor(n / friends), extra = n % friends;
+  [...$('#friends').children].forEach(f => f.querySelector('.s').textContent = '🍕'.repeat(each) || '😢');
+  Kids.sfx.pop();
+  let m;
+  if (!extra) { m = `Fair share! Each friend gets ${each} slice${each > 1 ? 's' : ''}, that is ${words(each, n)} of the pizza, or 1/${friends} of it! 🎉`; Kids.sfx.yay(); Kids.addStar(); ch.check({ fair: true, friends }); }
+  else m = `Oh no! ${extra} slice${extra > 1 ? 's are' : ' is'} left over, so it is not fair. Try cutting into a different number of slices!`;
+  $('#fr').textContent = m; Kids.speak(Kids.forSpeech(m));
+});
+
+/* ---------- quiz ---------- */
+function mini(a, b) {
+  const s = el('svg', { viewBox: '0 0 340 340', width: 150, height: 150 });
+  const set = new Set(); for (let i = 0; i < a; i++) set.add(i);
+  pizza(s, b, new Set([...Array(b).keys()].filter(i => !set.has(i))));
+  return s.outerHTML;
+}
+const MAKERS = [
+  () => { const b = [2, 3, 4, 6, 8][R(5)], a = 1 + R(b - 1); const o = new Set([`${a}/${b}`]), val = x => { const [p, q] = x.split('/'); return p / q; };
+    // wrong answers must have a different value (2/4 and 1/2 would both be right)
+    while (o.size < 3) { const bb = [2, 3, 4, 6, 8][R(5)], c = `${1 + R(bb - 1)}/${bb}`; if (![...o].some(x => Math.abs(val(x) - val(c)) < 1e-9)) o.add(c); }
+    return { q: `${mini(a, b)}<br>How much pizza is left?`, choices: shuffle([...o]).map(x => { const [p, q] = x.split('/'); return { label: frac(p, q), ok: x === `${a}/${b}` }; }), yay: `${a} out of ${b} slices: ${frac(a, b)}`, hint: 'Count ALL the slices (bottom number), then the slices left (top number).' }; },
+  () => { const pairs = [[2, 4], [2, 3], [3, 4], [2, 8], [4, 8], [3, 6]]; const [x, y] = pairs[R(pairs.length)];
+    return { q: `Which slice is BIGGER?`, choices: shuffle([x, y]).map(v => ({ label: `${frac(1, v)}<br><small>one ${NAME[v]}</small>`, ok: v === x })), yay: `${frac(1, x)} is bigger! Fewer slices means bigger slices.`, hint: 'Imagine sharing a pizza with more friends. Do you get more or less?' }; },
+  () => { const b = [2, 4, 6, 8][R(4)], a = b / 2;
+    return { q: `${mini(a, b)}<br>Is this half the pizza?`, choices: shuffle([['Yes! 🎉', true], ['No', false]]).map(([l, ok]) => ({ label: l, ok })), yay: `${frac(a, b)} is the same as ${frac(1, 2)}, half!`, hint: 'Is there the same amount left as eaten?' }; },
+];
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop(); mode = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  document.querySelector('#pizza').closest('.card').hidden = mode === 'quiz';
+  if (mode === 'eat') drawEat(); if (mode === 'share') drawShare();
+  if (mode === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)](), { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Cut the pizza in half 🍕', hint: 'Tap "2 slices".', ok: c => c.cut === 2, yay: 'Two equal parts: two halves!' },
+  { ask: 'Cut it into quarters and eat one quarter 😋', hint: 'Tap "4 slices", then tap one slice.', ok: c => c.n === 4 && c.e === 1, yay: 'One quarter is 1/4!' },
+  { ask: 'Eat exactly half of an 8-slice pizza 🍕', hint: 'Cut into 8, then eat 4 slices.', ok: c => c.n === 8 && c.e === 4, yay: '4/8 is the same as 1/2!' },
+  { ask: 'Share a pizza fairly with 3 friends 👫', hint: 'Open Share Fairly. Which number of slices can 3 friends share?', ok: c => c.fair && c.friends === 3, yay: 'Fair for everyone! 3 or 6 slices work for 3 friends.' },
+  { ask: 'Get a Pizza Quiz question right ❓', hint: 'Open Pizza Quiz.', ok: c => c.quiz, yay: 'Fraction champion!' },
+], { title: 'Pizza Pro' });
+Kids.learn({
+  why: ['A fraction is a part of a whole. When you cut something into EQUAL parts, each part is a fraction: 1/2, 1/3, 1/4…',
+    'The bottom number says how many equal parts. The top number says how many of them you have.'],
+  imagine: ['Imagine a dosa shared by 2 people, then by 4 people. With more people, does each piece get bigger or smaller?'],
+  wow: ['1/2 is the same as 2/4 and 4/8. Different slices, same amount of pizza!', 'Clocks use fractions too: "quarter past" means 1/4 of the way round, and "half past" means 1/2!'],
+  talk: ['Cut a chapati or an apple into halves and quarters at home.', 'If you share 6 biscuits with 2 friends, how many each?', 'Would you rather have 1/2 or 1/8 of a cake? Why?'],
+});
+drawEat();
+</script>
+</body>
+</html>

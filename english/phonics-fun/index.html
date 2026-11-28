@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Phonics Fun</title>
-<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
 <style>
   .abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
   .tile { border: none; border-radius: 18px; padding: 8px 4px; cursor: pointer; font-family: inherit; color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.15); transition: transform .12s; }
@@ -47,7 +47,7 @@
     <section class="card" id="quizBox" data-panel="first" hidden></section>
     <section class="card center" data-panel="find" hidden>
       <div class="label" style="margin-top:0">Listen, then tap the letter you hear!</div>
-      <div class="row"><button class="btn big purple" id="hearBtn">🔊 Hear the letter</button></div>
+      <div class="row"><button class="btn big purple" id="hearBtn">🔊 Hear the sound</button></div>
       <div class="find" id="find"></div>
       <div class="result" id="findRes"></div>
       <div class="row"><button class="btn big orange" id="findNext" hidden>Next ➡️</button></div>
@@ -62,23 +62,22 @@
 <section data-learn></section>
 <footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Class 1 English 📖</footer>
 
-<script src="../../shared/kids.js?v=4"></script>
+<script src="../../shared/kids.js?v=5"></script>
 <script>
 const $ = s => document.querySelector(s);
 const R = Kids.rand, shuffle = Kids.shuffle;
-const ABC = [['A','apple','🍎'],['B','ball','⚽'],['C','cat','🐱'],['D','dog','🐶'],['E','egg','🥚'],['F','fish','🐟'],['G','grapes','🍇'],['H','hat','🎩'],
-  ['I','ink','🖋️'],['J','jar','🫙'],['K','kite','🪁'],['L','lion','🦁'],['M','mango','🥭'],['N','nest','🪺'],['O','octopus','🐙'],['P','pen','🖊️'],
-  ['Q','queen','👸'],['R','rabbit','🐰'],['S','sun','☀️'],['T','tiger','🐯'],['U','umbrella','☂️'],['V','van','🚐'],['W','watch','⌚'],['X','box','📦', true],
-  ['Y','yo-yo','🪀'],['Z','zebra','🦓']];
+// [letter, picture word, picture, sound at the END?, sound], from the shared phonics table (same sounds as ChinnaKutty's games)
+const ABC = Object.entries(Kids.phonics).map(([l, [snd, word, pic]]) => [l.toUpperCase(), word, pic, l === 'x', snd]);
 const COLORS = ['#ef476f','#ff9f1c','#ffca3a','#8ac926','#06d6a0','#118ab2','#4267ac','#9b5de5','#f15bb5'];
 const seen = new Set();
-const sayLetter = (l, force = true) => Kids.speak(l[3] ? `${l[0]}. ${l[0]} makes the sound at the end of ${l[1]}` : `${l[0]}. ${l[0]} is for ${l[1]}`, force);
+// say the letter's sound (not its name): "B says buh, buh, ball"
+const sayLetter = (l, force = true) => Kids.speak(l[3] ? `${l[0]} says ${l[4]}, ${l[4]}, at the end of ${l[1]}.` : `${l[0]} says ${l[4]}, ${l[4]}, ${l[1]}.`, force, 0.8);
 
 function showBig(l) {
   const w = l[1], i = l[3] ? w.lastIndexOf(l[0].toLowerCase()) : 0;
   $('#big').innerHTML = `<div class="L">${l[0]}${l[0].toLowerCase()}</div><div class="e">${l[2]}</div>
     <div class="w">${w.slice(0, i)}<b>${w[i]}</b>${w.slice(i + 1)}</div>
-    <div class="label">${l[3] ? `X is at the END of "${w}"` : `${l[0]} is for ${w}`}</div>`;
+    <div class="label">${l[0]} says <b>"${l[4]}"</b> · ${l[3] ? `at the END of "${w}"` : `${l[0]} is for ${w}`}</div>`;
 }
 ABC.forEach((l, k) => {
   const b = document.createElement('button');
@@ -98,7 +97,7 @@ function makeQ() {
   const opts = new Set([a[0]]); while (opts.size < 4) opts.add(ABC[R(ABC.length)][0]);
   setTimeout(() => Kids.speak(a[1]), 300);
   return { q: `<div style="font-size:90px">${a[2]}</div><button class="btn purple" onclick="Kids.speak('${a[1]}', true)">🔊 ${a[1]}</button><div class="label">Which letter does it START with?</div>`,
-    choices: shuffle([...opts]).map(x => ({ label: x + x.toLowerCase(), ok: x === a[0] })), yay: `${a[1]} starts with ${a[0]}!`, hint: `Say it slowly: ${a[1][0]}… ${a[1]}. What is the first sound?` };
+    choices: shuffle([...opts]).map(x => ({ label: x + x.toLowerCase(), ok: x === a[0] })), yay: `${a[1]} starts with ${a[0]}, ${a[4]}!`, hint: `Say it slowly: ${a[4]}… ${a[1]}. What is the first sound?` };
 }
 let quizOn = false;
 function startQuiz() { if (!quizOn) { quizOn = true; Kids.quiz('#quizBox', makeQ, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); } }
@@ -115,15 +114,17 @@ function newFind() {
       if (fd.done) return;
       if (l === fd.target) {
         fd.done = true; b.classList.add('right'); if (fd.first) { Kids.addStar(); fd.right++; }
-        Kids.sfx.yay(); $('#findRes').textContent = `${Kids.praise()} That's ${l[0]}!`; $('#findRes').className = 'result good'; $('#findNext').hidden = false;
+        Kids.sfx.yay(); $('#findRes').textContent = `${Kids.praise()} That's ${l[0]}. It says "${l[4]}", like ${l[1]}!`; $('#findRes').className = 'result good'; $('#findNext').hidden = false;
         showBig(l); ch.check({ found: fd.right });
       } else { fd.first = false; b.classList.add('wrong'); Kids.sfx.oops(); Kids.resetStreak(); }
     });
     $('#find').appendChild(b);
   });
-  setTimeout(() => Kids.speak(fd.target[0]), 300);
+  setTimeout(hearFind, 300);
 }
-$('#hearBtn').addEventListener('click', () => Kids.speak(`${fd.target[0]}`, true));
+// find the letter by its SOUND
+const hearFind = () => Kids.speak(`Which letter says ${fd.target[4]}? ${fd.target[4]}, like ${fd.target[1]}.`, true, 0.8);
+$('#hearBtn').addEventListener('click', hearFind);
 $('#findNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
 
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {

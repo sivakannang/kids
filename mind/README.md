@@ -11,5 +11,4 @@ Games for focus, goals, dreams and imagination.
 | [imagine-time](imagine-time/) | Five calm, read-aloud guided imagination journeys |
 | [feelings-check-in](feelings-check-in/) | Naming a feeling and how big it is, what helps, breathing, a 2-week feelings diary |
 | [kindness-diary](kindness-diary/) | A daily kindness challenge, and a jar of hearts for kind things done and received |
-
-**Ideas:** gratitude jar.
+| [gratitude-jar](gratitude-jar/) | Three good things each day, a jar of notes, and pulling out a happy memory |

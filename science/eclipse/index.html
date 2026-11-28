@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eclipse!</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  body { background: linear-gradient(160deg, #10153d 0%, #2b1d5c 60%, #3b2a7a 100%); background-attachment: fixed; }
+  .logo h1 { color: #ffd166; } .logo small { color: #cfd8ff; } footer { color: #cfd8ff; }
+  .tab { background: rgba(255,255,255,.15); color: #fff; } .tab.active { background: #fff; }
+  #orbit, #view { width: 100%; display: block; border-radius: 18px; background: #050822; }
+  input[type=range] { width: 100%; }
+  .safety { background: #fff3c4; border-radius: 16px; padding: 10px 14px; font-size: 17px; color: #7a5600; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌑</span>
+    <div><h1>Eclipse!</h1><small>When the Moon hides the Sun, and the Earth hides the Moon, <b data-kid-name>Kavikuyil</b></small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="play">🌍 Move the Moon</button>
+  <button class="tab" data-tab="quiz">❓ Eclipse Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card space-card" data-panel="play">
+      <h2>From space <small>Drag the slider to move the Moon around the Earth</small></h2>
+      <svg id="orbit" viewBox="0 0 640 300"></svg>
+      <input type="range" id="ang" min="0" max="359" value="60">
+      <div class="row"><button class="btn purple" id="toSolar">☀️🌑 Show me a solar eclipse</button><button class="btn red" id="toLunar">🌕🔴 Show me a lunar eclipse</button></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card space-card">
+      <h2 id="viewTitle">What you see from Earth</h2>
+      <svg id="view" viewBox="0 0 300 220"></svg>
+      <div class="hint" id="viewTxt" style="font-size:17px;margin-top:8px"></div>
+    </section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section class="page" style="padding-top:0"><div class="safety">⚠️ <b>Safety:</b> never look straight at the Sun, even during an eclipse. It can hurt your eyes forever. Grown-ups use special eclipse glasses, or a pinhole projector made from a box.</div></section>
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Space 🚀</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+const O = $('#orbit'), V = $('#view');
+const EX = 420, EY = 150, MR = 90;
+// stars
+for (let i = 0; i < 60; i++) el('circle', { cx: Math.random() * 640, cy: Math.random() * 300, r: Math.random() * 1.2 + .3, fill: '#fff', opacity: .5 }, O);
+const sunG = el('radialGradient', { id: 'sg' }, el('defs', {}, O)); el('stop', { offset: 0, 'stop-color': '#fff7b0' }, sunG); el('stop', { offset: 1, 'stop-color': '#ffb703' }, sunG);
+el('circle', { cx: 40, cy: EY, r: 70, fill: 'url(#sg)' }, O);
+el('text', { x: 10, y: 270, fill: '#ffd166', 'font-size': 15 }, O).textContent = 'Sun (really much bigger and farther away!)';
+for (let k = -2; k <= 2; k++) el('line', { x1: 110, y1: EY + k * 28, x2: 640, y2: EY + k * 28, stroke: '#ffd16633', 'stroke-width': 1 }, O);
+el('circle', { cx: EX, cy: EY, r: MR, fill: 'none', stroke: '#ffffff33', 'stroke-dasharray': '4 6' }, O);
+const shadow = el('polygon', { points: `${EX},${EY - 22} ${EX + 220},${EY - 8} ${EX + 220},${EY + 8} ${EX},${EY + 22}`, fill: '#00000088' }, O);
+el('circle', { cx: EX, cy: EY, r: 24, fill: '#1e6fe0' }, O); el('path', { d: `M${EX - 10} ${EY - 14} q 12 6 4 18 q -10 4 -14 -6 z`, fill: '#2dc653' }, O);
+el('path', { d: `M${EX} ${EY - 24} A 24 24 0 0 1 ${EX} ${EY + 24} Z`, fill: '#00000066' }, O);
+const moonShadow = el('polygon', { fill: '#00000099' }, O);
+const moon = el('circle', { r: 10, fill: '#ddd' }, O);
+const moonNight = el('path', { fill: '#00000088' }, O);
+el('text', { x: EX, y: EY + 45, 'text-anchor': 'middle', fill: '#cfd8ff', 'font-size': 14 }, O).textContent = 'Earth';
+let seen = { solar: false, lunar: false };
+function update() {
+  const a = +$('#ang').value * Math.PI / 180;
+  // angle 180° = Moon between Sun and Earth (solar eclipse); 0° = behind Earth (lunar eclipse)
+  const mx = EX + MR * Math.cos(a), my = EY + MR * Math.sin(a);
+  moon.setAttribute('cx', mx); moon.setAttribute('cy', my);
+  moonNight.setAttribute('d', `M${mx} ${my - 10} A 10 10 0 0 1 ${mx} ${my + 10} Z`);
+  moonShadow.setAttribute('points', `${mx},${my - 10} ${mx + 140},${my - 3} ${mx + 140},${my + 3} ${mx},${my + 10}`);
+  const deg = (+$('#ang').value + 360) % 360;
+  const dSolar = Math.min(Math.abs(deg - 180), 360 - Math.abs(deg - 180)), dLunar = Math.min(deg, 360 - deg);
+  moonShadow.setAttribute('opacity', dSolar < 25 ? 1 : 0);
+  // view from Earth
+  V.innerHTML = '';
+  for (let i = 0; i < 40; i++) el('circle', { cx: (i * 73) % 300, cy: (i * 41) % 220, r: .8, fill: '#fff', opacity: dSolar < 4 ? .9 : .15 }, V);
+  if (dSolar < 30) {
+    const over = dSolar / 30;
+    V.style.background = dSolar < 4 ? '#050822' : `rgb(${40 + over * 60}, ${80 + over * 100}, ${140 + over * 90})`;
+    if (dSolar < 4) el('circle', { cx: 150, cy: 110, r: 62, fill: 'none', stroke: '#fff7d6', 'stroke-width': 10, opacity: .7 }, V);
+    el('circle', { cx: 150, cy: 110, r: 54, fill: '#ffd166' }, V);
+    el('circle', { cx: 150 + (deg < 180 ? 1 : -1) * over * 110, cy: 110, r: 55, fill: '#111' }, V);
+    $('#viewTitle').textContent = '☀️ Looking at the Sun (in the day)';
+    $('#viewTxt').textContent = dSolar < 4 ? '🌑 TOTAL SOLAR ECLIPSE! The Moon covers the whole Sun. The sky goes dark and you can see stars in the daytime!' : '🌘 A partial solar eclipse: the Moon is taking a bite out of the Sun!';
+    if (dSolar < 4 && !seen.solar) { seen.solar = true; Kids.addStar(); Kids.sfx.yay(); Kids.speak('Total solar eclipse! The Moon is exactly between the Sun and the Earth.'); ch.check({ solar: true }); }
+  } else if (dLunar < 30) {
+    V.style.background = '#050822';
+    const red = Math.max(0, 1 - dLunar / 12);
+    el('circle', { cx: 150, cy: 110, r: 55, fill: red > 0 ? `rgb(${200 - red * 30}, ${200 - red * 140}, ${200 - red * 160})` : '#e5e5e5' }, V);
+    if (red === 0) el('circle', { cx: 150 + (deg < 180 ? -1 : 1) * dLunar / 30 * 110, cy: 110, r: 60, fill: '#050822', opacity: .7 }, V);
+    $('#viewTitle').textContent = '🌕 Looking at the Moon (at night)';
+    $('#viewTxt').textContent = dLunar < 4 ? '🔴 TOTAL LUNAR ECLIPSE! The Earth\'s shadow covers the Moon, and it glows red, a "blood moon"!' : '🌖 The Earth\'s shadow is sliding over the full Moon…';
+    if (dLunar < 4 && !seen.lunar) { seen.lunar = true; Kids.addStar(); Kids.sfx.yay(); Kids.speak('Total lunar eclipse! The Earth is between the Sun and the Moon, and the Moon turns red.'); ch.check({ lunar: true }); }
+  } else {
+    V.style.background = '#050822';
+    // the Moon's shape (phase) for this position: 0° full, 180° new
+    const PH = ['🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔'], ph = PH[Math.round(deg / 45) % 8];
+    el('text', { x: 150, y: 150, 'text-anchor': 'middle', 'font-size': 120 }, V).textContent = ph;
+    $('#viewTitle').textContent = '🌙 The Moon tonight';
+    $('#viewTxt').textContent = 'No eclipse now. The Sun, Moon and Earth are not in a straight line. Keep moving the Moon!';
+  }
+  ch.check({ moved: true });
+}
+$('#ang').addEventListener('input', update);
+const glide = to => { let v = +$('#ang').value; const step = () => { const d = ((to - v + 540) % 360) - 180; if (Math.abs(d) < 2) { $('#ang').value = to; update(); return; } v = (v + Math.sign(d) * 2 + 360) % 360; $('#ang').value = v; update(); requestAnimationFrame(step); }; step(); };
+$('#toSolar').addEventListener('click', () => { Kids.sfx.whoosh(); glide(180); });
+$('#toLunar').addEventListener('click', () => { Kids.sfx.whoosh(); glide(0); });
+
+const Q = [['In a SOLAR eclipse, what is in the middle?', 'The Moon 🌑', ['The Earth 🌍', 'The Sun ☀️']], ['In a LUNAR eclipse, what is in the middle?', 'The Earth 🌍', ['The Moon 🌑', 'The Sun ☀️']],
+  ['What colour does the Moon turn in a total lunar eclipse?', 'Red 🔴', ['Green 🟢', 'Blue 🔵']], ['Is it safe to look straight at the Sun during an eclipse?', 'No! Never ⚠️', ['Yes', 'Only for a minute']],
+  ['When can a solar eclipse happen?', 'In the daytime ☀️', ['At night 🌙', 'Only in winter']], ['A lunar eclipse can only happen at…', 'Full moon (Pournami) 🌕', ['New moon (Amavasai) 🌑', 'Half moon 🌓']],
+  ['What is an eclipse called in Tamil?', 'கிரகணம் (kiraganam)', ['மழை (mazhai)', 'நிலா (nilaa)']]];
+const quizMaker = () => { const [q, a, w] = Q[R(Q.length)]; return { q, choices: shuffle([a, ...w]).map(x => ({ label: x, ok: x === a })), yay: a, hint: 'Try it with the Moon slider!' }; };
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 7, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Move the Moon around the Earth 🌍', hint: 'Drag the slider.', ok: c => c.moved, yay: 'The Moon goes round the Earth about once a month!' },
+  { ask: 'Make a total SOLAR eclipse ☀️🌑', hint: 'Put the Moon exactly between the Sun and the Earth.', ok: c => c.solar, yay: 'The Moon hid the Sun!' },
+  { ask: 'Make a total LUNAR eclipse 🔴', hint: 'Put the Moon right behind the Earth, in its shadow.', ok: c => c.lunar, yay: 'A red blood moon!' },
+  { ask: 'Get a quiz question right ❓', hint: 'Open Eclipse Quiz.', ok: c => c.quiz, yay: 'Eclipse expert!' },
+], { title: 'Eclipse Hunter' });
+Kids.learn({
+  why: ['A solar eclipse happens when the Moon passes exactly between the Sun and the Earth, and blocks the sunlight. 🌑',
+    'A lunar eclipse happens when the Earth is exactly between the Sun and the Moon, so the Earth\'s shadow falls on the Moon. 🔴',
+    'The Moon\'s path is a little tilted, so most months the three don\'t line up exactly. That is why eclipses are rare and special!'],
+  imagine: ['Imagine it is the middle of the day, and slowly the sky gets darker and darker… birds go quiet, it gets cooler, and stars come out at noon!'],
+  wow: ['The Sun is about 400 times bigger than the Moon, but also about 400 times farther away. That is why they look the same size in our sky, and the Moon can cover the Sun perfectly!',
+    'The Moon looks red in a lunar eclipse because sunlight bends through the Earth\'s air, the same reason sunsets are red.', 'In Tamil, an eclipse is called கிரகணம் (kiraganam).'],
+  talk: ['Try it with a torch (Sun), a ball (Earth) and a small ball (Moon) in a dark room.', 'Why do you think people long ago were scared of eclipses?', 'Ask a grown-up if they have ever seen an eclipse.'],
+});
+update();
+</script>
+</body>
+</html>
