@@ -14,4 +14,6 @@
 | [zoom-out](zoom-out/) | Powers-of-ten zoom from her to the observable universe |
 | [many-universes](many-universes/) | A "what if" story about the multiverse (clearly an open question) and a make-your-own-universe builder |
 
-**Ideas:** animal homes, plants, my body, weather.
+| [animal-homes](animal-homes/) | Where animals live and why |
+
+**Ideas:** weather watch, how plants grow, my body, star patterns.

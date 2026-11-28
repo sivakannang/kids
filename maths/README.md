@@ -11,5 +11,7 @@
 | [ruler-race](ruler-race/) | cm, m and km: the size ladder and a quiz |
 | [balance-scale](balance-scale/) | Heavy and light, grams and kilograms, balancing |
 | [speed-race](speed-race/) | Speed and time: snail to light, over 100 m up to the Sun |
+| [counting-fun](counting-fun/) | Counting to 20 and adding small numbers |
+| [money-shop](money-shop/) | Rupees, paying, and working out change |
 
-**Ideas:** counting fun, number bonds, money shop (₹ coins and notes), shapes hunt.
+**Ideas:** shapes hunt, number bonds, times tables, hot & cold (temperature).

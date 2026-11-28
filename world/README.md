@@ -1,5 +1,7 @@
-# 🌍 World
+# 🗺️ World
 
-Nothing here yet.
+| Project | What it teaches |
+|---|---|
+| [flag-quiz](flag-quiz/) | Flags, countries, capitals and continents |
 
-**Ideas:** flag quiz, countries & capitals, famous landmarks, continents puzzle.
+**Ideas:** Continents Puzzle, Famous Landmarks.

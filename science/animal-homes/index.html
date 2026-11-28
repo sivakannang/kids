@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animal Homes</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  body { background: linear-gradient(160deg, #d8f3dc 0%, #e9f5ff 60%, #fff6e0 100%); background-attachment: fixed; }
+  .board { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+  .col { display: flex; flex-direction: column; gap: 10px; }
+  .col h3 { margin: 0; text-align: center; color: var(--muted); }
+  .cardbtn { border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; color: var(--ink); transition: transform .12s; }
+  .cardbtn .e { font-size: 40px; }
+  .cardbtn.sel { border-color: var(--purple); background: #f1e9ff; transform: scale(1.04); }
+  .cardbtn.done { border-color: #06d6a0; background: #d3f8e2; cursor: default; }
+  .cardbtn.wrong { animation: shake .45s; }
+  .fact { margin-top: 14px; font-size: 20px; text-align: center; min-height: 56px; background: #fff3c4; border-radius: 18px; padding: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🐾</span>
+    <div><h1>Animal Homes</h1><small>Who lives where, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="label center" style="margin-top:0">Tap an animal, then tap its home!</div>
+      <div class="board">
+        <div class="col" id="animals"><h3>Animals</h3></div>
+        <div class="col" id="homes"><h3>Homes</h3></div>
+      </div>
+      <div class="fact" id="fact">🐦 Every animal needs a safe home to rest, sleep and look after its babies.</div>
+      <div class="row"><button class="btn big green" id="newBtn">🔄 New animals</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const PAIRS = [
+  { a: '🐦', an: 'Bird', h: '🪺', hn: 'Nest', f: 'Birds build nests from twigs, grass and leaves to keep their eggs safe.' },
+  { a: '🐝', an: 'Bee', h: '🍯', hn: 'Hive', f: 'Bees live together in a hive and make honey there.' },
+  { a: '🐰', an: 'Rabbit', h: '🕳️', hn: 'Burrow', f: 'Rabbits dig burrows: tunnels under the ground.' },
+  { a: '🕷️', an: 'Spider', h: '🕸️', hn: 'Web', f: 'Spiders spin sticky webs from silk to catch insects.' },
+  { a: '🐟', an: 'Fish', h: '🌊', hn: 'Water', f: 'Fish live in water and breathe with gills, not lungs.' },
+  { a: '🐒', an: 'Monkey', h: '🌳', hn: 'Tree', f: 'Monkeys live in trees and use their long arms (and some use their tails) to swing.' },
+  { a: '🐫', an: 'Camel', h: '🏜️', hn: 'Desert', f: 'Camels live in hot deserts and can go for days without drinking water.' },
+  { a: '🐧', an: 'Penguin', h: '🧊', hn: 'Ice', f: 'Most penguins live in cold places near the South Pole. They can\'t fly, but they swim brilliantly!' },
+  { a: '🐌', an: 'Snail', h: '🐚', hn: 'Shell', f: 'A snail carries its home on its back, its shell!' },
+  { a: '🐕', an: 'Dog', h: '🏠', hn: 'Kennel', f: 'A pet dog\'s little house is called a kennel.' },
+  { a: '🐄', an: 'Cow', h: '🛖', hn: 'Shed', f: 'Cows on a farm rest in a cowshed.' },
+  { a: '🐜', an: 'Ant', h: '⛰️', hn: 'Anthill', f: 'Ants live together in an anthill, with lots of tunnels and rooms inside.' },
+  { a: '🦁', an: 'Lion', h: '🌾', hn: 'Grassland', f: 'Lions live in big, open grasslands called savannas, and their babies stay in a den.' },
+  { a: '🦇', an: 'Bat', h: '🌑', hn: 'Cave', f: 'Many bats sleep upside down in dark caves during the day.' },
+  { a: '🐸', an: 'Frog', h: '🪷', hn: 'Pond', f: 'Frogs live near ponds. They start life as tadpoles in the water.' },
+  { a: '🐊', an: 'Crocodile', h: '🏞️', hn: 'River', f: 'Crocodiles live in rivers and lakes and lie in the sun to warm up.' },
+];
+let round = [], selA = null, matched = 0, rounds = 0, mistakes = 0;
+function newRound() {
+  round = shuffle(PAIRS).slice(0, 5); selA = null; matched = 0; mistakes = 0;
+  const A = $('#animals'), H = $('#homes');
+  A.querySelectorAll('button').forEach(b => b.remove()); H.querySelectorAll('button').forEach(b => b.remove());
+  round.forEach(p => {
+    const b = document.createElement('button'); b.className = 'cardbtn'; b.innerHTML = `<span class="e">${p.a}</span>${p.an}`;
+    b.addEventListener('click', () => { if (b.classList.contains('done')) return; selA = { p, b }; A.querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b)); Kids.sfx.pop(); Kids.speak(p.an); });
+    A.appendChild(b);
+  });
+  shuffle(round).forEach(p => {
+    const b = document.createElement('button'); b.className = 'cardbtn'; b.innerHTML = `<span class="e">${p.h}</span>${p.hn}`;
+    b.addEventListener('click', () => tapHome(p, b));
+    H.appendChild(b);
+  });
+}
+function tapHome(p, b) {
+  if (b.classList.contains('done')) return;
+  if (!selA) { $('#fact').textContent = '🐦 First tap an animal on the left!'; return; }
+  if (selA.p === p) {
+    selA.b.classList.remove('sel'); selA.b.classList.add('done'); b.classList.add('done');
+    selA.b.innerHTML += ' ✅'; b.innerHTML += ' ✅';
+    matched++; Kids.sfx.yay(); $('#fact').textContent = `${p.a} ${p.f}`; Kids.speak(Kids.forSpeech(`${p.an}: ${p.hn}. ${p.f}`));
+    ch.check({ pair: p.an });
+    selA = null;
+    if (matched === round.length) {
+      rounds++; Kids.addStar(); if (!mistakes) Kids.addStar(); Kids.confetti();
+      Kids.banner(mistakes ? '🏠 All animals are home!' : '🏠 All home, with no mistakes! ⭐⭐');
+      ch.check({ rounds, perfect: !mistakes });
+    }
+  } else {
+    mistakes++; Kids.sfx.oops(); Kids.resetStreak(); b.classList.remove('wrong'); void b.offsetWidth; b.classList.add('wrong');
+    $('#fact').textContent = `Hmm, a ${selA.p.an.toLowerCase()} doesn't live in a ${p.hn.toLowerCase()}. Try another home! 🤔`;
+  }
+}
+$('#newBtn').addEventListener('click', () => { Kids.sfx.pop(); newRound(); });
+
+const ch = Kids.challenges([
+  { ask: 'Help ONE animal find its home 🏠', hint: 'Tap an animal, then tap where it lives.', ok: c => !!c.pair, yay: 'Home sweet home!' },
+  { ask: 'Get ALL 5 animals home 🐾', hint: 'Match every animal on the board.', ok: c => c.rounds >= 1, yay: 'Every animal is safe at home!' },
+  { ask: 'Finish a board with NO mistakes ⭐', hint: 'Think carefully before you tap a home.', ok: c => c.perfect, yay: 'Perfect! You are an animal expert! 🦉' },
+  { ask: 'Play 3 boards 🔄', hint: 'Press "New animals" after each board.', ok: c => c.rounds >= 3, yay: 'Three boards of happy animals!' },
+], { title: 'Animal Expert' });
+
+Kids.learn({
+  why: ['A home keeps an animal safe from rain, heat, cold and hungry hunters, and gives its babies a safe place to grow.',
+    'Animals live where they can find food and water, and where their bodies are good at living: camels in deserts, fish in water.'],
+  imagine: ['Imagine you are a tiny ant 🐜, walking through the tunnels of your anthill. Left to the food room, right to the baby room… it\'s a busy underground city!'],
+  wow: ['Some termites build mounds taller than a grown-up!', 'A snail\'s shell grows with it, so it never has to move house. 🐚'],
+  talk: ['What animals live near your home?', 'If you were an animal, where would you like to live?', 'How is your home like a bird\'s nest?'],
+});
+newRound();
+</script>
+</body>
+</html>
