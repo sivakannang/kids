@@ -18,5 +18,6 @@
 | [number-bonds](number-bonds/) | Pairs that make 5, 10 and 20: ten frames, bubble pop, missing numbers |
 | [times-tables](times-tables/) | Skip counting on a number line, equal groups, and a quiz (2, 3, 4, 5, 10) |
 | [hot-and-cold](hot-and-cold/) | Reading a thermometer, °C, hotter or colder |
+| [fraction-pizza](fraction-pizza/) | Halves, thirds, quarters: cutting, eating, sharing fairly, and comparing fractions |
 
-**Ideas:** fraction pizza.
+**Ideas:** patterns.

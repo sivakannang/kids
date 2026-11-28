@@ -13,6 +13,8 @@ They use `shared/little.js` (letter sounds, big choices, the "🎤 I said it!" b
 | [story-time](story-time/) | Listening to stories and answering questions |
 | [rhyme-and-sing](rhyme-and-sing/) | Six original action songs to sing and do, and rhyming picture pairs |
 | [colours-shapes](colours-shapes/) | 10 colours, 8 shapes, and "find the red circle" |
+| [sight-words](sight-words/) | 32 first sight words in 4 levels: flash cards, find the word, balloon pop |
+| [sentence-builder](sentence-builder/) | Building describing sentences ("I see two big red balls") that draw a picture |
 
 **Tips for grown-ups:** keep it short (10–15 minutes), sit together, repeat the words with him, and praise the effort, not just right answers.
-**Ideas:** sight words, sentence building.
+**Ideas:** opposites, "Who am I?" animal riddles.

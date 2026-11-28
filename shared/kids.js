@@ -304,6 +304,16 @@
   }
   const shuffle = a => a.map(x => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]);
 
+  /* ---------- phonics: the sound of each letter and its picture word (as taught in school) ----------
+     sound is spelled so the computer voice says the SOUND, not the letter name */
+  const PHONICS = {
+    a: ['ah', 'apple', '🍎'], b: ['buh', 'ball', '⚽'], c: ['kuh', 'cat', '🐱'], d: ['duh', 'dog', '🐶'], e: ['eh', 'egg', '🥚'],
+    f: ['fff', 'fish', '🐟'], g: ['guh', 'goat', '🐐'], h: ['huh', 'hat', '🎩'], i: ['ih', 'igloo', '🧊'], j: ['juh', 'jug', '🫗'],
+    k: ['kuh', 'kite', '🪁'], l: ['lll', 'lion', '🦁'], m: ['mmm', 'monkey', '🐒'], n: ['nnn', 'nest', '🪺'], o: ['aw', 'octopus', '🐙'],
+    p: ['puh', 'pig', '🐷'], q: ['kwuh', 'queen', '👸'], r: ['rrr', 'rabbit', '🐰'], s: ['sss', 'sun', '☀️'], t: ['tuh', 'tiger', '🐯'],
+    u: ['uh', 'umbrella', '☂️'], v: ['vvv', 'van', '🚐'], w: ['wuh', 'water', '💧'], x: ['ks', 'box', '📦'], y: ['yuh', 'yellow', '💛'], z: ['zzz', 'zebra', '🦓'],
+  };
+
   /* ---------- small SVG helper ---------- */
   function svgEl(tag, attrs = {}, parent) {
     const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -345,7 +355,7 @@
     setProfile(id) { raw.set('kids.profile', id); },
     starsOf(id) { const k = id === 'kavikuyil' ? [`${id}:kids.stars`, 'kids.stars'] : [`${id}:kids.stars`]; for (const x of k) { const v = raw.get(x, undefined); if (v !== undefined) return v; } return 0; },
     store, rand, sfx, speak, speakLang, voiceFor, forSpeech, confetti, banner, praise, addStar, resetStreak,
-    learn, challenges, quiz, shuffle, svgEl, birthday, setBirthday,
+    learn, challenges, quiz, shuffle, svgEl, birthday, setBirthday, phonics: PHONICS,
     get stars() { return state.stars; },
     get sound() { return state.sound; },
   };

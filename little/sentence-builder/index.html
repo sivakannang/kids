@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentence Builder</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .pic { min-height: 200px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; background: #f8f6ff; border-radius: 24px; padding: 10px; }
+  .pic svg { display: block; }
+  .sentence { text-align: center; font-size: 34px; font-weight: 700; margin: 12px 0 4px; min-height: 48px; }
+  .sentence span { display: inline-block; margin: 0 4px; padding: 2px 10px; border-radius: 12px; }
+  .sentence span.gap { background: #fff3c4; color: #b08900; min-width: 60px; }
+  .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .slot { background: #fff; border-radius: 18px; padding: 8px; border: 3px solid #f0eefa; }
+  .slot h4 { margin: 0 0 6px; color: var(--muted); font-size: 15px; text-align: center; }
+  .slot .pick button { font-size: 18px; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+  .tile { border: none; border-radius: 16px; padding: 10px 18px; font-size: 30px; font-weight: 700; color: #fff; cursor: pointer; background: var(--blue); box-shadow: 0 5px 0 rgba(0,0,0,.15); font-family: inherit; }
+  .tile:nth-child(3n+1) { background: var(--pink); } .tile:nth-child(3n+2) { background: var(--orange); }
+  .tile.used { visibility: hidden; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🧱</span>
+    <div><h1>Sentence Builder</h1><small>Put words together to make a picture, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="make">🎨 Make a Picture</button>
+  <button class="tab" data-tab="copy">🧩 Build the Sentence</button>
+</nav>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+  <section class="card">
+    <div class="pic" id="pic"></div>
+    <div class="sentence" id="sentence"></div>
+    <div class="row" style="margin-top:4px"><button class="btn big purple" id="readBtn">🔊 Read it</button><button class="btn big green saidit" id="saidBtn">🎤 I said it!</button></div>
+  </section>
+  <section class="card" data-panel="make"><div class="slots" id="slots"></div></section>
+  <section class="card center" data-panel="copy" hidden>
+    <div class="label" style="margin-top:0">Look at the picture. Tap the words in the right order!</div>
+    <div class="tiles" id="tiles"></div>
+    <div class="row"><button class="btn orange" id="undo">↩️ Undo</button><button class="btn big orange" id="cNext" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script src="../../shared/little.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl, NICK = Kids.nick;
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+const NUM = [['a', 1], ['two', 2], ['three', 3], ['four', 4], ['five', 5]];
+const SIZE = [['big', 1.25], ['small', .7]];
+const COL = [['red', '#ef233c'], ['blue', '#1e6fe0'], ['yellow', '#ffd60a'], ['green', '#2dc653'], ['pink', '#ff70a6'], ['orange', '#ff8c1a'], ['purple', '#8338ec']];
+const THING = ['ball', 'balloon', 'star', 'heart', 'box', 'kite', 'fish'];
+// draw one coloured thing
+function thing(name, fill, scale) {
+  const s = el('svg', { viewBox: '0 0 100 100', width: 90 * scale, height: 90 * scale });
+  const a = { fill, stroke: 'rgba(0,0,0,.25)', 'stroke-width': 3 };
+  if (name === 'ball') { el('circle', { cx: 50, cy: 50, r: 40, ...a }, s); el('path', { d: 'M14 40 Q50 60 86 40', fill: 'none', stroke: '#fff', 'stroke-width': 5, opacity: .7 }, s); }
+  if (name === 'balloon') { el('ellipse', { cx: 50, cy: 40, rx: 30, ry: 36, ...a }, s); el('path', { d: 'M50 76 q -6 10 2 22', fill: 'none', stroke: '#666', 'stroke-width': 2 }, s); }
+  if (name === 'star') { const p = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? 18 : 44, t = -Math.PI / 2 + i * Math.PI / 5; p.push(`${50 + r * Math.cos(t)},${54 + r * Math.sin(t)}`); } el('polygon', { points: p.join(' '), ...a }, s); }
+  if (name === 'heart') el('path', { d: 'M50 88 C 10 60, 4 34, 22 20 C 36 10, 48 18, 50 30 C 52 18, 64 10, 78 20 C 96 34, 90 60, 50 88 Z', ...a }, s);
+  if (name === 'box') { el('rect', { x: 14, y: 24, width: 72, height: 62, ...a }, s); el('rect', { x: 10, y: 16, width: 80, height: 14, ...a }, s); }
+  if (name === 'kite') { el('polygon', { points: '50,6 82,44 50,92 18,44', ...a }, s); el('line', { x1: 50, y1: 6, x2: 50, y2: 92, stroke: '#fff', 'stroke-width': 2, opacity: .6 }, s); }
+  if (name === 'fish') { el('ellipse', { cx: 44, cy: 50, rx: 32, ry: 20, ...a }, s); el('polygon', { points: '74,50 96,32 96,68', ...a }, s); el('circle', { cx: 30, cy: 45, r: 4, fill: '#222' }, s); }
+  return s;
+}
+function words(st) {
+  const [n, k] = NUM[st.n], plural = k > 1 ? (st.t === 'box' ? 'es' : st.t === 'fish' ? '' : 's') : '';
+  return ['I', 'see', n, SIZE[st.s][0], COL[st.c][0], st.t + plural];
+}
+const text = st => words(st).join(' ') + '.';
+function draw(st, gaps) {
+  const box = $('#pic'); box.innerHTML = '';
+  for (let i = 0; i < NUM[st.n][1]; i++) box.appendChild(thing(st.t, COL[st.c][1], SIZE[st.s][1]));
+  const w = words(st);
+  $('#sentence').innerHTML = w.map((x, i) => gaps && i >= gaps ? '<span class="gap">?</span>' : `<span>${x}</span>`).join(' ') + (gaps && gaps < w.length ? '' : '.');
+}
+
+/* ---------- make a picture: pick each word ---------- */
+const st = { n: 0, s: 0, c: 0, t: 'ball' };
+const made = new Set();
+const SLOTS = [['How many?', 'n', NUM.map(x => x[0])], ['Big or small?', 's', SIZE.map(x => x[0])], ['What colour?', 'c', COL.map(x => x[0])], ['What thing?', 't', THING]];
+SLOTS.forEach(([h, key, opts]) => {
+  const d = document.createElement('div'); d.className = 'slot'; d.innerHTML = `<h4>${h}</h4><div class="pick"></div>`;
+  opts.forEach((o, i) => { const b = document.createElement('button'); b.textContent = o;
+    b.addEventListener('click', () => { st[key] = key === 't' ? o : i; Kids.sfx.pop(); mark(); draw(st); Little.say(text(st)); made.add(text(st)); if (made.size === 5) Kids.banner(`🎨 5 sentences, ${NICK}!`); });
+    d.querySelector('.pick').appendChild(b); });
+  $('#slots').appendChild(d);
+});
+function mark() { [...$('#slots').children].forEach((d, k) => { const [, key] = SLOTS[k]; [...d.querySelectorAll('button')].forEach((b, i) => b.classList.toggle('active', key === 't' ? b.textContent === st.t : i === st[key])); }); }
+
+/* ---------- build the sentence: tap words in order ---------- */
+let goal = null, built = [], cFirst = true;
+function newCopy() {
+  goal = { n: R(NUM.length), s: R(2), c: R(COL.length), t: THING[R(THING.length)] }; built = []; cFirst = true; $('#cNext').hidden = true;
+  const w = words(goal);
+  draw(goal, 2);
+  $('#tiles').innerHTML = '';
+  shuffle(w.slice(2).map((x, i) => [x, i + 2])).forEach(([x]) => {
+    const b = document.createElement('button'); b.className = 'tile'; b.textContent = x;
+    b.addEventListener('click', () => tapTile(b, x));
+    $('#tiles').appendChild(b);
+  });
+  say('Look at the picture. "I see…" what? Tap the words in order! 🧩'); Little.say('I see… what? Tap the words in order.');
+}
+function tapTile(b, x) {
+  const w = words(goal), need = w[2 + built.length];
+  if (x !== need) { cFirst = false; Kids.sfx.oops(); say(`Hmm, what comes next? Look at the picture: ${['how many?', 'big or small?', 'what colour?', 'what thing?'][built.length]} 👀`); return; }
+  built.push(x); b.classList.add('used'); Kids.sfx.pop(); Little.say(x, 0.9);
+  draw(goal, 2 + built.length);
+  if (built.length === 4) {
+    if (cFirst) Kids.addStar(); Kids.confetti(); Kids.sfx.yay();
+    const c = Little.cheer(); say(`${c} "${text(goal)}" 🎉`, true); setTimeout(() => Little.sayList([c, text(goal)]), 400); $('#cNext').hidden = false;
+  }
+}
+$('#undo').addEventListener('click', () => { if (!built.length || built.length === 4) return; const x = built.pop(); [...$('#tiles').children].find(b => b.textContent === x && b.classList.contains('used')).classList.remove('used'); draw(goal, 2 + built.length); });
+$('#cNext').addEventListener('click', () => { Kids.sfx.pop(); newCopy(); });
+
+$('#readBtn').addEventListener('click', () => { const s = document.querySelector('.tab.active').dataset.tab === 'make' ? st : goal; Little.say(text(s), 0.75); });
+Little.saidIt($('#saidBtn'), c => say(`${c} What a great sentence! 🧱`, true));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'make') { draw(st); say(`Pick words to make a picture, ${NICK}! Then say the sentence. 🎨`); } else newCopy();
+}));
+Kids.learn({
+  why: ['Describing words (big, red, two) turn "I see a ball" into "I see two big red balls". This builds the sentences he needs to talk and tell stories.',
+    'Matching words to a picture helps him understand what he reads, not just say the sounds.'],
+  wow: ['In English, the order is usually: how many → size → colour → thing. "Two big red balls", never "red two big balls"!'],
+  talk: ['Describe things together on a walk: "I see a small brown dog!"', 'Play "I spy": "I spy something big and green."', 'Ask him to make a sentence for you to draw!'],
+}, { why: '🤔 Why? (for grown-ups)', talk: '💬 Try at home' });
+mark(); draw(st); say(`Pick words to make a picture, ${NICK}! Then say the sentence. 🎨`);
+</script>
+</body>
+</html>

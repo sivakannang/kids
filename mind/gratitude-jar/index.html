@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gratitude Jar</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  body { background: linear-gradient(160deg, #fff6e0 0%, #ffe5ec 50%, #e9f5ff 100%); background-attachment: fixed; }
+  .three { display: grid; gap: 10px; }
+  .line { display: flex; gap: 8px; align-items: center; }
+  .line .n { font-size: 30px; }
+  .line input { flex: 1; font-size: 18px; padding: 10px 12px; border-radius: 14px; border: 3px solid #e5e0f5; font-family: inherit; }
+  .ideas { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+  .idea { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 5px 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 15px; }
+  .jar { position: relative; width: 240px; height: 300px; margin: 0 auto; border: 6px solid #ffd166; border-top: none; border-radius: 0 0 60px 60px; background: rgba(255,255,255,.65); overflow: hidden; display: flex; flex-wrap: wrap-reverse; align-content: flex-start; justify-content: center; padding: 8px; gap: 3px; }
+  .jar::before { content: ''; position: absolute; top: -14px; left: -16px; right: -16px; height: 14px; background: #ffd166; border-radius: 8px; }
+  .jar span { width: 30px; height: 22px; border-radius: 6px; animation: pop .5s; box-shadow: 0 2px 0 rgba(0,0,0,.1); }
+  .memory { background: #fffbea; border-radius: 20px; padding: 14px; text-align: center; font-size: 22px; min-height: 60px; margin-top: 10px; }
+  .memory small { display: block; color: var(--muted); font-size: 15px; margin-top: 6px; }
+  .days { max-height: 300px; overflow: auto; }
+  .day { padding: 8px 10px; border-radius: 14px; background: #fff7fb; margin-bottom: 6px; font-size: 16px; }
+  .day b { color: var(--purple); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🙏</span>
+    <div><h1>Gratitude Jar</h1><small>Three good things about today, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+    <section class="card">
+      <h3 style="margin:0 0 10px">✨ Today I am thankful for…</h3>
+      <div class="three" id="three"></div>
+      <div class="label center">Need an idea? Tap one:</div>
+      <div class="ideas" id="ideas"></div>
+      <div class="row"><button class="btn big pink" id="save">🫙 Put them in my jar</button></div>
+    </section>
+    <section class="card"><h3 style="margin:0 0 8px">📖 My thankful days</h3><div class="days" id="days"></div></section>
+  </div>
+  <div>
+    <section class="card center">
+      <h3 style="margin:0 0 18px">🫙 My Gratitude Jar</h3>
+      <div class="jar" id="jar"></div>
+      <div class="stats" id="stats"></div>
+      <div class="row"><button class="btn purple" id="pull">🎁 Pull out a happy memory</button></div>
+      <div class="memory" id="memory">Every note is a happy thought. On a sad day, pull one out! 💛</div>
+    </section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, K = Kids.name, N = Kids.nick;
+const KEY = 'gratitude.log';
+let log = Kids.store.get(KEY, {});   // { 'YYYY-MM-DD': ['…', '…', '…'] }
+const COLS = ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff'];
+const IDEAS = ['👩 Amma', '👨 Appa', '👵 Paati', '👴 Thatha', '👦 my brother', '👧 my sister', '🧑‍🤝‍🧑 my friends', '👩‍🏫 my teacher', '🍛 yummy food', '🏠 my home',
+  '🧸 my toys', '📚 a good book', '🌧️ the rain', '☀️ sunshine', '🌳 trees', '🐶 animals', '🎮 playing', '🛏️ my cosy bed', '💪 my healthy body', '😂 a funny moment'];
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+$('#three').innerHTML = [1, 2, 3].map(n => `<div class="line"><span class="n">${['🌟', '💛', '🌈'][n - 1]}</span><input maxlength="70" placeholder="Good thing number ${n}…"></div>`).join('');
+const inputs = [...$('#three').querySelectorAll('input')];
+IDEAS.forEach(i => { const b = document.createElement('button'); b.className = 'idea'; b.textContent = i;
+  b.addEventListener('click', () => { const empty = inputs.find(x => !x.value.trim()); if (empty) { empty.value = i; Kids.sfx.pop(); } else say('All three are full! Tap "Put them in my jar". 🫙'); });
+  $('#ideas').appendChild(b); });
+function fillToday() { const t = log[Kids.today()] || []; inputs.forEach((x, k) => x.value = t[k] || ''); }
+$('#save').addEventListener('click', () => {
+  const things = inputs.map(x => x.value.trim()).filter(Boolean);
+  if (!things.length) { Kids.sfx.oops(); say('Write or pick at least one good thing first! ✍️'); return; }
+  const first = !log[Kids.today()];
+  log[Kids.today()] = things; Kids.store.set(KEY, log);
+  if (first) { Kids.addStar(); Kids.confetti(); }
+  Kids.sfx.yay();
+  const m = things.length === 3 ? `${Kids.praise()} Three good things! Noticing the good makes your heart happy. 💛` : `Lovely, ${N}! ${things.length} happy thought${things.length > 1 ? 's' : ''} in your jar. 💛`;
+  say(m, true); Kids.speak(Kids.forSpeech(m));
+  const days = Object.keys(log).length;
+  if ([3, 7, 14, 30].includes(days) && first) Kids.banner(`🫙 ${days} thankful days, ${K}!`);
+  draw();
+});
+$('#pull').addEventListener('click', () => {
+  const all = Object.entries(log).flatMap(([d, t]) => t.map(x => [d, x]));
+  if (!all.length) { $('#memory').textContent = 'Your jar is empty. Add your first good thing! 💛'; return; }
+  const [d, t] = all[R(all.length)]; Kids.sfx.whoosh();
+  $('#memory').innerHTML = `💛 ${esc(t)}<small>${new Date(d).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</small>`;
+  Kids.speak(Kids.forSpeech(`You were thankful for ${t}`));
+});
+function draw() {
+  const all = Object.entries(log).sort().flatMap(([, t]) => t);
+  $('#jar').innerHTML = all.slice(-60).map((_, k) => `<span style="background:${COLS[k % COLS.length]}"></span>`).join('');
+  const days = Object.keys(log).length;
+  let streak = 0; { const d = new Date(); if (!log[Kids.today()]) d.setDate(d.getDate() - 1);
+    const key = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    while (log[key(d)]) { streak++; d.setDate(d.getDate() - 1); } }
+  $('#stats').innerHTML = `<div class="stat"><b>${all.length}</b>happy notes</div><div class="stat"><b>${days}</b>days</div><div class="stat"><b>🔥 ${streak}</b>in a row</div>`;
+  $('#days').innerHTML = days ? Object.entries(log).sort().reverse().slice(0, 30).map(([d, t]) => `<div class="day"><b>${new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</b>: ${t.map(esc).join(' · ')}</div>`).join('')
+    : '<div class="hint">Nothing yet. Fill in today\'s three good things!</div>';
+}
+Kids.learn({
+  why: ['Gratitude means feeling thankful. When we notice good things, even small ones, our brain gets better at seeing the good every day.',
+    'Saying thank you makes other people happy too!'],
+  imagine: ['Imagine your jar a year from now, full of hundreds of colourful notes. Every one is a happy moment you can remember. 🌈'],
+  wow: ['Scientists found that people who write down good things often feel happier and even sleep better!', 'A good thing can be tiny: a warm dosa, a hug, a rainbow, or a funny joke.'],
+  talk: ['At dinner, everyone shares one good thing about their day.', 'Who could you say "thank you" to tomorrow?', 'What is the smallest thing you are thankful for?'],
+});
+fillToday(); draw();
+say(log[Kids.today()] ? `You already filled your jar today, ${K}! You can change your notes, or pull out a happy memory. 💛` : `Hi ${K}! What are three good things about today? 🌟`);
+</script>
+</body>
+</html>

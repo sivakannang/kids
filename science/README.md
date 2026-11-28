@@ -18,5 +18,7 @@
 | [how-plants-grow](how-plants-grow/) | Growing a seed (water and sunlight), plant parts, the plant life cycle |
 | [my-body](my-body/) | Brain, heart, lungs, stomach, bones, muscles, skin; counting your own heartbeat |
 | [star-patterns](star-patterns/) | Joining stars into constellations: Saptarishi, Dhruva, Orion, Vrishchika… |
+| [volcanoes](volcanoes/) | Why volcanoes erupt, the parts of a volcano, famous volcanoes (Barren Island) |
+| [eclipse](eclipse/) | Solar and lunar eclipses by moving the Moon, and eclipse safety |
 
-**Ideas:** volcanoes, eclipses.
+**Ideas:** magnets, recycling.

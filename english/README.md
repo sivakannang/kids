@@ -8,4 +8,4 @@
 | [story-time](story-time/) | Six original read-along stories: tap any word to hear it, "I read it myself" stars, questions at the end |
 | [rhyme-time](rhyme-time/) | Word families (-at, -an, -ig…), real and silly words, finding rhymes, odd one out |
 
-**Ideas:** sight words, sentence building.
+**Ideas:** see `little/` for sight words and sentence building.

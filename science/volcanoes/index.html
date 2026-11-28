@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volcanoes</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  #volc { width: 100%; max-width: 680px; display: block; margin: 0 auto; border-radius: 20px; }
+  #volc .lab { cursor: pointer; }
+  .meter { height: 22px; background: #eee; border-radius: 99px; overflow: hidden; max-width: 460px; margin: 10px auto 0; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb703, #e63946); transition: width .2s; }
+  .shake { animation: shake .4s 4; }
+  .famous { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+  .fv { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 8px; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink); }
+  .fv b { display: block; } .fv small { color: var(--muted); }
+  .fv.seen { border-color: #ffd166; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌋</span>
+    <div><h1>Volcanoes</h1><small>Why do mountains erupt, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="erupt">🌋 Make it Erupt</button>
+  <button class="tab" data-tab="inside">🔍 Inside a Volcano</button>
+  <button class="tab" data-tab="world">🗺️ Famous Volcanoes</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" id="volcCard">
+      <svg id="volc" viewBox="0 0 680 440"></svg>
+      <div data-panel="erupt">
+        <div class="meter"><i id="press"></i></div>
+        <div class="row"><button class="btn big red" id="heat">🔥 Add hot magma</button><button class="btn orange" id="reset">🔁 Calm down</button></div>
+      </div>
+      <div class="result" id="res"></div>
+    </section>
+    <section class="card" data-panel="world" hidden><div class="famous" id="famous"></div></section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+const s = $('#volc');
+const defs = el('defs', {}, s);
+const g1 = el('linearGradient', { id: 'sky', x1: 0, y1: 0, x2: 0, y2: 1 }, defs); el('stop', { offset: 0, 'stop-color': '#8ecae6' }, g1); el('stop', { offset: 1, 'stop-color': '#e0f4ff' }, g1);
+el('rect', { x: 0, y: 0, width: 680, height: 440, fill: 'url(#sky)' }, s);
+const ground = el('rect', { x: 0, y: 330, width: 680, height: 110, fill: '#7f5539' }, s);
+const chamber = el('ellipse', { cx: 340, cy: 410, rx: 110, ry: 26, fill: '#e85d04', opacity: .25 }, s);
+el('polygon', { points: '140,330 300,110 380,110 540,330', fill: '#6b4f3a', stroke: '#4a3426', 'stroke-width': 4 }, s);
+const vent = el('rect', { x: 330, y: 110, width: 20, height: 300, fill: '#e85d04', opacity: .25 }, s);
+el('ellipse', { cx: 340, cy: 110, rx: 40, ry: 8, fill: '#3d2b1f' }, s);
+const lavaG = el('g', {}, s), ashG = el('g', {}, s), labG = el('g', {}, s);
+el('text', { x: 70, y: 320, 'font-size': 36 }, s).textContent = '🌳';
+el('text', { x: 590, y: 322, 'font-size': 36 }, s).textContent = '🏡';
+let p = 0, erupting = false, eruptions = 0;
+function setP(v) { p = Math.max(0, Math.min(100, v)); $('#press').style.width = p + '%'; chamber.setAttribute('opacity', .25 + p / 140); vent.setAttribute('opacity', .25 + p / 140); }
+$('#heat').addEventListener('click', () => {
+  if (erupting) return;
+  setP(p + 14); Kids.sfx.boing();
+  if (p < 50) $('#res').textContent = '🔥 Hot, melted rock called magma is rising from deep inside the Earth…';
+  else if (p < 100) { $('#res').textContent = '😮 The pressure is building! Gas bubbles are pushing up, like a shaken soda bottle…'; $('#volcCard').classList.remove('shake'); void $('#volcCard').offsetWidth; $('#volcCard').classList.add('shake'); }
+  if (p >= 100) erupt();
+});
+function erupt() {
+  erupting = true; eruptions++; Kids.sfx.whoosh(); Kids.sfx.oops();
+  $('#res').textContent = '🌋 KABOOM! The volcano erupts! Magma that comes out is called LAVA. Ash and gas shoot up into the sky!';
+  Kids.speak('Kaboom! The volcano erupts! When magma comes out, it is called lava.');
+  let t = 0;
+  const iv = setInterval(() => {
+    t++;
+    for (let k = 0; k < 3; k++) { const c = el('circle', { cx: 340 + (Math.random() - .5) * 40, cy: 100, r: 6 + Math.random() * 10, fill: ['#ffb703', '#fb8500', '#e63946'][R(3)] }, lavaG);
+      const vx = (Math.random() - .5) * 9, vy = -6 - Math.random() * 7; let x = +c.getAttribute('cx'), y = 100, v = vy;
+      const f = setInterval(() => { x += vx; v += .45; y += v; c.setAttribute('cx', x); c.setAttribute('cy', y); if (y > 330) { clearInterval(f); c.remove(); } }, 30); }
+    const a = el('circle', { cx: 340 + (Math.random() - .5) * 30, cy: 90, r: 18, fill: '#6c757d', opacity: .6 }, ashG);
+    let ay = 90, ar = 18; const af = setInterval(() => { ay -= 2.2; ar += .6; a.setAttribute('cy', ay); a.setAttribute('r', ar); a.setAttribute('opacity', Math.max(0, .6 - (90 - ay) / 200)); if (ay < -40) { clearInterval(af); a.remove(); } }, 40);
+    if (t === 1) { const flow = el('path', { d: 'M330 112 C 300 180, 260 250, 220 330 L 250 330 C 290 250, 320 180, 350 112 Z', fill: '#f77f00', opacity: 0 }, lavaG);
+      let o = 0; const ff = setInterval(() => { o += .05; flow.setAttribute('opacity', Math.min(.9, o)); if (o > 1.5) { clearInterval(ff); setTimeout(() => flow.remove(), 4000); } }, 60); }
+    if (t > 50) { clearInterval(iv); erupting = false; setP(0); Kids.addStar(); ch.check({ erupt: eruptions }); $('#res').textContent += ' 😌 Now it is calm again… for now. Lava cools down and turns into new rock!'; }
+  }, 80);
+}
+$('#reset').addEventListener('click', () => { if (!erupting) { setP(0); Kids.sfx.pop(); $('#res').textContent = 'The volcano is resting.'; } });
+
+/* ---------- inside ---------- */
+const PARTS = [['Magma chamber', 120, 412, 'Deep underground is a pool of magma: rock so hot (over 1,000 °C!) that it has melted.'],
+  ['Vent', 470, 250, 'The vent is the pipe that magma travels up to reach the top.'],
+  ['Crater', 470, 100, 'The crater is the bowl-shaped hole at the top where the volcano erupts.'],
+  ['Lava', 150, 220, 'When magma comes out of the volcano, we call it lava. It flows like thick, glowing honey, then cools into rock.'],
+  ['Ash cloud', 200, 50, 'Volcanoes can blast out a huge cloud of ash: tiny bits of rock and glass. It can travel very far in the wind.']];
+const learnt = new Set();
+function drawLabels(show) {
+  labG.innerHTML = ''; if (!show) return;
+  PARTS.forEach(([n, x, y, t]) => {
+    const g = el('g', { class: 'lab' }, labG);
+    el('rect', { x: x - 80, y: y - 18, width: 160, height: 34, rx: 17, fill: learnt.has(n) ? '#06d6a0' : '#9b5de5' }, g);
+    el('text', { x, y: y + 6, 'text-anchor': 'middle', 'font-size': 17, fill: '#fff', 'font-weight': 700, 'font-family': 'Fredoka, sans-serif' }, g).textContent = n;
+    g.addEventListener('click', () => { learnt.add(n); drawLabels(true); $('#res').textContent = `${n}: ${t}`; Kids.speak(Kids.forSpeech(`${n}. ${t}`), true); Kids.sfx.pop(); ch.check({ parts: learnt.size }); });
+  });
+}
+/* ---------- famous volcanoes ---------- */
+const FAM = [['Barren Island', 'India 🇮🇳', 'India\'s only active volcano, on an island in the Andaman Sea. Nobody lives there, only goats!'],
+  ['Mount Fuji', 'Japan 🇯🇵', 'A beautiful snowy volcano. It is sleeping (dormant) right now; it last erupted about 300 years ago.'],
+  ['Mount Vesuvius', 'Italy 🇮🇹', 'About 2,000 years ago it buried the city of Pompeii in ash.'],
+  ['Kilauea', 'Hawaii, USA 🇺🇸', 'One of the most active volcanoes in the world. Its lava sometimes flows all the way into the sea!'],
+  ['Mount Etna', 'Italy 🇮🇹', 'The tallest active volcano in Europe. It erupts very often.'],
+  ['Deccan Traps', 'India 🇮🇳', 'Not one volcano: a HUGE area of old lava rock in Maharashtra, from eruptions around the time of the dinosaurs!']];
+const fseen = new Set();
+$('#famous').innerHTML = '';
+FAM.forEach(f => { const b = document.createElement('button'); b.className = 'fv'; b.innerHTML = `<b>🌋 ${f[0]}</b><small>${f[1]}</small>`;
+  b.addEventListener('click', () => { b.classList.add('seen'); fseen.add(f[0]); $('#res').textContent = `${f[0]} (${f[1]}): ${f[2]}`; Kids.speak(Kids.forSpeech(`${f[0]}. ${f[2]}`), true); ch.check({ famous: fseen.size, india: f[1].startsWith('India') }); });
+  $('#famous').appendChild(b); });
+/* ---------- quiz ---------- */
+const Q = [['What is melted rock called when it is still underground?', 'Magma', ['Lava', 'Sand']], ['What is melted rock called when it comes out?', 'Lava', ['Magma', 'Water']],
+  ['What is the hole at the top of a volcano?', 'Crater', ['Chamber', 'Cave']], ['Where is India\'s only active volcano?', 'Barren Island', ['Mumbai', 'Ooty']],
+  ['A volcano that may erupt again but is quiet now is…', 'Dormant (sleeping)', ['Extinct (never again)', 'Erupting']], ['What happens to lava when it cools?', 'It becomes rock', ['It becomes water', 'It disappears']],
+  ['Which city was buried by Mount Vesuvius?', 'Pompeii', ['Paris', 'Delhi']]];
+const quizMaker = () => { const [q, a, w] = Q[R(Q.length)]; return { q, choices: shuffle([a, ...w]).map(x => ({ label: x, ok: x === a })), yay: a + '!', hint: 'Explore the other tabs to find out!' }; };
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop(); const t = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== t);
+  $('#volcCard').hidden = t === 'quiz' || t === 'world'; drawLabels(t === 'inside');
+  if (t === 'world') { $('#volcCard').hidden = false; $('#res').textContent = 'Tap a volcano to learn about it!'; }
+  if (t === 'inside') $('#res').textContent = 'Tap each label to learn the parts of a volcano!';
+  if (t === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 7, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Make the volcano erupt 🌋', hint: 'Keep tapping "Add hot magma" until the bar is full.', ok: c => c.erupt >= 1, yay: 'KABOOM! What an eruption!' },
+  { ask: 'Learn all 5 parts of a volcano 🔍', hint: 'Open Inside a Volcano and tap every label.', ok: c => c.parts >= 5, yay: 'You know a volcano inside out!' },
+  { ask: 'Find India\'s only active volcano 🇮🇳', hint: 'Open Famous Volcanoes.', ok: c => c.india && c.famous >= 1, yay: 'Barren Island, in the Andaman Sea!' },
+  { ask: 'Get a quiz question right ❓', hint: 'Open the Quiz tab.', ok: c => c.quiz, yay: 'Volcano expert!' },
+], { title: 'Volcano Explorer' });
+Kids.learn({
+  why: ['Deep under our feet, the Earth is very, very hot. In some places the rock melts into magma. Magma is lighter than solid rock, so it pushes up, up, up!',
+    'Gas in the magma builds pressure, like a shaken soda bottle. When the pressure is too much: eruption!'],
+  imagine: ['Imagine standing on a hill far away (safely!) watching orange lava glow in the night, like a river of fire. 🔥'],
+  wow: ['Some islands, like Hawaii, were made by volcanoes, one eruption at a time!', 'There are volcanoes under the sea too, and even on other planets. Mars has Olympus Mons, the biggest volcano we know of!'],
+  talk: ['Try the baking soda volcano with a grown-up: baking soda + vinegar + a drop of red colour!', 'Why do you think people sometimes live near volcanoes? (Hint: the soil is great for farming.)', 'Would you like to visit a volcano? Which one?'],
+});
+setP(0); $('#res').textContent = 'Tap "Add hot magma" and watch what happens…';
+</script>
+</body>
+</html>
