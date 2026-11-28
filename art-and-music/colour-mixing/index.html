@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colour Mixing</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .paints { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .paint { width: 84px; height: 84px; border-radius: 50%; border: 5px solid #fff; cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.15); font-family: inherit; font-weight: 700; font-size: 13px; }
+  .bowl { width: 230px; height: 230px; border-radius: 50%; margin: 14px auto; border: 10px solid #e5e0f5; transition: background .6s; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.4); position: relative; overflow: hidden; }
+  .bowl .swirl { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent, rgba(255,255,255,.25), transparent 40%); animation: spin 1.2s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .in { text-align: center; font-size: 22px; min-height: 34px; }
+  .discover { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .discover span { border-radius: 999px; padding: 6px 12px; color: #fff; font-weight: 700; font-size: 14px; text-shadow: 0 1px 3px rgba(0,0,0,.4); }
+  .lights { position: relative; height: 320px; background: #0b0b14; border-radius: 24px; overflow: hidden; }
+  .lights .spot { position: absolute; width: 200px; height: 200px; border-radius: 50%; mix-blend-mode: screen; transition: opacity .4s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🎨</span>
+    <div><h1>Colour Mixing</h1><small>Red + yellow = ? Let's find out, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="paint">🖌️ Mix Paints</button>
+  <button class="tab" data-tab="light">🔦 Mix Lights</button>
+  <button class="tab" data-tab="quiz">❓ Colour Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="paint">
+      <div class="paints" id="paints"></div>
+      <div class="bowl" id="bowl"></div>
+      <div class="in" id="inBowl"></div>
+      <div class="row"><button class="btn big orange" id="emptyBtn">🫗 Empty the bowl</button></div>
+      <h3 class="center" style="margin-bottom:6px">🔎 Colours you discovered</h3>
+      <div class="discover" id="found"></div>
+    </section>
+    <section class="card" data-panel="light" hidden>
+      <div class="lights" id="lights"></div>
+      <div class="row" id="lightBtns"></div>
+      <div class="result" id="lRes">Light mixes differently from paint! Turn on the torches and see.</div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Art &amp; Music 🎨</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, K = Kids.name;
+const PAINT = { red: '#e63946', yellow: '#ffd60a', blue: '#1d4ed8', white: '#ffffff', black: '#1b1b1b' };
+// what you get when you mix (sorted names joined by +), like real paints
+const MIX = {
+  'red+yellow': ['orange', '#ff8c1a'], 'blue+yellow': ['green', '#2a9d4b'], 'blue+red': ['purple', '#7b2cbf'],
+  'red+white': ['pink', '#ff8fab'], 'blue+white': ['light blue', '#90cdf4'], 'white+yellow': ['cream', '#fff3b0'],
+  'black+white': ['grey', '#9e9e9e'], 'black+red': ['dark red', '#7a1020'], 'black+blue': ['navy', '#14213d'], 'black+yellow': ['olive', '#808000'],
+  'blue+red+yellow': ['brown', '#7a4a24'], 'red+white+yellow': ['peach', '#ffb38a'], 'blue+white+yellow': ['light green', '#95d5b2'], 'blue+red+white': ['lavender', '#c8a2e8'],
+};
+let bowl = [];
+const found = new Map(Kids.store.get('mix.found', []));
+Object.entries(PAINT).forEach(([n, c]) => {
+  const b = document.createElement('button'); b.className = 'paint'; b.style.background = c; b.style.color = ['yellow', 'white'].includes(n) ? '#333' : '#fff'; b.textContent = n;
+  b.addEventListener('click', () => addPaint(n));
+  $('#paints').appendChild(b);
+});
+function result() {
+  const set = [...new Set(bowl)].sort();
+  if (set.length === 0) return null;
+  if (set.length === 1) return [set[0], PAINT[set[0]]];
+  return MIX[set.join('+')] || ['muddy brown', '#5b4636'];
+}
+function addPaint(n) {
+  if (bowl.length >= 6) { Kids.sfx.oops(); $('#inBowl').textContent = 'The bowl is full! Empty it to mix again.'; return; }
+  bowl.push(n); Kids.sfx.pop();
+  const r = result();
+  const b = $('#bowl'); b.style.background = r[1]; b.innerHTML = `<div class="swirl"></div><span>${r[0]}</span>`;
+  b.style.color = ['yellow', 'white', 'cream', 'light blue', 'peach', 'light green', 'pink'].includes(r[0]) ? '#333' : '#fff';
+  const parts = [...new Set(bowl)];
+  $('#inBowl').textContent = parts.length > 1 ? `${parts.join(' + ')} = ${r[0]}!` : `${n}… now add another colour!`;
+  if (parts.length > 1) {
+    if (!found.has(r[0])) { found.set(r[0], r[1]); Kids.store.set('mix.found', [...found]); Kids.addStar(); Kids.sfx.yay(); Kids.banner(`🎨 New colour: ${r[0]}!`); }
+    Kids.speak(`${parts.join(' and ')} make ${r[0]}!`);
+    ch.check({ made: r[0], parts, count: found.size });
+  }
+  drawFound();
+}
+$('#emptyBtn').addEventListener('click', () => { bowl = []; Kids.sfx.whoosh(); $('#bowl').style.background = '#fff'; $('#bowl').innerHTML = ''; $('#inBowl').textContent = 'Tap two paints to mix them!'; });
+function drawFound() { $('#found').innerHTML = found.size ? [...found].map(([n, c]) => `<span style="background:${c}">${n}</span>`).join('') : '<span style="background:#ccc">none yet!</span>'; }
+
+/* ---------- light mixing (red, green, blue light) ---------- */
+const LIGHT = [['red', '#ff0000', 70, 60], ['green', '#00ff00', 210, 60], ['blue', '#0000ff', 140, 140]];
+const on = { red: false, green: false, blue: false };
+LIGHT.forEach(([n, c, x, y]) => {
+  const s = document.createElement('div'); s.className = 'spot'; s.style.background = `radial-gradient(circle, ${c} 60%, transparent 72%)`; s.style.left = `calc(50% - 180px + ${x}px)`; s.style.top = y - 40 + 'px'; s.style.opacity = 0; s.dataset.n = n;
+  $('#lights').appendChild(s);
+  const b = document.createElement('button'); b.className = 'btn big'; b.style.background = c === '#00ff00' ? '#06a77d' : c; b.textContent = `🔦 ${n}`;
+  b.addEventListener('click', () => { on[n] = !on[n]; s.style.opacity = on[n] ? 1 : 0; b.classList.toggle('on', on[n]); Kids.sfx.pop(); lightSay(); });
+  $('#lightBtns').appendChild(b);
+});
+function lightSay() {
+  const k = Object.keys(on).filter(n => on[n]).join('+');
+  const M = { '': 'All dark. Turn on a torch!', red: 'Red light.', green: 'Green light.', blue: 'Blue light.', 'red+green': 'Red + green light = YELLOW! Surprise! 💛', 'red+blue': 'Red + blue light = magenta (pinky-purple)!',
+    'green+blue': 'Green + blue light = cyan (bright sky blue)!', 'red+green+blue': 'All three lights together make WHITE light! 🤍 That is how your TV and phone screens make every colour.' };
+  $('#lRes').textContent = M[k]; if (k.includes('+')) Kids.speak(Kids.forSpeech(M[k]));
+  ch.check({ light: k });
+}
+/* ---------- quiz ---------- */
+const QS = Object.entries(MIX).filter(([k]) => !k.includes('black') && k.split('+').length === 2);
+function quizMaker() {
+  const [k, [n, c]] = QS[R(QS.length)]; const [a, b] = k.split('+');
+  const wrong = shuffle(QS.filter(([, v]) => v[0] !== n)).slice(0, 3).map(([, v]) => v);
+  return { q: `<span style="color:${PAINT[a]};text-shadow:0 0 2px #0006">●</span> ${a} + <span style="color:${PAINT[b]};text-shadow:0 0 2px #0006">●</span> ${b} = ?`,
+    choices: shuffle([[n, c], ...wrong]).map(([x, col]) => ({ label: `<span class="ce" style="color:${col};text-shadow:0 0 3px #0005">●</span>${x}`, ok: x === n })), yay: `${a} and ${b} make ${n}!`, hint: 'Try mixing them in the paint bowl!' };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Mix red and yellow. What do you get? 🔴💛', hint: 'Empty the bowl, then tap red and yellow.', ok: c => c.made === 'orange', yay: 'Orange, like a mango! 🥭' },
+  { ask: 'Make green 💚', hint: 'Which two colours do leaves need? Try blue and yellow!', ok: c => c.made === 'green', yay: 'Blue + yellow = green!' },
+  { ask: 'Make purple 💜', hint: 'Try red and blue.', ok: c => c.made === 'purple', yay: 'Purple, like grapes!' },
+  { ask: 'Make a colour lighter with white 🤍', hint: 'Mix white with any colour.', ok: c => c.parts && c.parts.includes('white') && c.parts.length === 2 && !c.parts.includes('black'), yay: c => `White made it lighter: ${c.made}!` },
+  { ask: 'Discover 8 colours 🔎', hint: 'Try mixing three paints, or adding black.', ok: c => c.count >= 8, yay: 'A real colour scientist!' },
+  { ask: 'Turn on red and green light. What colour? 🔦', hint: 'Open Mix Lights.', ok: c => c.light === 'red+green', yay: 'Yellow! Light is surprising!' },
+], { title: 'Colour Wizard' });
+Kids.learn({
+  why: ['Red, yellow and blue are called primary colours for paint. You can mix them to make lots of other colours!',
+    'Paint works by soaking up some colours of light. Mix lots of paints and they soak up more and more, so the colour gets darker and muddier.'],
+  imagine: ['Imagine a world with only red, yellow and blue. Could you paint a green tree? An orange sunset? A purple flower? Yes, by mixing!'],
+  wow: ['Screens work the other way round: they mix red, green and blue LIGHT. Look very closely at a TV with a magnifying glass and you can see tiny red, green and blue dots!',
+    'A rainbow shows that white sunlight is really made of many colours. 🌈'],
+  talk: ['Which colour do you like best? Can you mix it?', 'Mix real paints with a grown-up. Do you get the same colours?', 'What colour do you think red + green paint makes? Try it!'],
+});
+drawFound(); $('#inBowl').textContent = 'Tap two paints to mix them!';
+</script>
+</body>
+</html>

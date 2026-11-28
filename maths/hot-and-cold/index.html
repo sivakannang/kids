@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hot &amp; Cold</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .thermo { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  #th { width: 150px; height: 440px; }
+  .things { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .thing { border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 8px 4px; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .thing .e { display: block; font-size: 38px; }
+  .thing.on { border-color: var(--orange); background: #fff4e0; }
+  .readout { font-size: 54px; font-weight: 700; text-align: center; }
+  .feel { font-size: 22px; text-align: center; color: var(--muted); }
+  input[type=range] { width: 100%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌡️</span>
+    <div><h1>Hot &amp; Cold</h1><small>How hot is it? Let's measure temperature, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="th">🌡️ Thermometer</button>
+  <button class="tab" data-tab="quiz">❓ Hotter or Colder?</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="th">
+      <div class="thermo">
+        <svg id="th" viewBox="0 0 150 440"></svg>
+        <div style="flex:1;min-width:240px">
+          <div class="readout" id="read"></div>
+          <div class="feel" id="feel"></div>
+          <div class="label">Slide to change the temperature:</div>
+          <input type="range" id="slider" min="-20" max="110" value="25">
+          <div class="label">Or tap a thing to see how hot it is:</div>
+          <div class="things" id="things"></div>
+        </div>
+      </div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Measuring 📏</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+// [picture, name, °C (about)]
+const T = [
+  ['🧊', 'Ice', 0], ['❄️', 'Freezer', -18], ['🥶', 'Fridge', 4], ['🏔️', 'Ooty in winter', 8], ['🌳', 'Bangalore morning', 20],
+  ['🏠', 'A nice room', 25], ['🏖️', 'Chennai in summer', 38], ['🤒', 'A fever', 39], ['🧍', 'Your body', 37], ['🛁', 'Warm bath', 38],
+  ['☕', 'Hot tea', 70], ['♨️', 'Boiling water', 100], ['🍦', 'Ice cream', -10], ['🐧', 'Antarctica', -20],
+];
+const MIN = -20, MAX = 110;
+const s = $('#th');
+el('rect', { x: 55, y: 20, width: 40, height: 340, rx: 20, fill: '#fff', stroke: '#6c6f93', 'stroke-width': 4 }, s);
+el('circle', { cx: 75, cy: 390, r: 36, fill: '#ef233c', stroke: '#6c6f93', 'stroke-width': 4 }, s);
+const y = v => 350 - (v - MIN) / (MAX - MIN) * 320;
+const fill = el('rect', { x: 63, width: 24, rx: 12, fill: '#ef233c' }, s);
+el('rect', { x: 63, y: 355, width: 24, height: 20, fill: '#ef233c' }, s);
+for (let v = -20; v <= 110; v += 10) {
+  el('line', { x1: 95, y1: y(v), x2: v % 50 === 0 ? 115 : 106, y2: y(v), stroke: '#6c6f93', 'stroke-width': 2 }, s);
+  el('text', { x: 118, y: y(v) + 5, 'font-size': 13, fill: '#6c6f93' }, s).textContent = v;
+}
+[[0, 'water freezes'], [37, 'you'], [100, 'water boils']].forEach(([v, t]) => el('text', { x: 50, y: y(v) + 5, 'font-size': 11, 'text-anchor': 'end', fill: '#118ab2', 'font-weight': 700 }, s).textContent = t);
+function feel(v) {
+  if (v <= 0) return ['🥶 Freezing! Water turns to ice.', '#3a86ff'];
+  if (v < 15) return ['🧥 Cold. Wear a sweater!', '#4ea8de'];
+  if (v < 30) return ['😊 Nice and comfortable.', '#06a77d'];
+  if (v < 40) return ['🥵 Hot! Drink lots of water.', '#ff9f1c'];
+  if (v < 60) return ['🔥 Very hot. Too hot to touch for long!', '#f3722c'];
+  return ['⚠️ Danger! This can burn you.', '#ef233c'];
+}
+let seen = new Set();
+function set(v, thing) {
+  $('#slider').value = v;
+  fill.setAttribute('y', y(v)); fill.setAttribute('height', 360 - y(v));
+  const [f, c] = feel(v);
+  $('#read').textContent = `${v} °C`; $('#read').style.color = c;
+  $('#feel').textContent = (thing ? `${thing[0]} ${thing[1]}: about ${v} °C. ` : '') + f;
+  [...$('#things').children].forEach((b, i) => b.classList.toggle('on', T[i] === thing));
+}
+T.forEach(t => {
+  const b = document.createElement('button'); b.className = 'thing'; b.innerHTML = `<span class="e">${t[0]}</span>${t[1]}`;
+  b.addEventListener('click', () => { set(t[2], t); Kids.sfx.pop(); seen.add(t[1]); Kids.speak(`${t[1]}: about ${t[2] < 0 ? 'minus ' + -t[2] : t[2]} degrees.`); ch.check({ t, seen: seen.size }); });
+  $('#things').appendChild(b);
+});
+$('#slider').addEventListener('input', e => { const v = +e.target.value; set(v); ch.check({ v }); });
+
+function quizMaker() {
+  const kind = R(3);
+  if (kind < 2) {
+    let a, b; do { a = T[R(T.length)]; b = T[R(T.length)]; } while (a === b || Math.abs(a[2] - b[2]) < 5);
+    const hot = kind === 0, ans = (hot ? a[2] > b[2] : a[2] < b[2]) ? a : b;
+    return { q: `Which is <b>${hot ? 'hotter 🔥' : 'colder ❄️'}</b>?`, choices: shuffle([a, b]).map(x => ({ label: `<span class="ce">${x[0]}</span>${x[1]}`, ok: x === ans })),
+      yay: `${ans[1]} is about ${ans[2]} °C.`, hint: 'Think: would it burn your fingers, or make them shiver?' };
+  }
+  const a = T[R(T.length)], o = new Set([a[2]]);
+  while (o.size < 3) { const w = T[R(T.length)][2]; if (Math.abs(w - a[2]) >= 10) o.add(w); }
+  return { q: `<div style="font-size:70px">${a[0]}</div>About how hot is ${a[1].toLowerCase()}?`, choices: shuffle([...o]).map(x => ({ label: `${x} °C`, ok: x === a[2] })), yay: `${a[1]}: about ${a[2]} °C.`, hint: 'Remember: water freezes at 0 °C and boils at 100 °C. Your body is 37 °C.' };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Find out how hot your own body is 🧍', hint: 'Tap "Your body".', ok: c => c.t && c.t[1] === 'Your body', yay: 'Your body is about 37 °C, all day and night!' },
+  { ask: 'Slide the thermometer to where water freezes 🧊', hint: 'Water freezes at 0 °C.', ok: c => c.v === 0, yay: '0 °C: ice time!' },
+  { ask: 'Slide it to where water boils ♨️', hint: 'Slide it up to 100.', ok: c => c.v === 100, yay: '100 °C: bubbling and boiling!' },
+  { ask: 'Find something colder than ice 🐧', hint: 'Look for a number below 0.', ok: c => c.t && c.t[2] < 0, yay: c => `${c.t[1]} is below zero, colder than ice!` },
+  { ask: 'Win a Hotter or Colder round ❓', hint: 'Open the quiz tab.', ok: c => c.quiz, yay: 'Temperature expert!' },
+], { title: 'Temperature Pro' });
+Kids.learn({
+  why: ['A thermometer measures how hot or cold something is. We measure in degrees Celsius (°C).',
+    'The red line goes up when it is hot, because the liquid inside grows bigger when it warms up!'],
+  imagine: ['Imagine you are an ice cube. As the Sun warms you up past 0 °C, you melt into a puddle of water! 💧'],
+  wow: ['The surface of the Sun is about 5,500 °C! 🌞', 'The coldest place on Earth is in Antarctica, where it can be colder than −80 °C.',
+    'When you have a fever, your body heats up to fight the germs.'],
+  talk: ['Is today hot or cold? What clothes did you wear?', 'Why do we keep milk in the fridge?', 'Where is the hottest place in our house? The coldest?'],
+});
+set(25);
+</script>
+</body>
+</html>

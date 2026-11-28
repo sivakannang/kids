@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colours &amp; Shapes</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .sw { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .sw button { width: 86px; height: 86px; border-radius: 24px; border: 4px solid #fff; cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.15); font-size: 15px; font-weight: 700; font-family: inherit; }
+  .sw button.cur { outline: 5px solid #ffd166; }
+  .shapes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .shapes button { background: #fff; border: 4px solid #eee; border-radius: 22px; padding: 6px; cursor: pointer; }
+  .shapes button.cur { border-color: #ffd166; }
+  .shapes svg { width: 78px; height: 78px; display: block; }
+  .show { text-align: center; } .show .things { font-size: 60px; } .show .name { font-size: 46px; font-weight: 700; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 520px; margin: 12px auto; }
+  .grid button { background: #fff; border: 4px solid #f0eefa; border-radius: 26px; padding: 8px; cursor: pointer; }
+  .grid button svg { width: 100%; height: auto; display: block; }
+  .grid button.right { border-color: #06d6a0; background: #d3f8e2; animation: pop .5s; }
+  .grid button.wrong { opacity: .3; animation: shake .45s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🎨</span>
+    <div><h1>Colours &amp; Shapes</h1><small>Find the red circle, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="colours">🌈 Colours</button>
+  <button class="tab" data-tab="shapes">🔷 Shapes</button>
+  <button class="tab" data-tab="find">🔍 Find It!</button>
+</nav>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+
+  <section class="card" data-panel="colours">
+    <div class="sw" id="sw"></div>
+    <div class="show" id="cShow" style="margin-top:12px"></div>
+    <div class="row"><button class="btn big green saidit" id="cSaid">🎤 I said it!</button></div>
+  </section>
+
+  <section class="card" data-panel="shapes" hidden>
+    <div class="shapes" id="shapes"></div>
+    <div class="show" id="sShow" style="margin-top:12px"></div>
+    <div class="row"><button class="btn big green saidit" id="sSaid">🎤 I said it!</button></div>
+  </section>
+
+  <section class="card center" data-panel="find" hidden>
+    <div class="pick" id="level"><button data-l="colour" class="active">🌈 Colours</button><button data-l="shape">🔷 Shapes</button><button data-l="both">⭐ Both</button></div>
+    <div class="row"><button class="btn big purple" id="fHear">🔊 Listen</button></div>
+    <div class="grid" id="grid"></div>
+    <div class="row"><button class="btn big orange" id="fNext" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script src="../../shared/little.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, NICK = Kids.nick, el = Kids.svgEl;
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+const COLOURS = [
+  ['red', '#ef233c', '🍎🍓🚒'], ['blue', '#1e6fe0', '🫐🐳💙'], ['yellow', '#ffd60a', '🍌🌻🐥'], ['green', '#2dc653', '🐸🥦🍀'],
+  ['orange', '#ff8c1a', '🍊🥕🦊'], ['purple', '#8338ec', '🍇🍆🦄'], ['pink', '#ff70a6', '🌸🦩🍬'], ['brown', '#8d5524', '🐻🍫🪵'],
+  ['black', '#222222', '🐦‍⬛🎱🕶️'], ['white', '#ffffff', '🥛☁️🐑'],
+];
+const SHAPES = {
+  circle: { sides: 'no corners, it is round', things: '⚽🍪🕐' },
+  square: { sides: '4 sides, all the same', things: '🧇🎲🪟' },
+  triangle: { sides: '3 sides and 3 corners', things: '🍕🔺⛺' },
+  rectangle: { sides: '4 sides, 2 long and 2 short', things: '🚪📱📺' },
+  star: { sides: '5 points', things: '⭐🌟✨' },
+  heart: { sides: 'a shape for love', things: '❤️💌🫶' },
+  oval: { sides: 'like a stretched circle', things: '🥚🏉🪞' },
+  diamond: { sides: '4 sides, standing on a corner', things: '🪁💎🔶' },
+};
+function shape(svg, name, fill) {
+  const a = { fill, stroke: fill === '#ffffff' ? '#bbb' : 'rgba(0,0,0,.15)', 'stroke-width': 3 };
+  const pts = p => p.map(x => x.join(',')).join(' ');
+  if (name === 'circle') el('circle', { cx: 50, cy: 50, r: 40, ...a }, svg);
+  if (name === 'square') el('rect', { x: 12, y: 12, width: 76, height: 76, rx: 4, ...a }, svg);
+  if (name === 'triangle') el('polygon', { points: pts([[50, 8], [92, 88], [8, 88]]), ...a }, svg);
+  if (name === 'rectangle') el('rect', { x: 4, y: 24, width: 92, height: 52, rx: 4, ...a }, svg);
+  if (name === 'oval') el('ellipse', { cx: 50, cy: 50, rx: 44, ry: 28, ...a }, svg);
+  if (name === 'diamond') el('polygon', { points: pts([[50, 4], [90, 50], [50, 96], [10, 50]]), ...a }, svg);
+  if (name === 'star') { const p = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? 18 : 44, t = -Math.PI / 2 + i * Math.PI / 5; p.push([50 + r * Math.cos(t), 54 + r * Math.sin(t)]); } el('polygon', { points: pts(p), ...a }, svg); }
+  if (name === 'heart') el('path', { d: 'M50 88 C 10 60, 4 34, 22 20 C 36 10, 48 18, 50 30 C 52 18, 64 10, 78 20 C 96 34, 90 60, 50 88 Z', ...a }, svg);
+  return svg;
+}
+const newSvg = () => el('svg', { viewBox: '0 0 100 100' });
+
+/* ---------- colours ---------- */
+let cur = COLOURS[0];
+COLOURS.forEach(c => {
+  const b = document.createElement('button'); b.style.background = c[1]; b.style.color = ['yellow', 'white', 'pink'].includes(c[0]) ? '#333' : '#fff'; b.textContent = c[0];
+  b.addEventListener('click', () => { cur = c; showColour(); });
+  $('#sw').appendChild(b);
+});
+function showColour() {
+  [...$('#sw').children].forEach((b, i) => b.classList.toggle('cur', COLOURS[i] === cur));
+  $('#cShow').innerHTML = `<div class="name" style="color:${cur[0] === 'white' ? '#999' : cur[1]}">${cur[0]}</div><div class="things">${cur[2]}</div>`;
+  say(`This is ${cur[0]}! Can you find something ${cur[0]} in your room? 👀`); Little.sayList([`${cur[0]}!`, `Can you find something ${cur[0]}?`]);
+}
+Little.saidIt($('#cSaid'), c => say(`${c} You said ${cur[0]}! 🌈`, true));
+
+/* ---------- shapes ---------- */
+let curS = 'circle';
+Object.keys(SHAPES).forEach((s, i) => {
+  const b = document.createElement('button'); b.appendChild(shape(newSvg(), s, COLOURS[i % 8][1]));
+  b.addEventListener('click', () => { curS = s; showShape(); });
+  $('#shapes').appendChild(b);
+});
+function showShape() {
+  [...$('#shapes').children].forEach((b, i) => b.classList.toggle('cur', Object.keys(SHAPES)[i] === curS));
+  const S = SHAPES[curS];
+  $('#sShow').innerHTML = `<div class="name" style="color:var(--purple)">${curS}</div><div class="hint" style="font-size:20px">${S.sides}</div><div class="things">${S.things}</div>`;
+  say(`This is a ${curS}! It has ${S.sides}. 🔷`); Little.sayList([`${curS}!`, `A ${curS} has ${S.sides}.`]);
+}
+Little.saidIt($('#sSaid'), c => say(`${c} You said ${curS}! 🔷`, true));
+
+/* ---------- find it ---------- */
+let level = 'colour', target = null, fFirst = true, wins = 0;
+const ask = () => level === 'colour' ? `Find the ${target.c[0]} one!` : level === 'shape' ? `Find the ${target.s}!` : `Find the ${target.c[0]} ${target.s}!`;
+function newFind() {
+  const shapes = Object.keys(SHAPES), cols = COLOURS.slice(0, 8);
+  const items = [];
+  const key = x => level === 'colour' ? x.c[0] : level === 'shape' ? x.s : x.c[0] + x.s;
+  while (items.length < 6) {
+    const x = { c: cols[R(cols.length)], s: level === 'colour' ? 'circle' : shapes[R(shapes.length)] };
+    if (level === 'colour' && R(2)) x.s = shapes[R(shapes.length)];
+    if (!items.some(y => key(y) === key(x))) items.push(x);
+  }
+  target = items[R(items.length)]; fFirst = true; $('#fNext').hidden = true;
+  $('#grid').innerHTML = ''; let done = false;
+  items.forEach(x => {
+    const b = document.createElement('button'); b.appendChild(shape(newSvg(), x.s, x.c[1]));
+    b.addEventListener('click', () => {
+      if (done || b.disabled) return;
+      if (key(x) === key(target)) {
+        done = true; b.classList.add('right'); Kids.sfx.yay(); Kids.confetti(); if (fFirst) Kids.addStar();
+        const c = Little.cheer(); say(`${c} That's the ${level === 'shape' ? target.s : level === 'colour' ? target.c[0] + ' one' : target.c[0] + ' ' + target.s}! 🎉`, true); Little.say(c);
+        $('#fNext').hidden = false; if (++wins % 5 === 0) Kids.banner(`🎨 ${wins} found! Super eyes, ${NICK}!`);
+      } else {
+        fFirst = false; b.classList.add('wrong'); b.disabled = true; Kids.sfx.oops();
+        const what = level === 'colour' ? `That one is ${x.c[0]}.` : level === 'shape' ? `That is a ${x.s}.` : `That is a ${x.c[0]} ${x.s}.`;
+        say(`${what} Try again! 👀`); Little.sayList([what, ask()]);
+      }
+    });
+    $('#grid').appendChild(b);
+  });
+  hear();
+}
+function hear() { say(ask() + ' 👆'); Little.say(ask()); }
+$('#fHear').addEventListener('click', hear);
+$('#fNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
+$('#level').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  level = b.dataset.l; Kids.sfx.pop(); $('#level').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); newFind();
+}));
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  ({ colours: showColour, shapes: showShape, find: newFind })[b.dataset.tab]();
+}));
+Kids.learn({
+  why: ['Naming colours and shapes builds his first describing words: "a big red ball".', 'Spotting shapes in real things is the start of geometry!'],
+  wow: ['Red, yellow and blue paints can mix to make lots of other colours. Try it in Colour Mixing!', 'A wheel is a circle so it can roll. A square wheel would go bump, bump, bump!'],
+  talk: ['Play "I spy something red" around the house.', 'On a walk, look for circles, squares and triangles.', 'Ask: "What colour is your shirt today?"'],
+}, { why: '🤔 Why? (for grown-ups)', talk: '💬 Try at home' });
+showColour();
+</script>
+</body>
+</html>

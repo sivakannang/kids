@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Famous Landmarks</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<script src="../../shared/vendor/d3.min.js"></script>
+<script src="../../shared/vendor/topojson-client.min.js"></script>
+<script src="../../shared/vendor/countries-110m.js"></script>
+<style>
+  #map .ocean { fill: #9fd3ff; } #map .land { fill: #f4efe1; stroke: #d6cfb8; stroke-width: .5; }
+  #map .pin { cursor: pointer; } #map .pin circle.d { fill: #ef476f; stroke: #fff; stroke-width: 2; }
+  #map .pin.seen circle.d { fill: #06d6a0; } #map .pin.on circle.d { fill: #ffd166; r: 9; }
+  #map .pin text { font-size: 18px; pointer-events: none; }
+  .card.lm { text-align: center; } .lm .e { font-size: 90px; line-height: 1.1; } .lm h2 { margin: 4px 0; color: var(--purple); }
+  .lm .where { color: var(--muted); font-size: 18px; } .lm p { font-size: 18px; line-height: 1.45; }
+  .list { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .list button { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .list button.seen { border-color: #06d6a0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🏛️</span>
+    <div><h1>Famous Landmarks</h1><small>Travel the world's wonders, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="explore">🗺️ Explore</button>
+  <button class="tab" data-tab="find">📍 Find It</button>
+  <button class="tab" data-tab="quiz">❓ Which Country?</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="explore find">
+      <svg id="map" class="svgbox" viewBox="0 0 960 500"></svg>
+      <div class="result" id="findRes" hidden></div>
+      <div class="row" id="findRow" hidden><button class="btn big orange" id="findNext">Next ➡️</button></div>
+      <div class="list" id="list"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card lm" id="card"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · World 🗺️</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+// [picture, name, place, country, flag, lon, lat, fact]
+const L = [
+  ['🕌', 'Taj Mahal', 'Agra', 'India', '🇮🇳', 78.04, 27.17, 'A shining white marble tomb built by Emperor Shah Jahan for his wife Mumtaz. About 20,000 workers built it over 20 years!'],
+  ['🛕', 'Brihadeeswarar Temple', 'Thanjavur, Tamil Nadu', 'India', '🇮🇳', 79.13, 10.78, 'Built by the Chola king Raja Raja Chola more than 1,000 years ago. Its tall tower is made of granite stone!'],
+  ['🏰', 'Mysore Palace', 'Mysuru, Karnataka', 'India', '🇮🇳', 76.65, 12.31, 'At Dasara, the palace is lit up by almost 1 lakh light bulbs. ✨'],
+  ['🚪', 'Gateway of India', 'Mumbai', 'India', '🇮🇳', 72.83, 18.92, 'A huge stone arch by the sea, built about 100 years ago.'],
+  ['🗼', 'Eiffel Tower', 'Paris', 'France', '🇫🇷', 2.29, 48.86, 'A tall iron tower. In hot summers, the iron grows and the tower gets about 15 cm taller!'],
+  ['🔺', 'Pyramids of Giza', 'Giza', 'Egypt', '🇪🇬', 31.13, 29.98, 'Built more than 4,500 years ago as tombs for kings called pharaohs.'],
+  ['🧱', 'Great Wall of China', 'Near Beijing', 'China', '🇨🇳', 116.57, 40.43, 'A wall so long that, with all its parts, it stretches for thousands of kilometres across mountains and deserts.'],
+  ['🗽', 'Statue of Liberty', 'New York', 'USA', '🇺🇸', -74.04, 40.69, 'A giant statue holding up a torch. It was a gift from France, and it is green because its copper turned green in the rain.'],
+  ['🎭', 'Sydney Opera House', 'Sydney', 'Australia', '🇦🇺', 151.21, -33.86, 'Its roof looks like big white sails on the harbour.'],
+  ['🕰️', 'Big Ben', 'London', 'United Kingdom', '🇬🇧', -0.12, 51.5, 'Big Ben is really the name of the huge bell inside the clock tower. Bong!'],
+  ['🏟️', 'Colosseum', 'Rome', 'Italy', '🇮🇹', 12.49, 41.89, 'An old stadium almost 2,000 years old, where about 50,000 people could watch shows.'],
+  ['⛰️', 'Machu Picchu', 'Andes mountains', 'Peru', '🇵🇪', -72.55, -13.16, 'An ancient city built by the Inca people, high up on a mountain in the clouds.'],
+  ['✝️', 'Christ the Redeemer', 'Rio de Janeiro', 'Brazil', '🇧🇷', -43.21, -22.95, 'A giant statue with open arms, standing on top of a mountain above the city.'],
+  ['🗻', 'Mount Fuji', 'Honshu', 'Japan', '🇯🇵', 138.73, 35.36, 'A tall volcano with a snowy top. It is Japan\'s highest mountain.'],
+  ['🏙️', 'Burj Khalifa', 'Dubai', 'United Arab Emirates', '🇦🇪', 55.27, 25.2, 'The tallest building in the world, with more than 160 floors!'],
+  ['🏔️', 'Mount Everest', 'Himalayas', 'Nepal', '🇳🇵', 86.93, 27.99, 'The highest mountain on Earth, nearly 9 km high. It is between Nepal and China.'],
+  ['💦', 'Niagara Falls', 'Between Canada and the USA', 'Canada', '🇨🇦', -79.07, 43.08, 'Giant waterfalls. So much water falls every second that it could fill a swimming pool in a moment!'],
+  ['🛕', 'Angkor Wat', 'Siem Reap', 'Cambodia', '🇰🇭', 103.87, 13.41, 'The largest temple in the world, built about 900 years ago.'],
+  ['🗿', 'Moai statues', 'Easter Island', 'Chile', '🇨🇱', -109.35, -27.12, 'Hundreds of giant stone heads, carved by the islanders long ago.'],
+  ['🦁', 'Serengeti', 'Northern Tanzania', 'Tanzania', '🇹🇿', 34.83, -2.33, 'A huge grassland where millions of zebras and wildebeest walk together every year.'],
+];
+const svg = $('#map'), W = 960, H = 500;
+const proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
+const path = d3.geoPath(proj);
+el('path', { d: path({ type: 'Sphere' }), class: 'ocean' }, svg);
+const lg = el('g', {}, svg);
+topojson.feature(window.WORLD_ATLAS, window.WORLD_ATLAS.objects.countries).features.forEach(f => el('path', { d: path(f), class: 'land' }, lg));
+const seen = new Set(); let mode = 'explore', target = null, fFirst = true;
+const pins = L.map((l, i) => {
+  const [x, y] = proj([l[5], l[6]]);
+  const g = el('g', { class: 'pin', transform: `translate(${x.toFixed(1)},${y.toFixed(1)})` }, svg);
+  el('circle', { r: 14, fill: 'transparent' }, g); el('circle', { r: 7, class: 'd' }, g);
+  const t = el('text', { y: -10, 'text-anchor': 'middle' }, g); t.textContent = l[0];
+  g.addEventListener('click', () => mode === 'find' ? findTap(i) : show(i));
+  return { g, t };
+});
+function show(i) {
+  const l = L[i];
+  pins.forEach((p, j) => p.g.classList.toggle('on', j === i));
+  pins[i].g.classList.add('seen'); seen.add(i); Kids.sfx.pop();
+  $('#card').innerHTML = `<div class="e">${l[0]}</div><h2>${l[1]}</h2><div class="where">📍 ${l[2]}, ${l[3]} ${l[4]}</div><p>${l[7]}</p>`;
+  Kids.speak(Kids.forSpeech(`${l[1]}, in ${l[3]}. ${l[7]}`), true);
+  drawList(); ch.check({ i, seen: seen.size, india: [...seen].filter(k => L[k][3] === 'India').length });
+}
+function drawList() {
+  $('#list').innerHTML = '';
+  L.forEach((l, i) => { const b = document.createElement('button'); b.className = seen.has(i) ? 'seen' : ''; b.textContent = `${l[0]} ${l[1]}`; b.addEventListener('click', () => { if (mode === 'explore') show(i); }); $('#list').appendChild(b); });
+  $('#list').hidden = mode !== 'explore';
+}
+/* ---------- find it on the map ---------- */
+function newFind() {
+  target = R(L.length); fFirst = true;
+  pins.forEach(p => { p.g.classList.remove('on'); p.t.style.display = 'none'; });
+  const l = L[target];
+  $('#card').innerHTML = `<div class="e">${l[0]}</div><h2>${l[1]}</h2><div class="where">Can you find it on the map? It is in ${l[3]} ${l[4]}.</div>`;
+  $('#findRes').className = 'result'; $('#findRes').textContent = `📍 Tap the dot where the ${l[1]} is!`; $('#findRow').hidden = true;
+  Kids.speak(`Where is the ${l[1]}? It is in ${l[3]}.`, true);
+}
+function findTap(i) {
+  if (target === null || !$('#findRow').hidden) return;
+  if (i === target) {
+    pins[i].g.classList.add('on'); pins[i].t.style.display = ''; Kids.sfx.yay(); if (fFirst) Kids.addStar();
+    $('#findRes').className = 'result good'; $('#findRes').textContent = `${Kids.praise()} ${L[i][7]}`; $('#findRow').hidden = false; ch.check({ found: true });
+  } else {
+    fFirst = false; Kids.sfx.oops(); pins[i].t.style.display = '';
+    $('#findRes').className = 'result hint'; $('#findRes').textContent = `That is the ${L[i][1]} in ${L[i][3]}. Look for ${L[target][3]}!`;
+  }
+}
+$('#findNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
+/* ---------- which country? ---------- */
+function quizMaker() {
+  const a = L[R(L.length)]; const countries = [...new Set(L.map(l => l[3]))].filter(c => c !== a[3]);
+  const o = shuffle([a[3], ...shuffle(countries).slice(0, 3)]);
+  return { q: `<div style="font-size:80px">${a[0]}</div>Which country is the <b>${a[1]}</b> in?`, choices: o.map(c => ({ label: `<span class="ce">${L.find(l => l[3] === c)[4]}</span>${c}`, ok: c === a[3] })), yay: `${a[1]} is in ${a[2]}, ${a[3]}.`, hint: 'Explore the map first to learn where each one is!' };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop(); mode = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = !p.dataset.panel.split(' ').includes(mode));
+  $('#findRes').hidden = mode !== 'find'; if (mode !== 'find') $('#findRow').hidden = true;
+  if (mode === 'explore') { pins.forEach(p => p.t.style.display = ''); target = null; drawList(); $('#card').innerHTML = '<div class="e">🌍</div><h2>Let\'s travel!</h2><p>Tap a picture on the map to visit a famous place.</p>'; }
+  if (mode === 'find') { drawList(); newFind(); }
+  if (mode === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Visit the Taj Mahal 🕌', hint: 'It is in India, in the north.', ok: c => c.i === 0, yay: 'One of the most beautiful buildings in the world!' },
+  { ask: 'Visit all 4 landmarks in India 🇮🇳', hint: 'There are 4 pins in India.', ok: c => c.india >= 4, yay: 'India has so many wonders!' },
+  { ask: 'Visit 10 landmarks around the world 🌍', hint: 'Tap pins all over the map.', ok: c => c.seen >= 10, yay: 'A world traveller!' },
+  { ask: 'Find a landmark on the map 📍', hint: 'Open Find It.', ok: c => c.found, yay: 'Great map reading!' },
+  { ask: 'Win a Which Country? question ❓', hint: 'Open Which Country?', ok: c => c.quiz, yay: 'Landmark legend!' },
+], { title: 'World Traveller' });
+Kids.learn({
+  why: ['Landmarks are famous places that are easy to recognise, like the Taj Mahal. They tell stories about the people who built them.',
+    'Some landmarks were made by people (towers, temples, walls). Others were made by nature (mountains, waterfalls).'],
+  imagine: ['Imagine standing at the top of Mount Everest. It is freezing, windy, and you can see the curve of the clouds below you! 🏔️'],
+  wow: ['The Brihadeeswarar Temple\'s top stone weighs about 80 tonnes. Nobody is quite sure how the Cholas lifted it so high!',
+    'Some of these places are UNESCO World Heritage Sites, which means the whole world promises to look after them.'],
+  talk: ['Which landmark would you like to visit first?', 'Have you visited any famous places in India?', 'If you could build a landmark, what would it be?'],
+});
+drawList(); $('#card').innerHTML = '<div class="e">🌍</div><h2>Let\'s travel!</h2><p>Tap a picture on the map to visit a famous place.</p>';
+</script>
+</body>
+</html>

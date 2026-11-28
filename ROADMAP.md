@@ -95,8 +95,7 @@ Big ideas (black holes, light years, many universes) come later, but they're bui
 | 🖍️ Drawing Pad | `art-and-music/` | Drawing, symmetry, colouring |
 | 🎹 Little Piano | `art-and-music/` | Notes, tunes, composing |
 
-## 🌱 Coming soon (ideas on the home page)
-Story Time · Rhyme Time · Mei Ezhuthukkal · Tamil Animal Words · Shapes Hunt · Number Bonds · Times Tables · Hot & Cold · Weather Watch · How Plants Grow · My Body · Star Patterns · Continents Puzzle · Famous Landmarks · Colour Mixing · Rhythm Game · Feelings Check-in · Kindness Diary
+## 🌱 Round 2 ideas: built in Round 4 (see below)
 
 ---
 
@@ -116,4 +115,34 @@ The games now have **two profiles**: Kavikuyil (PeriyaKutty, 1st std) and Praban
 | 👧 Kavikuyil | ಅ Kannada Swaragalu | `kannada/` | Kannada vowels |
 | 👧 Kavikuyil | 🗓️ Time Words | `maths/` | Yesterday, next week… |
 
-**Next ideas:** Hindi Vyanjan, Kannada Vyanjanagalu, Rhyme & Sing, Colours & Shapes, sight words.
+**Next ideas:** built in Round 4 (below).
+
+---
+
+## 🌈 Round 4: every "coming soon" game (✅ done)
+| For | Game | Where | Discovers |
+|---|---|---|---|
+| 👦 Prabanjan | 🎵 Rhyme & Sing | `little/` | Original action songs, rhyming pairs |
+| 👦 Prabanjan | 🎨 Colours & Shapes | `little/` | Colours, shapes, "find the red circle" |
+| 👧 Kavikuyil | क Hindi Vyanjan | `hindi/` | Hindi consonants |
+| 👧 Kavikuyil | ಕ Kannada Vyanjanagalu | `kannada/` | Kannada consonants |
+| 👧 Kavikuyil | க் Mei Ezhuthukkal | `tamil/` | The 18 Tamil consonants |
+| 👧 Kavikuyil | 🐘 Tamil Animal Words | `tamil/` | Animal names in Tamil |
+| 👧 Kavikuyil | 📚 Story Time | `english/` | Reading along, comprehension |
+| 👧 Kavikuyil | 🔁 Rhyme Time | `english/` | Word families and rhymes |
+| 👧 Kavikuyil | 🔷 Shapes Hunt | `maths/` | 2D and 3D shapes, sides and corners |
+| 👧 Kavikuyil | 🔟 Number Bonds | `maths/` | Pairs that make 5, 10, 20 |
+| 👧 Kavikuyil | ✖️ Times Tables | `maths/` | Skip counting, equal groups |
+| 👧 Kavikuyil | 🌡️ Hot & Cold | `maths/` | Temperature and thermometers |
+| 👧👦 Both | 🌦️ Weather Watch | `science/` | Weather, the water cycle |
+| 👧👦 Both | 🌱 How Plants Grow | `science/` | What plants need, plant parts |
+| 👧👦 Both | 🫀 My Body | `science/` | Organs, heartbeat |
+| 👧 Kavikuyil | ✨ Star Patterns | `science/` | Constellations |
+| 👧 Kavikuyil | 🌏 Continents Puzzle | `world/` | The 7 continents |
+| 👧 Kavikuyil | 🏛️ Famous Landmarks | `world/` | World wonders and where they are |
+| 👧👦 Both | 🎨 Colour Mixing | `art-and-music/` | Paint and light mixing |
+| 👧👦 Both | 🥁 Rhythm Game | `art-and-music/` | Rhythm, timing, making beats |
+| 👧👦 Both | 😊 Feelings Check-in | `mind/` | Naming and handling feelings |
+| 👧👦 Both | 💝 Kindness Diary | `mind/` | Kindness and thankfulness |
+
+**Coming soon (on the home page):** Sight Words · Sentence Builder · Hindi Matras · Kannada Kagunita · Uyirmei Letters · Fraction Pizza · Volcanoes · Eclipse! · Gratitude Jar

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>हिंदी व्यंजन · Hindi Vyanjan</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big" style="font-family:'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif">क</span>
+    <div><h1>Hindi Vyanjan <span style="font-family:'Kohinoor Devanagari','Noto Sans Devanagari','Nirmala UI',sans-serif">हिंदी व्यंजन</span></h1><small>The Hindi consonants, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📖 Learn</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main data-letters></main>
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · हिंदी 🪷</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script src="../../shared/letters.js?v=4"></script>
+<script>
+Kids.lettersGame({
+  lang: 'hi', langName: 'Hindi', what: 'consonant', font: "'Kohinoor Devanagari', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif",
+  kinds: {
+    k1: { label: "क family (throat)", bg: "linear-gradient(135deg, #f774c4, #e0409e)" },
+    k2: { label: "च family (palate)", bg: "linear-gradient(135deg, #ff9f1c, #f3722c)" },
+    k3: { label: "ट family (tongue up)", bg: "linear-gradient(135deg, #9b5de5, #7b3fe0)" },
+    k4: { label: "त family (teeth)", bg: "linear-gradient(135deg, #3aa6dd, #118ab2)" },
+    k5: { label: "प family (lips)", bg: "linear-gradient(135deg, #2ec4b6, #04a08a)" },
+    k6: { label: "Other letters", bg: "linear-gradient(135deg, #8d99ae, #5c677d)" },
+    k7: { label: "Joined letters", bg: "linear-gradient(135deg, #ef476f, #c9184a)" },
+  },
+  letters: [
+    ['क', 'ka', 'k1', 'कबूतर', 'kabootar', 'pigeon', '🕊️'],
+    ['ख', 'kha', 'k1', 'खरगोश', 'khargosh', 'rabbit', '🐇'],
+    ['ग', 'ga', 'k1', 'गमला', 'gamla', 'flower pot', '🪴'],
+    ['घ', 'gha', 'k1', 'घड़ी', 'ghadi', 'clock', '⏰'],
+    ['ङ', 'nga', 'k1', '', '', 'A nose sound, "ng". It hides inside words like अङ्ग (ang, body part).', ''],
+    ['च', 'cha', 'k2', 'चम्मच', 'chammach', 'spoon', '🥄'],
+    ['छ', 'chha', 'k2', 'छतरी', 'chhatri', 'umbrella', '☂️'],
+    ['ज', 'ja', 'k2', 'जहाज़', 'jahaaz', 'ship', '🚢'],
+    ['झ', 'jha', 'k2', 'झंडा', 'jhanda', 'flag', '🚩'],
+    ['ञ', 'nya', 'k2', '', '', 'A nose sound, "ny". It hides inside words like पञ्च (panch, five).', ''],
+    ['ट', 'Ta (hard)', 'k3', 'टमाटर', 'tamaatar', 'tomato', '🍅'],
+    ['ठ', 'Tha (hard)', 'k3', 'ठेला', 'thela', 'handcart', '🛒'],
+    ['ड', 'Da (hard)', 'k3', 'डमरू', 'damroo', 'little drum', '🥁'],
+    ['ढ', 'Dha (hard)', 'k3', 'ढोल', 'dhol', 'big drum', '🪘'],
+    ['ण', 'Na (hard)', 'k3', '', '', 'No words start with it! It comes in the middle or end, like बाण (baan, arrow) 🏹.', ''],
+    ['त', 'ta', 'k4', 'तरबूज़', 'tarbooz', 'watermelon', '🍉'],
+    ['थ', 'tha', 'k4', 'थाली', 'thaali', 'plate', '🍽️'],
+    ['द', 'da', 'k4', 'दरवाज़ा', 'darvaaza', 'door', '🚪'],
+    ['ध', 'dha', 'k4', 'धनुष', 'dhanush', 'bow', '🏹'],
+    ['न', 'na', 'k4', 'नल', 'nal', 'water tap', '🚰'],
+    ['प', 'pa', 'k5', 'पतंग', 'patang', 'kite', '🪁'],
+    ['फ', 'pha', 'k5', 'फूल', 'phool', 'flower', '🌸'],
+    ['ब', 'ba', 'k5', 'बतख', 'batakh', 'duck', '🦆'],
+    ['भ', 'bha', 'k5', 'भालू', 'bhaalu', 'bear', '🐻'],
+    ['म', 'ma', 'k5', 'मछली', 'machhli', 'fish', '🐟'],
+    ['य', 'ya', 'k6', 'यान', 'yaan', 'spaceship', '🚀'],
+    ['र', 'ra', 'k6', 'रस्सी', 'rassi', 'rope', '🪢'],
+    ['ल', 'la', 'k6', 'लाल', 'laal', 'red', '🔴'],
+    ['व', 'va', 'k6', 'वन', 'van', 'forest', '🌳'],
+    ['श', 'sha', 'k6', 'शेर', 'sher', 'lion', '🦁'],
+    ['ष', 'Sha (hard)', 'k6', 'षट्कोण', 'shatkon', 'hexagon (6 sides)', '⬡'],
+    ['स', 'sa', 'k6', 'सेब', 'seb', 'apple', '🍎'],
+    ['ह', 'ha', 'k6', 'हाथी', 'haathi', 'elephant', '🐘'],
+    ['क्ष', 'ksha', 'k7', 'क्षत्रिय', 'kshatriya', 'warrior', '🛡️'],
+    ['त्र', 'tra', 'k7', 'त्रिशूल', 'trishool', 'trident', '🔱'],
+    ['ज्ञ', 'gya', 'k7', 'ज्ञान', 'gyaan', 'knowledge', '📚'],
+  ],
+});
+Kids.learn({
+  why: ['व्यंजन (vyanjan) are the consonants. On their own each one has a little "a" sound hiding inside: क says "ka".',
+    'The first 25 come in 5 families of 5. Each family is made in a different part of your mouth: throat, palate, tongue up, teeth, and lips!'],
+  imagine: ['Say क, च, ट, त, प slowly. Can you feel the sound moving from the back of your mouth to your lips? It is like a little train travelling forward! 🚂'],
+  wow: ['The last three, क्ष, त्र and ज्ञ, are two letters joined together, like best friends holding hands. 🤝',
+    'When a consonant meets a vowel sign, it changes: क + ा = का (kaa), क + ि = कि (ki).'],
+  talk: ['Which family is your favourite?', 'Can you find a Hindi word for something in your room?', 'Say "kabootar", "khargosh" and "gamla" with a grown-up. Which sounds are breathy?'],
+});
+</script>
+</body>
+</html>

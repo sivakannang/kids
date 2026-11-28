@@ -9,5 +9,7 @@ Games for focus, goals, dreams and imagination.
 | [dream-jar](dream-jar/) | Drawing and saving dreams, with links to games that help each dream |
 | [why-jar](why-jar/) | Collecting questions, guessing first, finding out together, and keeping the answers |
 | [imagine-time](imagine-time/) | Five calm, read-aloud guided imagination journeys |
+| [feelings-check-in](feelings-check-in/) | Naming a feeling and how big it is, what helps, breathing, a 2-week feelings diary |
+| [kindness-diary](kindness-diary/) | A daily kindness challenge, and a jar of hearts for kind things done and received |
 
-**Ideas:** Feelings Check-in, Kindness Diary, gratitude jar.
+**Ideas:** gratitude jar.

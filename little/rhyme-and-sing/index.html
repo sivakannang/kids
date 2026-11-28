@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhyme &amp; Sing</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .songs { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .song { border: none; border-radius: 24px; padding: 14px 8px; cursor: pointer; font-family: inherit; color: #fff; font-size: 20px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+  .song .e { display: block; font-size: 60px; }
+  .stage { text-align: center; }
+  .stage .act { font-size: 110px; line-height: 1.1; display: inline-block; }
+  .stage .act.go { animation: bob .6s ease-in-out infinite; }
+  .stage .line { font-size: 34px; font-weight: 600; margin: 10px auto; max-width: 760px; line-height: 1.4; }
+  .stage .line b { color: var(--red); }
+  .stage .todo { font-size: 22px; color: var(--muted); }
+  .beat { display: flex; gap: 10px; justify-content: center; margin: 8px 0; }
+  .beat span { width: 22px; height: 22px; border-radius: 50%; background: #e5e0f5; transition: background .1s; }
+  .beat span.on { background: var(--orange); transform: scale(1.2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🎵</span>
+    <div><h1>Rhyme &amp; Sing</h1><small>Sing, clap and do the actions, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="sing">🎵 Sing Along</button>
+  <button class="tab" data-tab="pairs">🔁 Rhyme Pairs</button>
+</nav>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+
+  <section class="card" data-panel="sing" id="songList"><div class="songs" id="songs"></div></section>
+  <section class="card stage" data-panel="sing" id="stage" hidden>
+    <div class="beat" id="beat"><span></span><span></span><span></span><span></span></div>
+    <div class="act" id="act"></div>
+    <div class="line" id="line"></div>
+    <div class="todo" id="todo"></div>
+    <div class="row">
+      <button class="btn big purple" id="againBtn">🔁 Again</button>
+      <button class="btn big green saidit" id="sangBtn">🎤 I sang it!</button>
+      <button class="btn big orange" id="nextLine">Next ➡️</button>
+    </div>
+    <div class="row"><button class="btn" id="backBtn">🎵 All songs</button></div>
+  </section>
+
+  <section class="card center" data-panel="pairs" hidden>
+    <div class="giant-pic" id="pPic"></div>
+    <div class="row" style="margin-top:0"><button class="btn big purple" id="pHear">🔊 Listen</button></div>
+    <div class="bigchoices" id="pChoices"></div>
+    <div class="row"><button class="btn big orange" id="pNext" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script src="../../shared/little.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, NICK = Kids.nick;
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+// original action songs, written for this app: [picture, line (rhyming words in *stars*), what to do]
+const five = [5, 4, 3, 2, 1].map(n => {
+  const w = ['', 'one', 'two', 'three', 'four', 'five'];
+  return ['🥭'.repeat(n), `${w[n][0].toUpperCase() + w[n].slice(1)} little mango${n > 1 ? 'es' : ''} on the mango *tree*, one fell down, and it landed on *me*!`, `Hold up ${n} finger${n > 1 ? 's' : ''}! ✋`];
+});
+const SONGS = [
+  { id: 'clap', e: '👏', n: 'Clap and Stamp', c: '#ef476f', lines: [
+    ['👏', 'Clap, clap, clap your hands, clap them one, two, *three*!', 'Clap 3 times!'],
+    ['🦶', 'Stamp, stamp, stamp your feet, stamp them just like *me*!', 'Stamp your feet!'],
+    ['👋', 'Wave, wave, wave your arms, wave them up so *high*!', 'Wave your arms up high!'],
+    ['🦘', 'Jump, jump, jump up tall, jump up to the *sky*!', 'Jump!'],
+    ['🙇', 'Now sit down, nice and slow, take a bow and say *hello*!', 'Take a bow!'],
+  ] },
+  { id: 'mango', e: '🥭', n: 'Five Little Mangoes', c: '#ff9f1c', lines: [...five,
+    ['🌳', 'No more mangoes on the mango *tree*. Let\'s plant a seed, and wait and *see*!', 'Pretend to plant a seed! 🌱'],
+  ] },
+  { id: 'body', e: '👃', n: 'Touch Your Nose', c: '#118ab2', lines: [
+    ['👃', 'Nose, nose, touch your *nose*!', 'Touch your nose!'],
+    ['🦶', 'Toes, toes, touch your *toes*!', 'Touch your toes!'],
+    ['👂', 'Ears, ears, pull your *ears*!', 'Gently pull your ears!'],
+    ['👏', 'Clap, clap, give three *cheers*!', 'Hip hip hooray!'],
+    ['🤸', 'Hands up high and touch the *ground*, now spin yourself around and *round*!', 'Spin around!'],
+  ] },
+  { id: 'animals', e: '🐄', n: 'Animal Friends', c: '#06a77d', lines: [
+    ['🐄', 'The cow says moo, and the cat says *meow*,', 'Say moo! Say meow!'],
+    ['🐶', 'the dog says woof, and they all take a *bow*!', 'Bark like a dog, then bow!'],
+    ['🦆', 'The duck says quack, and the hen says *cluck*,', 'Flap your wings!'],
+    ['🐸', 'the frog says croak, and it jumps in the *muck*!', 'Jump like a frog!'],
+    ['🦁', 'The lion says roar, and the bee says *buzz*,', 'Roar like a lion!'],
+    ['🐒', 'the monkey jumps, just because it *does*!', 'Jump like a monkey!'],
+  ] },
+  { id: 'brush', e: '🪥', n: 'Brush My Teeth', c: '#9b5de5', lines: [
+    ['🪥', 'Brush, brush, brush my teeth, up and down and *round*,', 'Pretend to brush!'],
+    ['🦷', 'top ones, bottom ones, make a shiny *sound*!', 'Show your big smile!'],
+    ['💦', 'Swish, swish, spit it out, rinse it nice and *clean*,', 'Swish swish!'],
+    ['😁', 'now I have the brightest smile that you have ever *seen*!', 'Smile big!'],
+  ] },
+  { id: 'rain', e: '🌧️', n: 'Pitter Patter Rain', c: '#3a86ff', lines: [
+    ['🌧️', 'Pitter, patter, falls the *rain*,', 'Wiggle your fingers like rain!'],
+    ['🪟', 'on the roof and window *pane*.', 'Tap, tap, tap!'],
+    ['☂️', 'Open up my big *umbrella*,', 'Open your arms wide!'],
+    ['🐸', 'here comes Froggy, the jumping *fella*!', 'Jump like a frog!'],
+    ['🌈', 'Now the sun comes out to *play*, a rainbow says hello *today*!', 'Draw a rainbow in the air!'],
+  ] },
+];
+const sung = Kids.store.get('sing.sung', {});
+SONGS.forEach(s => {
+  const b = document.createElement('button'); b.className = 'song'; b.style.background = s.c;
+  b.innerHTML = `<span class="e">${s.e}</span>${s.n}${sung[s.id] ? ' ✅' : ''}`;
+  b.addEventListener('click', () => open(s));
+  $('#songs').appendChild(b);
+});
+let song = null, li = 0, beatT = null, sangLine = new Set();
+function open(s) { song = s; li = 0; sangLine = new Set(); Kids.sfx.pop(); $('#songList').hidden = true; $('#stage').hidden = false; showLine(); }
+function showLine() {
+  const [pic, text, todo] = song.lines[li];
+  $('#act').textContent = pic; $('#act').classList.add('go');
+  $('#line').innerHTML = text.replace(/\*(.+?)\*/g, '<b>$1</b>');
+  $('#todo').textContent = '👉 ' + todo;
+  $('#nextLine').textContent = li === song.lines.length - 1 ? '🏁 The end' : 'Next ➡️';
+  $('#sangBtn').disabled = sangLine.has(li);
+  say(`${song.e} ${song.n}: listen, then sing it with me, ${NICK}!`);
+  sing();
+}
+function sing() {
+  const [, text, todo] = song.lines[li];
+  clearInterval(beatT); let k = 0;
+  const dots = $('#beat').children;
+  beatT = setInterval(() => { [...dots].forEach((d, i) => d.classList.toggle('on', i === k % 4)); Kids.sfx.tick(); k++; if (k > 16) { clearInterval(beatT); [...dots].forEach(d => d.classList.remove('on')); } }, 500);
+  Little.sayList([text.replace(/\*/g, ''), todo.replace(/[^\w\s!',]/g, '')], 0.8);
+}
+$('#againBtn').addEventListener('click', sing);
+Little.saidIt($('#sangBtn'), c => { sangLine.add(li); $('#sangBtn').disabled = true; say(`${c} What a lovely voice! 🎶`, true); });
+$('#nextLine').addEventListener('click', () => {
+  Kids.sfx.pop();
+  if (li < song.lines.length - 1) { li++; showLine(); return; }
+  clearInterval(beatT);
+  if (!sung[song.id]) { sung[song.id] = true; Kids.store.set('sing.sung', sung); Kids.addStar(); }
+  Kids.confetti(); Kids.sfx.yay(); say(`Hooray, ${NICK}! You sang the whole song! 🎉👏`, true); Little.say(`Hooray ${NICK}! You sang the whole song!`);
+  setTimeout(back, 2500);
+});
+function back() {
+  clearInterval(beatT); try { speechSynthesis.cancel(); } catch {}
+  $('#stage').hidden = true; $('#songList').hidden = false;
+  [...$('#songs').children].forEach((b, i) => { const s = SONGS[i]; b.innerHTML = `<span class="e">${s.e}</span>${s.n}${sung[s.id] ? ' ✅' : ''}`; });
+  say(`Pick a song, ${NICK}! 🎵`);
+}
+$('#backBtn').addEventListener('click', back);
+
+/* ---------- rhyme pairs ---------- */
+const PAIRS = [['cat', '🐱', 'hat', '🎩'], ['dog', '🐶', 'frog', '🐸'], ['sun', '☀️', 'bun', '🍞'], ['bee', '🐝', 'tree', '🌳'], ['cake', '🎂', 'snake', '🐍'],
+  ['star', '⭐', 'car', '🚗'], ['mouse', '🐭', 'house', '🏠'], ['goat', '🐐', 'boat', '⛵'], ['fish', '🐟', 'dish', '🍽️'], ['king', '👑', 'ring', '💍'],
+  ['bug', '🐛', 'mug', '☕'], ['moon', '🌙', 'spoon', '🥄'], ['bear', '🐻', 'chair', '🪑'], ['fox', '🦊', 'box', '📦'], ['bell', '🔔', 'shell', '🐚']];
+let pair = null, pFirst = true;
+function newPair() {
+  const i = R(PAIRS.length); pair = PAIRS[i]; pFirst = true;
+  const flip = R(2), a = flip ? [pair[2], pair[3]] : [pair[0], pair[1]], b = flip ? [pair[0], pair[1]] : [pair[2], pair[3]];
+  pair = { a, b };
+  const others = shuffle(PAIRS.filter((_, j) => j !== i)).slice(0, 2).map(p => R(2) ? [p[0], p[1]] : [p[2], p[3]]);
+  $('#pPic').textContent = a[1]; $('#pNext').hidden = true;
+  Little.choose($('#pChoices'), shuffle([b, ...others]).map(x => ({ label: x[1], pic: true, ok: x === b })), () => {
+    if (pFirst) Kids.addStar(); const c = Little.cheer(); say(`${c} ${a[0]} and ${b[0]} rhyme! 🎉`, true); Little.sayList([c, `${a[0]}, ${b[0]}. They rhyme!`]); Kids.confetti(); $('#pNext').hidden = false;
+    ch.check();
+  }, () => { pFirst = false; say('Listen to the end of the words. Try again! 👂'); Little.sayList(['Hmm, not that one.', `What rhymes with ${a[0]}?`]); });
+  pHear();
+}
+function pHear() { say(`What rhymes with ${pair.a[0]}? 👆`); Little.sayList([`${pair.a[0]}.`, `What rhymes with ${pair.a[0]}?`]); }
+const ch = { n: 0, check() { this.n++; if (this.n === 5) Kids.banner(`🎵 5 rhymes, ${NICK}! Super ears!`); } };
+$('#pHear').addEventListener('click', pHear);
+$('#pNext').addEventListener('click', () => { Kids.sfx.pop(); newPair(); });
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop(); clearInterval(beatT); try { speechSynthesis.cancel(); } catch {}
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'sing') { $('#stage').hidden = true; $('#songList').hidden = false; say(`Pick a song, ${NICK}! 🎵`); }
+  if (b.dataset.tab === 'pairs') newPair();
+}));
+Kids.learn({
+  why: ['Singing helps little ones hear the sounds inside words, the first step to reading!', 'Doing the actions helps the words stick in the memory.'],
+  wow: ['Rhyming words sound the same at the end: cat and hat, moon and spoon.', 'All these songs were written just for ChinnaKutty and PeriyaKutty!'],
+  talk: ['Sing a song together at bath time or in the car.', 'Make up a new line: "The cow says moo, and the ___ says ___!"', 'Ask him: what rhymes with his favourite toy?'],
+}, { why: '🤔 Why sing? (for grown-ups)', talk: '💬 Try at home' });
+say(`Hi ${NICK}! Let's sing and dance! Pick a song. 🎵`);
+</script>
+</body>
+</html>

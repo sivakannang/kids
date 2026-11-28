@@ -11,6 +11,8 @@ They use `shared/little.js` (letter sounds, big choices, the "🎤 I said it!" b
 | [picture-talk](picture-talk/) | New words, listening, and telling stories about pictures |
 | [number-friends](number-friends/) | Numbers 1–10 (and 20) |
 | [story-time](story-time/) | Listening to stories and answering questions |
+| [rhyme-and-sing](rhyme-and-sing/) | Six original action songs to sing and do, and rhyming picture pairs |
+| [colours-shapes](colours-shapes/) | 10 colours, 8 shapes, and "find the red circle" |
 
 **Tips for grown-ups:** keep it short (10–15 minutes), sit together, repeat the words with him, and praise the effort, not just right answers.
-**Ideas:** Rhyme & Sing, Colours & Shapes, sight words, sentence building.
+**Ideas:** sight words, sentence building.
