@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ஆத்திசூடி · Aathichoodi</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .ta { font-family: 'Tamil Sangam MN', 'Noto Sans Tamil', 'Latha', 'Nirmala UI', sans-serif; }
+  .lines { display: grid; gap: 8px; }
+  .ln { display: flex; align-items: center; gap: 12px; border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 8px 12px; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink); }
+  .ln .l { font-size: 34px; width: 46px; text-align: center; color: var(--pink); }
+  .ln .t { font-size: 22px; } .ln .r { font-size: 14px; color: var(--muted); display: block; }
+  .ln.on { border-color: var(--purple); background: #f1e9ff; } .ln.seen .l { color: #06a77d; }
+  .big { text-align: center; } .big .t { font-size: 40px; color: var(--purple); line-height: 1.4; } .big .r { font-size: 20px; color: var(--muted); }
+  .big .m { font-size: 22px; margin: 10px 0; } .big .e { font-size: 70px; } .big .s { font-size: 17px; background: #fff3c4; border-radius: 14px; padding: 8px 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big ta">அ</span>
+    <div><h1>Aathichoodi <span class="ta">ஆத்திசூடி</span></h1><small>Avvaiyar's little lines of wisdom, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📜 Learn</button>
+  <button class="tab" data-tab="quiz">🤔 Which Line Fits?</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="learn"><div class="lines" id="lines"></div><div class="hint" id="voiceNote" style="margin-top:8px"></div></section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card big" id="big"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · தமிழ் 🌺</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, K = Kids.name;
+// Avvaiyar's Aathichoodi (about 900 years old): the first 13 lines, one for each uyir letter and ஃ
+// [letter, line, sound, simple meaning, picture, a little story for today]
+const A = [
+  ['அ', 'அறம் செய விரும்பு', 'Aram seya virumbu', 'Love doing good things.', '💖', 'Helping Amma lay the table is doing a good thing!'],
+  ['ஆ', 'ஆறுவது சினம்', 'Aaruvadhu sinam', 'Anger should cool down. Calm your anger.', '😤➡️😌', 'When you feel cross, breathe slowly and let the anger cool, like hot milk cooling.'],
+  ['இ', 'இயல்வது கரவேல்', 'Iyalvadhu karavel', 'Don\'t hide what you can give. Help as much as you can.', '🤲', 'If a friend forgot their pencil and you have two, share one!'],
+  ['ஈ', 'ஈவது விலக்கேல்', 'Eevadhu vilakkel', 'Don\'t stop anyone from giving and sharing.', '🎁', 'If your brother wants to give his toy to a friend, cheer him on!'],
+  ['உ', 'உடையது விளம்பேல்', 'Udaiyadhu vilambel', 'Don\'t show off about what you have.', '🙊', 'A new bag is nice, but no need to boast about it.'],
+  ['ஊ', 'ஊக்கமது கைவிடேல்', 'Ookkamadhu kaividel', 'Never give up trying.', '💪', 'Fell off your cycle? Get up and try again!'],
+  ['எ', 'எண் எழுத்து இகழேல்', 'En ezhuthu igazhel', 'Never think numbers and letters are unimportant. Keep learning them!', '🔢🔤', 'Practising maths and reading every day makes your mind strong.'],
+  ['ஏ', 'ஏற்பது இகழ்ச்சி', 'Erpadhu igazhchi', 'Don\'t depend on asking others for things. Try to do it yourself.', '🧹', 'Tie your own shoes and pack your own bag, little by little!'],
+  ['ஐ', 'ஐயம் இட்டு உண்', 'Aiyam ittu un', 'Share with people in need before you eat.', '🍚', 'Share your snack with a friend who has none.'],
+  ['ஒ', 'ஒப்புரவு ஒழுகு', 'Oppuravu ozhugu', 'Live kindly and fairly with everyone.', '🤝', 'Take turns on the swing so everyone gets a go.'],
+  ['ஓ', 'ஓதுவது ஒழியேல்', 'Odhuvadhu ozhiyel', 'Never stop learning.', '📚', 'Read a little every day, even in the holidays!'],
+  ['ஔ', 'ஔவியம் பேசேல்', 'Auviyam pesel', 'Don\'t speak with jealousy or say mean things about others.', '🗣️❌', 'If a friend wins a prize, say "Well done!" instead of feeling cross.'],
+  ['ஃ', 'அஃகம் சுருக்கேல்', 'Akkam surukkel', 'Never cheat when you measure or share. Be honest.', '⚖️', 'When you share sweets, share them fairly.'],
+];
+const seen = new Set();
+const note = () => { $('#voiceNote').textContent = Kids.voiceFor('ta') ? '🔊 Tap a line to hear it in Tamil.' : '🔇 No Tamil voice on this device: read the English letters together with a grown-up.'; };
+try { speechSynthesis.addEventListener('voiceschanged', note); } catch {}
+A.forEach(a => {
+  const b = document.createElement('button'); b.className = 'ln';
+  b.innerHTML = `<span class="l ta">${a[0]}</span><span><span class="t ta">${a[1]}</span><span class="r">${a[2]}: ${a[3]}</span></span>`;
+  b.addEventListener('click', () => { show(a); seen.add(a[0]); ch.check({ a, seen: seen.size }); });
+  $('#lines').appendChild(b);
+});
+function show(a) {
+  [...$('#lines').children].forEach((b, i) => { b.classList.toggle('on', A[i] === a); b.classList.toggle('seen', seen.has(A[i][0]) || A[i] === a); });
+  $('#big').innerHTML = `<div class="e">${a[4]}</div><div class="t ta">${a[1]}</div><div class="r">${a[2]}</div><div class="m">${a[3]}</div><div class="s">💡 ${a[5]}</div>
+    <div class="row"><button class="btn green" id="liveIt">🌟 I did this today!</button></div>`;
+  if (!Kids.speakLang(a[1], 'ta', true, 0.7)) Kids.speak(`${a[2]}. ${a[3]}`, true);
+  $('#liveIt').addEventListener('click', () => { Kids.addStar(); Kids.sfx.yay(); Kids.confetti(); $('#liveIt').disabled = true; Kids.banner(`🌟 ${a[2]}: well done, ${K}!`); ch.check({ lived: true }); });
+}
+/* ---------- which line fits? ---------- */
+const MAKERS = [
+  () => { const a = A[R(A.length)]; return { q: `<div style="font-size:22px">💡 ${a[5]}</div><div class="label">Which line of Aathichoodi is this?</div>`,
+    choices: shuffle([a, ...shuffle(A.filter(x => x !== a)).slice(0, 2)]).map(x => ({ label: `<span class="ta" style="font-size:22px">${x[1]}</span><br><small>${x[3]}</small>`, ok: x === a })), yay: `${a[2]}: ${a[3]}`, hint: 'Read the English meanings carefully.' }; },
+  () => { const a = A[R(A.length)]; return { q: `<span class="ta" style="font-size:30px">${a[1]}</span><br><small>${a[2]}</small><div class="label">What does it mean?</div>`,
+    choices: shuffle([a, ...shuffle(A.filter(x => x !== a)).slice(0, 2)]).map(x => ({ label: x[3], ok: x === a })), yay: a[3], hint: 'Look at the Learn tab.' }; },
+  () => { const a = A[R(A.length)]; return { q: `<span class="ta" style="font-size:30px">${a[1].replace(a[0], '?')}</span><div class="label">Which letter starts this line?</div>`,
+    choices: shuffle([a, ...shuffle(A.filter(x => x !== a)).slice(0, 3)]).map(x => ({ label: `<span class="ta" style="font-size:34px">${x[0]}</span>`, ok: x === a })), yay: `${a[1]} starts with ${a[0]}.`, hint: 'The lines go in the order of the uyir letters: அ ஆ இ ஈ…' }; },
+];
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)](), { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Hear the very first line, அறம் செய விரும்பு 💖', hint: 'It starts with அ.', ok: c => c.a && c.a[0] === 'அ', yay: 'Aram seya virumbu: love doing good!' },
+  { ask: 'Find the line that says "never give up" 💪', hint: 'It starts with ஊ.', ok: c => c.a && c.a[0] === 'ஊ', yay: 'Ookkamadhu kaividel!' },
+  { ask: 'Hear all 13 lines 📜', hint: 'Tap every line.', ok: c => c.seen >= 13, yay: 'You know the first part of Aathichoodi!' },
+  { ask: 'Do one of the lines in real life today 🌟', hint: 'Pick a line, do it, then tap "I did this today!"', ok: c => c.lived, yay: 'Living the wisdom, not just reading it!' },
+  { ask: 'Get a "Which line fits?" question right 🤔', hint: 'Open the second tab.', ok: c => c.quiz, yay: 'Wise like Avvaiyar!' },
+], { title: 'Little Avvaiyar' });
+Kids.learn({
+  why: ['ஆத்திசூடி (Aathichoodi) was written by the poet ஔவையார் (Avvaiyar) about 900 years ago. Each line is tiny, but it teaches a big lesson about being good.',
+    'The lines start with the Tamil letters in order: அ, ஆ, இ, ஈ… So it helps you remember the uyir letters too!'],
+  imagine: ['Imagine Avvaiyar, a wise old poet, walking from village to village, teaching children these little lines. What would you ask her?'],
+  wow: ['The full Aathichoodi has 109 lines! Tamil children have learned it for hundreds of years.', 'The great poet Bharathiyar wrote a new Aathichoodi for children about 100 years ago, with lines like "அச்சம் தவிர்" (Achcham thavir: don\'t be afraid)!'],
+  talk: ['Which line do you like best? Why?', 'Ask Paati or Thatha if they learned Aathichoodi at school.', 'Can you make up your own wise line?'],
+});
+show(A[0]); seen.add('அ'); note(); setTimeout(note, 800);
+</script>
+</body>
+</html>

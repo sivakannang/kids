@@ -8,4 +8,6 @@
 | [animal-words](animal-words/) | 33 animals and birds in Tamil, with a quiz |
 | [uyirmei](uyirmei/) | Uyirmei letters: mei + uyir (க் + ஆ = கா), the full chart, and first words to read |
 
-**Ideas:** Aathichoodi, Thirukkural for kids.
+| [aathichoodi](aathichoodi/) | Avvaiyar's Aathichoodi, the first 13 lines (அ to ஃ), with meanings and everyday examples |
+
+**Ideas:** Tamil stories to read, Thirukkural for kids.

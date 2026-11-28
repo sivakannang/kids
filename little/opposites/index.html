@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opposites</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .pair { display: flex; gap: 16px; justify-content: center; align-items: stretch; flex-wrap: wrap; }
+  .side { flex: 1; min-width: 160px; max-width: 280px; border-radius: 28px; padding: 14px; text-align: center; cursor: pointer; border: none; font-family: inherit; color: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+  .side .e { font-size: 100px; line-height: 1.1; display: block; }
+  .side .w { font-size: 38px; font-weight: 700; }
+  .side.a { background: linear-gradient(135deg, #ff9f1c, #f3722c); } .side.b { background: linear-gradient(135deg, #3aa6dd, #118ab2); }
+  .vs { align-self: center; font-size: 40px; }
+  .act { text-align: center; font-size: 120px; transition: transform .4s; }
+  .act.big { transform: scale(1.5); } .act.small { transform: scale(.5); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">↔️</span>
+    <div><h1>Opposites</h1><small>Big and small, hot and cold, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📖 Learn</button>
+  <button class="tab" data-tab="match">🔍 Find the Opposite</button>
+  <button class="tab" data-tab="act">🤸 Act it Out</button>
+</nav>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+
+  <section class="card" data-panel="learn">
+    <div class="pair" id="pair"></div>
+    <div class="navrow"><button class="btn orange" id="prev">⬅️</button><button class="btn big green saidit" id="said">🎤 I said them!</button><button class="btn orange" id="next">➡️</button></div>
+  </section>
+
+  <section class="card center" data-panel="match" hidden>
+    <div class="giant-pic" id="mPic"></div>
+    <div style="font-size:40px;font-weight:700" id="mWord"></div>
+    <div class="row" style="margin-top:4px"><button class="btn big purple" id="mHear">🔊 Listen</button></div>
+    <div class="bigchoices" id="mChoices"></div>
+    <div class="row"><button class="btn big orange" id="mNext" hidden>Next ➡️</button></div>
+  </section>
+
+  <section class="card center" data-panel="act" hidden>
+    <div class="act" id="actPic">🧒</div>
+    <div style="font-size:44px;font-weight:700;color:var(--purple)" id="actWord"></div>
+    <div class="row"><button class="btn big green saidit" id="did">✅ I did it!</button><button class="btn big orange" id="actNext">Next ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script src="../../shared/little.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, NICK = Kids.nick;
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+// [word, picture, opposite, picture]
+const P = [['big', '🐘', 'small', '🐭'], ['hot', '☕', 'cold', '🧊'], ['up', '⬆️', 'down', '⬇️'], ['day', '☀️', 'night', '🌙'], ['happy', '😊', 'sad', '😢'],
+  ['fast', '🐆', 'slow', '🐢'], ['tall', '🦒', 'short', '🐧'], ['open', '📖', 'closed', '📕'], ['loud', '📢', 'quiet', '🤫'], ['wet', '💦', 'dry', '🏜️'],
+  ['old', '👴', 'young', '👶'], ['heavy', '🏋️', 'light', '🪶'], ['long', '🐍', 'short', '🐛'], ['full', '🍪🍪🍪', 'empty', '🫙'], ['in', '📥', 'out', '📤'], ['awake', '😃', 'asleep', '😴']];
+let i = 0;
+function show() {
+  const [a, pa, b, pb] = P[i];
+  $('#pair').innerHTML = `<button class="side a"><span class="e">${pa}</span><span class="w">${a}</span></button><div class="vs">↔️</div><button class="side b"><span class="e">${pb}</span><span class="w">${b}</span></button>`;
+  const [sa, sb] = $('#pair').querySelectorAll('.side');
+  sa.addEventListener('click', () => Little.say(a)); sb.addEventListener('click', () => Little.say(b));
+  say(`${a[0].toUpperCase() + a.slice(1)} and ${b}! They are opposites. Can you say them? 🗣️`);
+  Little.sayList([`${a}.`, `${b}.`, `${a} and ${b} are opposites!`]);
+}
+$('#prev').addEventListener('click', () => { i = (i + P.length - 1) % P.length; Kids.sfx.pop(); show(); });
+$('#next').addEventListener('click', () => { i = (i + 1) % P.length; Kids.sfx.pop(); show(); });
+Little.saidIt($('#said'), c => { say(`${c} ${P[i][0]} and ${P[i][2]}! 🎉`, true); setTimeout(() => { i = (i + 1) % P.length; show(); }, 1700); });
+
+/* ---------- find the opposite ---------- */
+let q = null, first = true;
+function newMatch() {
+  const k = R(P.length), flip = R(2), p = P[k];
+  q = flip ? { w: p[2], pic: p[3], ans: p[0], apic: p[1] } : { w: p[0], pic: p[1], ans: p[2], apic: p[3] };
+  first = true; $('#mNext').hidden = true;
+  $('#mPic').textContent = q.pic; $('#mWord').textContent = q.w;
+  const wrong = shuffle(P.filter((_, j) => j !== k && ![P[j][0], P[j][2]].some(w => w === q.ans || w === q.w))).slice(0, 2).map(x => R(2) ? [x[0], x[1]] : [x[2], x[3]]);
+  Little.choose($('#mChoices'), shuffle([[q.ans, q.apic], ...wrong]).map(([w, pic]) => ({ label: `${pic}<div style="font-size:20px">${w}</div>`, pic: true, ok: w === q.ans })), () => {
+    if (first) Kids.addStar(); const c = Little.cheer(); say(`${c} The opposite of ${q.w} is ${q.ans}! 🎉`, true); Little.sayList([c, `The opposite of ${q.w} is ${q.ans}!`]); Kids.confetti(); $('#mNext').hidden = false;
+  }, () => { first = false; say('Hmm, not that one. Try again! 🤔'); Little.say(`What is the opposite of ${q.w}?`); });
+  mHear();
+}
+function mHear() { say(`What is the opposite of "${q.w}"? 👆`); Little.say(`What is the opposite of ${q.w}?`); }
+$('#mHear').addEventListener('click', mHear);
+$('#mNext').addEventListener('click', () => { Kids.sfx.pop(); newMatch(); });
+
+/* ---------- act it out ---------- */
+const ACTS = [['big', 'Make yourself BIG! Stretch your arms wide!', 'big', '🙆'], ['small', 'Now make yourself small! Curl up tiny!', 'small', '🙇'],
+  ['fast', 'Run on the spot, FAST!', '', '🏃'], ['slow', 'Now walk sloooowly, like a tortoise.', '', '🐢'], ['loud', 'Clap LOUD!', '', '👏'], ['quiet', 'Now clap very quietly… shhh.', '', '🤫'],
+  ['up', 'Reach UP high to the sky!', '', '🙌'], ['down', 'Now touch the floor, DOWN low!', '', '🙇'], ['happy', 'Make a happy face!', '', '😊'], ['sad', 'Now make a sad face.', '', '😢']];
+let ai = 0;
+function showAct() {
+  const [w, t, cls, pic] = ACTS[ai];
+  $('#actPic').className = 'act ' + cls; $('#actPic').textContent = pic; $('#actWord').textContent = w.toUpperCase();
+  $('#did').disabled = false; say(t); Little.say(t);
+}
+Little.saidIt($('#did'), c => { $('#did').disabled = true; say(`${c} Great ${ACTS[ai][0]}! 🎉`, true); setTimeout(() => { ai = (ai + 1) % ACTS.length; showAct(); }, 1500); });
+$('#actNext').addEventListener('click', () => { ai = (ai + 1) % ACTS.length; Kids.sfx.pop(); showAct(); });
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  ({ learn: show, match: newMatch, act: showAct })[b.dataset.tab]();
+}));
+Kids.learn({
+  why: ['Opposites teach describing words in pairs. Knowing "big" helps him understand "small".', 'Acting them out makes the words stick, and gets the wiggles out!'],
+  wow: ['Some words have more than one opposite: the opposite of "short" can be "tall" or "long"!'],
+  talk: ['Play "Opposites ping-pong": you say "hot", he says "cold".', 'Find opposites at home: an open door and a closed door.', 'At bath time: wet and dry!'],
+}, { why: '🤔 Why? (for grown-ups)', talk: '💬 Try at home' });
+show();
+</script>
+</body>
+</html>

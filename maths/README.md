@@ -20,4 +20,6 @@
 | [hot-and-cold](hot-and-cold/) | Reading a thermometer, °C, hotter or colder |
 | [fraction-pizza](fraction-pizza/) | Halves, thirds, quarters: cutting, eating, sharing fairly, and comparing fractions |
 
-**Ideas:** patterns.
+| [patterns](patterns/) | Repeating patterns (AB, ABC, AAB), number patterns, and making your own |
+
+**Ideas:** mental maths sprint.

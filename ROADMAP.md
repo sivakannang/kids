@@ -166,3 +166,16 @@ The games now have **two profiles**: Kavikuyil (PeriyaKutty, 1st std) and Praban
 
 
 **Added after Round 5:** 🗺️ States & Countries (`world/`): Indian states and union territories, and countries of the world, with capitals, languages and greetings.
+
+## 🧩 Round 6 (✅ done)
+| For | Game | Where |
+|---|---|---|
+| 👦 Prabanjan | ↔️ Opposites | `little/` |
+| 👦 Prabanjan | 🐣 Who Am I? | `little/` |
+| 👧 Kavikuyil | 🗨️ Everyday Phrases | `languages/` |
+| 👧 Kavikuyil | 📜 Aathichoodi | `tamil/` |
+| 👧 Kavikuyil | 🔁 Patterns | `maths/` |
+| 👧👦 Both | 🧲 Magnets | `science/` |
+| 👧👦 Both | ♻️ Recycling Sorter | `science/` |
+
+**Coming soon (on the home page):** Action Words · Tamil Stories · Mental Maths Sprint · Seasons of India · Build a Solar System · Festivals of India

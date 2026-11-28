@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Magnets</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .table { position: relative; height: 300px; background: #f4efe1; border-radius: 22px; overflow: hidden; touch-action: none; }
+  .item { position: absolute; font-size: 44px; text-align: center; width: 90px; transition: left .35s, top .35s; user-select: none; }
+  .item small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .item.stuck { filter: drop-shadow(0 0 6px #ffd166); }
+  .item.no { animation: shake .4s; }
+  #mag { position: absolute; width: 90px; height: 70px; cursor: grab; touch-action: none; z-index: 2; }
+  .guess { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .bars { display: flex; gap: 0; justify-content: center; align-items: center; height: 120px; }
+  .bar { display: flex; width: 160px; height: 50px; border-radius: 8px; overflow: hidden; font-weight: 700; color: #fff; font-size: 22px; transition: margin .4s; }
+  .bar span { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .N { background: #ef476f; } .S { background: #118ab2; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🧲</span>
+    <div><h1>Magnets</h1><small>What sticks and what doesn't, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="test">🔍 Guess &amp; Test</button>
+  <button class="tab" data-tab="poles">↔️ Push &amp; Pull</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="test">
+      <div class="label" style="margin-top:0" id="ask"></div>
+      <div class="guess"><button class="btn big green" id="yes">🧲 It will stick!</button><button class="btn big orange" id="no">🙅 It won't stick</button></div>
+      <div class="table" id="table" style="margin-top:10px"></div>
+      <div class="hint">You can also drag the magnet around the table!</div>
+      <div class="result" id="res"></div>
+    </section>
+    <section class="card center" data-panel="poles" hidden>
+      <div class="bars"><div class="bar" id="b1"><span class="N">N</span><span class="S">S</span></div><div class="bar" id="b2"><span class="N">N</span><span class="S">S</span></div></div>
+      <div class="row"><button class="btn big" id="flip">🔄 Flip the right magnet</button></div>
+      <div class="result" id="pRes"></div>
+    </section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// [picture, name, sticks?, why]
+const ITEMS = [['📎', 'paper clip', true, 'It is made of steel, which has iron in it.'], ['🔩', 'iron nail', true, 'Iron is magnetic!'], ['🧷', 'safety pin', true, 'It is made of steel.'],
+  ['✂️', 'scissors', true, 'The blades are steel, so they stick.'], ['🥫', 'tin can', true, 'Most food tins are steel with a thin coat of tin.'], ['🪛', 'screwdriver', true, 'The metal tip is steel.'],
+  ['✏️', 'pencil', false, 'Wood and graphite are not magnetic.'], ['🧸', 'teddy bear', false, 'Cloth and cotton are not magnetic.'], ['🥤', 'plastic cup', false, 'Plastic is not magnetic.'],
+  ['🪵', 'wooden block', false, 'Wood is not magnetic.'], ['🔮', 'glass marble', false, 'Glass is not magnetic.'], ['🥄', 'aluminium spoon', false, 'Aluminium is a metal, but it is NOT magnetic! Surprise!'],
+  ['💍', 'gold ring', false, 'Gold is a metal, but not magnetic.'], ['🍃', 'leaf', false, 'Leaves are not magnetic.'], ['🧽', 'sponge', false, 'Sponges are not magnetic.'], ['🔌', 'copper wire', false, 'Copper is a metal that is NOT magnetic.']];
+let cur = null, tested = 0, right = 0, guessed = null;
+const T = $('#table');
+const mag = document.createElement('div'); mag.id = 'mag';
+mag.innerHTML = '<svg viewBox="0 0 90 70" width="90" height="70"><path d="M10 10 h22 v30 a13 13 0 0 0 26 0 v-30 h22 v30 a35 35 0 0 1 -70 0 z" fill="#ef476f"/><rect x="10" y="4" width="22" height="12" fill="#ddd"/><rect x="58" y="4" width="22" height="12" fill="#ddd"/></svg>';
+T.appendChild(mag);
+let mx = 20, my = 20;
+const placeMag = () => { mag.style.left = mx + 'px'; mag.style.top = my + 'px'; };
+let itemEl = null;
+function newItem() {
+  cur = ITEMS[R(ITEMS.length)]; guessed = null;
+  if (itemEl) itemEl.remove();
+  itemEl = document.createElement('div'); itemEl.className = 'item'; itemEl.innerHTML = `${cur[0]}<small>${cur[1]}</small>`;
+  itemEl.style.left = (T.clientWidth || 600) - 140 + 'px'; itemEl.style.top = '170px'; T.appendChild(itemEl);
+  mx = 20; my = 20; placeMag();
+  $('#ask').textContent = `Will the magnet pick up the ${cur[1]}? Guess first!`; $('#res').className = 'result'; $('#res').textContent = '';
+  $('#yes').disabled = $('#no').disabled = false;
+}
+function test() {
+  // slide the magnet to the item
+  mx = parseFloat(itemEl.style.left); my = 100; placeMag();
+  setTimeout(() => {
+    tested++;
+    if (cur[2]) { itemEl.style.top = '150px'; itemEl.classList.add('stuck'); Kids.sfx.boing(); } else { itemEl.classList.add('no'); Kids.sfx.oops(); }
+    const ok = guessed === cur[2];
+    if (ok) { right++; Kids.addStar(); Kids.sfx.yay(); }
+    $('#res').className = 'result ' + (ok ? 'good' : 'hint');
+    $('#res').textContent = `${ok ? Kids.praise() + ' You guessed right!' : 'Surprise!'} The ${cur[1]} ${cur[2] ? 'STICKS' : 'does NOT stick'}. ${cur[3]}`;
+    Kids.speak(Kids.forSpeech(`The ${cur[1]} ${cur[2] ? 'sticks' : 'does not stick'}. ${cur[3]}`));
+    ch.check({ tested, right, item: cur });
+    setTimeout(newItem, 3800);
+  }, 450);
+}
+$('#yes').addEventListener('click', () => { guessed = true; $('#yes').disabled = $('#no').disabled = true; test(); });
+$('#no').addEventListener('click', () => { guessed = false; $('#yes').disabled = $('#no').disabled = true; test(); });
+// drag the magnet just to play
+let drag = null;
+mag.addEventListener('pointerdown', e => { drag = [e.clientX - mx, e.clientY - my]; mag.setPointerCapture(e.pointerId); });
+mag.addEventListener('pointermove', e => { if (!drag) return; mx = e.clientX - drag[0]; my = e.clientY - drag[1]; placeMag(); });
+mag.addEventListener('pointerup', () => { drag = null; });
+
+/* ---------- poles ---------- */
+let flipped = false, flips = 0;
+function poles() {
+  $('#b2').innerHTML = flipped ? '<span class="S">S</span><span class="N">N</span>' : '<span class="N">N</span><span class="S">S</span>';
+  // facing ends: left magnet's right end is S; right magnet's left end is N (not flipped) or S (flipped)
+  const attract = !flipped;
+  $('#b2').style.marginLeft = attract ? '0px' : '90px';
+  $('#pRes').className = 'result ' + (attract ? 'good' : 'hint');
+  $('#pRes').textContent = attract ? '🤝 S and N are facing: they PULL together and snap! Opposite poles attract.' : '🙅 S and S are facing: they PUSH apart! The same poles repel.';
+}
+$('#flip').addEventListener('click', () => { flipped = !flipped; flips++; Kids.sfx.boing(); poles(); ch.check({ flips }); });
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'poles') poles(); else newItem();
+}));
+const ch = Kids.challenges([
+  { ask: 'Guess and test one thing 🧲', hint: 'Choose "It will stick" or "It won\'t stick".', ok: c => c.tested >= 1, yay: 'That is how scientists work: guess, then test!' },
+  { ask: 'Guess right 5 times 🎯', hint: 'Things with iron or steel stick.', ok: c => c.right >= 5, yay: 'Super scientist!' },
+  { ask: 'Find a metal that does NOT stick 🤔', hint: 'Try the aluminium spoon, the gold ring or the copper wire.', ok: c => c.item && !c.item[2] && /aluminium|gold|copper/.test(c.item[1]), yay: 'Not all metals are magnetic. Only some, like iron!' },
+  { ask: 'Make two magnets push apart ↔️', hint: 'Open Push & Pull and flip the magnet.', ok: c => c.flips >= 1, yay: 'Same poles push apart!' },
+], { title: 'Magnet Master' });
+Kids.learn({
+  why: ['A magnet pulls things made of iron (and steel, which has iron in it). Most other things, like wood, plastic and glass, are not pulled.',
+    'Every magnet has two ends called poles: North and South. Opposite poles pull together, and the same poles push apart.'],
+  imagine: ['Imagine invisible lines coming out of a magnet, reaching out to grab paper clips. That invisible area is called the magnetic field!'],
+  wow: ['The Earth itself is a giant magnet! That is why a compass needle always points north.', 'Some trains float above the track using strong magnets. They are called maglev trains, and they are super fast!'],
+  talk: ['Test things on the fridge door with a fridge magnet (with a grown-up).', 'Why do you think fridge doors have magnets?', 'Where else could magnets be useful?'],
+});
+newItem();
+</script>
+</body>
+</html>

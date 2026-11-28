@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Am I?</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .clues { display: grid; gap: 10px; max-width: 640px; margin: 0 auto; }
+  .clue { background: #f1e9ff; border-radius: 20px; padding: 12px 16px; font-size: 24px; font-weight: 600; animation: pop .4s; }
+  .mystery { text-align: center; font-size: 110px; filter: blur(0); }
+  .mystery.hide { filter: brightness(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🐣</span>
+    <div><h1>Who Am I?</h1><small>Listen to the clues and guess, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+  <section class="card center">
+    <div class="mystery hide" id="mys">❓</div>
+    <div class="clues" id="clues"></div>
+    <div class="row"><button class="btn big purple" id="more">🔊 Another clue</button><button class="btn" id="again">🔁 Hear the clues again</button></div>
+    <div class="bigchoices" id="choices"></div>
+    <div class="row"><button class="btn big orange" id="next" hidden>Next riddle ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script src="../../shared/little.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, NICK = Kids.nick;
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+// riddles written for this game: [answer, picture, clue 1, clue 2, clue 3]
+const RID = [
+  ['cow', '🐄', 'I live on a farm.', 'I say moo!', 'I give you milk.'],
+  ['elephant', '🐘', 'I am very, very big.', 'I have big flappy ears.', 'I have a long trunk.'],
+  ['cat', '🐱', 'I have soft fur and whiskers.', 'I love to drink milk.', 'I say meow!'],
+  ['dog', '🐶', 'I wag my tail when I am happy.', 'I guard the house.', 'I say bow bow!'],
+  ['fish', '🐟', 'I have no legs.', 'I live in water.', 'I swim with my fins.'],
+  ['bird', '🐦', 'I have two wings.', 'I live in a nest.', 'I can fly and sing.'],
+  ['monkey', '🐒', 'I love to climb trees.', 'I have a long tail.', 'I love to eat bananas.'],
+  ['rabbit', '🐰', 'I have long ears.', 'I hop, hop, hop.', 'I love carrots.'],
+  ['lion', '🦁', 'I am called the king of the jungle.', 'I have a big mane of hair.', 'I say ROAR!'],
+  ['frog', '🐸', 'I am green.', 'I live near ponds.', 'I jump and say croak!'],
+  ['sun', '☀️', 'I am in the sky.', 'I am very hot and bright.', 'I come out in the day.'],
+  ['moon', '🌙', 'I am in the sky.', 'I come out at night.', 'Sometimes I am round, and sometimes I look like a banana!'],
+  ['umbrella', '☂️', 'You open me up.', 'I have a handle.', 'I keep you dry in the rain.'],
+  ['banana', '🍌', 'I am a fruit.', 'I am yellow and long.', 'Monkeys love me!'],
+  ['ball', '⚽', 'I am round.', 'You can kick me or throw me.', 'I bounce!'],
+  ['bus', '🚌', 'I have wheels.', 'Many people ride in me.', 'I take children to school.'],
+];
+let cur = null, shown = 0, first = true, done = false, solved = 0;
+function newRiddle() {
+  cur = RID[R(RID.length)]; shown = 0; first = true; done = false;
+  $('#clues').innerHTML = ''; $('#mys').textContent = '❓'; $('#mys').className = 'mystery hide'; $('#next').hidden = true; $('#more').disabled = false;
+  const wrong = shuffle(RID.filter(r => r !== cur)).slice(0, 2);
+  Little.choose($('#choices'), shuffle([cur, ...wrong]).map(r => ({ label: r[1], pic: true, ok: r === cur })), () => {
+    done = true; Kids.addStar(); if (shown === 1) Kids.addStar();
+    $('#mys').textContent = cur[1]; $('#mys').className = 'mystery'; Kids.confetti(); solved++;
+    const c = Little.cheer(), m = shown === 1 ? `${c} You guessed it from just ONE clue! I am a ${cur[0]}!` : `${c} Yes! I am a ${cur[0]}!`;
+    say(m + ' 🎉', true); Little.sayList([m]); $('#next').hidden = false; $('#more').disabled = true;
+    if (solved % 5 === 0) Kids.banner(`🐣 ${solved} riddles solved, ${NICK}!`);
+  }, () => { first = false; say('Not that one! Listen to another clue. 👂'); if (shown < 3) addClue(); else Little.say('Not that one. Try again!'); });
+  addClue();
+}
+function addClue() {
+  if (shown >= 3) return;
+  const t = cur[2 + shown]; shown++;
+  $('#clues').insertAdjacentHTML('beforeend', `<div class="clue">${shown}. ${t}</div>`);
+  say(shown === 1 ? 'Listen to the clue. Who am I? 🤔' : 'Here is another clue! 👂');
+  Little.sayList([t, shown === 3 ? 'Who am I?' : '']);
+  if (shown === 3) $('#more').disabled = true;
+}
+$('#more').addEventListener('click', () => { if (!done) addClue(); });
+$('#again').addEventListener('click', () => Little.sayList(cur.slice(2, 2 + shown).concat('Who am I?')));
+$('#next').addEventListener('click', () => { Kids.sfx.pop(); newRiddle(); });
+Kids.learn({
+  why: ['Riddles build listening and thinking: he has to hold the clues in his head and put them together.', 'Each clue uses describing words he can learn and reuse.'],
+  wow: ['Guessing from fewer clues earns an extra star!'],
+  talk: ['Turn it around: he gives YOU clues about an animal, and you guess.', 'Play in the car: "I am yellow and I say quack…"', 'Make riddles about family members!'],
+}, { why: '🤔 Why? (for grown-ups)', talk: '💬 Try at home' });
+newRiddle();
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Everyday Phrases</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .ta { font-family: 'Tamil Sangam MN', 'Noto Sans Tamil', 'Latha', 'Nirmala UI', sans-serif; }
+  .hi { font-family: 'Kohinoor Devanagari', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif; }
+  .kn { font-family: 'Kannada Sangam MN', 'Noto Sans Kannada', 'Tunga', 'Nirmala UI', sans-serif; }
+  .phr { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .ph { border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 8px; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .ph .e { display: block; font-size: 34px; } .ph.on { border-color: var(--purple); background: #f1e9ff; } .ph.seen { border-color: #06d6a0; }
+  .langs { display: grid; gap: 10px; }
+  .lg { display: flex; align-items: center; gap: 10px; border-radius: 18px; padding: 10px 12px; cursor: pointer; border: none; text-align: left; font-family: inherit; color: var(--ink); }
+  .lg .fl { font-size: 15px; font-weight: 700; width: 70px; color: var(--muted); }
+  .lg .t { font-size: 28px; flex: 1; } .lg .r { font-size: 16px; color: var(--muted); display: block; }
+  .lg.en { background: #eef6ff; } .lg.tal { background: #ffe1ec; } .lg.hin { background: #fff3c4; } .lg.kan { background: #d3f8e2; }
+  .choice .t2 { font-size: 22px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🗨️</span>
+    <div><h1>Everyday Phrases</h1><small>Hello, thank you, how are you? in 4 languages, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📖 Learn</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="learn"><div class="phr" id="phr"></div><div class="hint" id="voiceNote" style="margin-top:8px"></div></section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card"><div class="langs" id="langs"></div>
+      <div class="row"><button class="btn big green" id="usedIt">🗣️ I said it to someone today!</button></div></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Languages 🗣️</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, K = Kids.name;
+// [picture, English, [Tamil, sound], [Hindi, sound], [Kannada, sound]]  (spoken, everyday forms)
+const P = [
+  ['👋', 'Hello', ['வணக்கம்', 'Vanakkam'], ['नमस्ते', 'Namaste'], ['ನಮಸ್ಕಾರ', 'Namaskara']],
+  ['🙏', 'Thank you', ['நன்றி', 'Nandri'], ['धन्यवाद', 'Dhanyavaad'], ['ಧನ್ಯವಾದಗಳು', 'Dhanyavaadagalu']],
+  ['🥺', 'Please', ['தயவுசெய்து', 'Thayavuseithu'], ['कृपया', 'Kripya'], ['ದಯವಿಟ್ಟು', 'Dayavittu']],
+  ['🤗', 'How are you?', ['எப்படி இருக்கீங்க?', 'Eppadi irukkeenga?'], ['आप कैसे हैं?', 'Aap kaise hain?'], ['ಹೇಗಿದ್ದೀರಾ?', 'Hegiddeera?']],
+  ['😊', 'I am fine', ['நான் நல்லா இருக்கேன்', 'Naan nallaa irukken'], ['मैं ठीक हूँ', 'Main theek hoon'], ['ನಾನು ಚೆನ್ನಾಗಿದ್ದೀನಿ', 'Naanu chennaagiddeeni']],
+  ['❓', 'What is your name?', ['உங்க பெயர் என்ன?', 'Unga peyar enna?'], ['आपका नाम क्या है?', 'Aapka naam kya hai?'], ['ನಿಮ್ಮ ಹೆಸರು ಏನು?', 'Nimma hesaru enu?']],
+  ['🏷️', `My name is ${K}`, [`என் பெயர் ${K}`, `En peyar ${K}`], [`मेरा नाम ${K} है`, `Mera naam ${K} hai`], [`ನನ್ನ ಹೆಸರು ${K}`, `Nanna hesaru ${K}`]],
+  ['😔', 'Sorry', ['மன்னிக்கவும்', 'Mannikkavum'], ['माफ़ कीजिए', 'Maaf kijiye'], ['ಕ್ಷಮಿಸಿ', 'Kshamisi']],
+  ['🌅', 'Good morning', ['காலை வணக்கம்', 'Kaalai vanakkam'], ['सुप्रभात', 'Suprabhaat'], ['ಶುಭೋದಯ', 'Shubhodaya']],
+  ['🌙', 'Good night', ['இனிய இரவு', 'Iniya iravu'], ['शुभ रात्रि', 'Shubh raatri'], ['ಶುಭ ರಾತ್ರಿ', 'Shubha raatri']],
+  ['✅', 'Yes', ['ஆமாம்', 'Aamaam'], ['हाँ', 'Haan'], ['ಹೌದು', 'Haudu']],
+  ['❌', 'No', ['இல்லை', 'Illai'], ['नहीं', 'Nahin'], ['ಇಲ್ಲ', 'Illa']],
+  ['💧', 'Water, please', ['தண்ணீர் கொடுங்க', 'Thanneer kodunga'], ['पानी दीजिए', 'Paani dijiye'], ['ನೀರು ಕೊಡಿ', 'Neeru kodi']],
+  ['🍛', 'I am hungry', ['எனக்கு பசிக்குது', 'Enakku pasikkudhu'], ['मुझे भूख लगी है', 'Mujhe bhookh lagi hai'], ['ನನಗೆ ಹಸಿವಾಗಿದೆ', 'Nanage hasivaagide']],
+  ['⚽', 'Let\'s play!', ['விளையாடலாம்!', 'Vilaiyaadalaam!'], ['चलो खेलते हैं!', 'Chalo khelte hain!'], ['ಆಟ ಆಡೋಣ!', 'Aata aadona!']],
+  ['🌟', 'Very good!', ['ரொம்ப நல்லா இருக்கு!', 'Romba nallaa irukku!'], ['बहुत अच्छा!', 'Bahut achchha!'], ['ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ!', 'Tumba chennaagide!']],
+  ['👋', 'See you later', ['போயிட்டு வரேன்', 'Poyittu varen'], ['फिर मिलेंगे', 'Phir milenge'], ['ಹೋಗಿ ಬರ್ತೀನಿ', 'Hogi barteeni']],
+];
+const L = [['ta', 'Tamil', 'ta', 2, 'tal'], ['hi', 'Hindi', 'hi', 3, 'hin'], ['kn', 'Kannada', 'kn', 4, 'kan']];
+const seen = new Set(), heardLang = new Set();
+const used = Kids.store.get('phrases.used', {});
+let cur = P[0];
+P.forEach(p => {
+  const b = document.createElement('button'); b.className = 'ph'; b.innerHTML = `<span class="e">${p[0]}</span>${p[1]}`;
+  b.addEventListener('click', () => { cur = p; Kids.sfx.pop(); seen.add(p[1]); show(); ch.check({ seen: seen.size, p: p[1] }); });
+  $('#phr').appendChild(b);
+});
+function show() {
+  [...$('#phr').children].forEach((b, i) => { b.classList.toggle('on', P[i] === cur); b.classList.toggle('seen', seen.has(P[i][1])); });
+  $('#langs').innerHTML = `<button class="lg en" data-l="en"><span class="fl">English</span><span class="t">${cur[0]} ${cur[1]}</span></button>` +
+    L.map(([cls, name, lang, k, bg]) => `<button class="lg ${bg}" data-l="${lang}"><span class="fl">${name}</span><span class="t"><span class="${cls}">${cur[k][0]}</span><span class="r">${cur[k][1]}</span></span></button>`).join('');
+  $('#langs').querySelectorAll('.lg').forEach(b => b.addEventListener('click', () => {
+    const l = b.dataset.l, k = { ta: 2, hi: 3, kn: 4 }[l];
+    if (l === 'en') Kids.speak(cur[1], true); else if (!Kids.speakLang(cur[k][0], l)) Kids.speak(cur[k][1], true, 0.8);
+    heardLang.add(l); ch.check({ langs: heardLang.size });
+  }));
+  $('#usedIt').disabled = used[Kids.today()] === cur[1];
+}
+$('#usedIt').addEventListener('click', () => {
+  used[Kids.today()] = cur[1]; Kids.store.set('phrases.used', used); Kids.addStar(); Kids.sfx.yay(); Kids.confetti(); $('#usedIt').disabled = true;
+  Kids.banner(`🗣️ You used "${cur[1]}" for real, ${K}!`); ch.check({ real: true });
+});
+const note = () => { const miss = L.filter(l => !Kids.voiceFor(l[2])).map(l => l[1]); $('#voiceNote').textContent = miss.length ? `🔇 No ${miss.join(' / ')} voice on this device: read the English letters together with a grown-up.` : '🔊 Tap any line on the right to hear it.'; };
+try { speechSynthesis.addEventListener('voiceschanged', note); } catch {}
+
+/* ---------- quiz ---------- */
+const pool = P.filter(p => !p[1].startsWith('My name'));
+function quizMaker() {
+  const a = pool[R(pool.length)], [cls, name, , k] = L[R(L.length)];
+  if (R(2)) return { q: `${a[0]} How do you say "<b>${a[1]}</b>" in ${name}?`, choices: shuffle([a, ...shuffle(pool.filter(p => p !== a)).slice(0, 2)]).map(p => ({ label: `<span class="${cls} t2">${p[k][0]}</span><br><small>${p[k][1]}</small>`, ok: p === a })), yay: `"${a[1]}" in ${name} is ${a[k][1]}.`, hint: 'Look it up on the Learn tab!' };
+  return { q: `<span class="${cls}" style="font-size:34px">${a[k][0]}</span><br><small>${a[k][1]}</small><div class="label">What does this ${name} phrase mean?</div>`, choices: shuffle([a, ...shuffle(pool.filter(p => p !== a)).slice(0, 2)]).map(p => ({ label: `${p[0]} ${p[1]}`, ok: p === a })), yay: `${a[k][1]} means "${a[1]}".`, hint: 'Say it out loud. Do you remember it?' };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Hear "Thank you" in all 4 languages 🙏', hint: 'Tap Thank you, then tap each language on the right.', ok: c => c.langs >= 4, yay: 'Nandri! Dhanyavaad! Dhanyavaadagalu! Thank you!' },
+  { ask: 'Learn how to say your name 🏷️', hint: `Tap "My name is ${K}".`, ok: c => c.p && c.p.startsWith('My name'), yay: 'Now you can introduce yourself anywhere!' },
+  { ask: 'Look at 10 phrases 📖', hint: 'Tap the phrase cards one by one.', ok: c => c.seen >= 10, yay: 'Ten phrases in four languages!' },
+  { ask: 'Use a phrase with a real person today 🗣️', hint: 'Say it to Amma, Appa, a friend or a teacher, then tap the green button.', ok: c => c.real, yay: 'Real talking is the best practice!' },
+  { ask: 'Get a quiz question right ❓', hint: 'Open the Quiz tab.', ok: c => c.quiz, yay: 'Super speaker!' },
+], { title: 'Little Linguist' });
+Kids.learn({
+  why: ['Words are fun to learn, but phrases are what we really use to talk! A few polite phrases can make a new friend smile.',
+    'Tamil, Hindi and Kannada speakers all live around us in Bengaluru. Knowing a little of each language helps you talk to everyone.'],
+  imagine: ['Imagine visiting Paati in Tamil Nadu, a friend in Delhi, and the vegetable shop near home, and greeting each one in their own language!'],
+  wow: ['People who speak more than one language often find it easier to learn even more languages later.',
+    'These are the everyday spoken forms. Books sometimes use a slightly more formal way of saying them.'],
+  talk: ['Which phrase will you use first? With whom?', 'Teach a phrase to a grown-up!', 'Ask a Kannada-speaking friend to say "Hegiddeera?" to you.'],
+});
+show(); note(); setTimeout(note, 800);
+</script>
+</body>
+</html>

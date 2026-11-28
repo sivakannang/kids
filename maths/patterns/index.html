@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patterns</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<style>
+  .seq { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; font-size: 50px; min-height: 70px; align-items: center; }
+  .seq .gap { width: 64px; height: 64px; border: 4px dashed #c9b8f0; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 34px; color: var(--muted); }
+  .seq .num { font-size: 40px; font-weight: 700; background: #f1e9ff; border-radius: 14px; padding: 4px 12px; }
+  .palette { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .palette button { font-size: 40px; background: #fff; border: 3px solid #eee; border-radius: 16px; padding: 2px 10px; cursor: pointer; }
+  .made { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; font-size: 40px; min-height: 60px; background: #f8f6ff; border-radius: 18px; padding: 8px; }
+  .made .ext { opacity: .45; }
+  .choice .ce { font-size: 46px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔁</span>
+    <div><h1>Patterns</h1><small>What comes next, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="next">❓ What Comes Next?</button>
+  <button class="tab" data-tab="make">🎨 Make a Pattern</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="next">
+      <div class="pick" id="lvl"><button data-l="1" class="active">⭐ AB</button><button data-l="2">⭐⭐ ABC / AAB</button><button data-l="3">⭐⭐⭐ Numbers</button></div>
+      <div id="quizBox" style="margin-top:10px"></div>
+    </section>
+    <section class="card center" data-panel="make" hidden>
+      <div class="label" style="margin-top:0">Tap pictures to make the start of a pattern (2 to 4 things), then press the magic button!</div>
+      <div class="palette" id="pal"></div>
+      <div class="made" id="made" style="margin-top:10px"></div>
+      <div class="row"><button class="btn big purple" id="magic">✨ Repeat my pattern</button><button class="btn orange" id="clear">🧽 Clear</button></div>
+      <div class="result" id="mRes"></div>
+    </section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Numbers 🔢</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const SETS = [['🔴', '🔵', '🟡', '🟢'], ['🍎', '🍌', '🍇', '🍊'], ['🐶', '🐱', '🐭', '🐰'], ['⭐', '🌙', '☀️', '☁️'], ['🔺', '🟦', '⚪', '🔶'], ['🚗', '🚌', '🚲', '✈️']];
+const UNITS = { 1: ['AB'], 2: ['ABC', 'AAB', 'ABB', 'AABB'] };
+let level = 1;
+function shapeQ() {
+  const set = shuffle(SETS[R(SETS.length)]), unit = UNITS[level][R(UNITS[level].length)];
+  const map = {}; [...new Set(unit)].forEach((ch, i) => map[ch] = set[i]);
+  const len = unit.length * 2 + 1 + R(unit.length), seq = Array.from({ length: len }, (_, i) => map[unit[i % unit.length]]);
+  const ans = map[unit[len % unit.length]];
+  const opts = shuffle([...new Set([ans, ...set.slice(0, 3)])]).slice(0, 3); if (!opts.includes(ans)) opts[0] = ans;
+  return { q: `<div class="seq">${seq.join(' ')} <span class="gap">?</span></div><div class="label">What comes next?</div>`, choices: shuffle(opts).map(x => ({ label: `<span class="ce">${x}</span>`, ok: x === ans })),
+    yay: `The pattern repeats: ${unit.split('').map(ch => map[ch]).join(' ')}, then again!`, hint: `Find the part that repeats. Say it out loud: ${unit.split('').map(ch => map[ch]).join(' ')}…` };
+}
+function numQ() {
+  const kind = R(4); let seq, ans, rule;
+  if (kind === 0) { const st = R(5), d = [2, 3, 5, 10][R(4)]; seq = [0, 1, 2, 3].map(i => st + i * d); ans = st + 4 * d; rule = `add ${d} each time`; }
+  else if (kind === 1) { const st = 20 + R(20), d = [1, 2, 5][R(3)]; seq = [0, 1, 2, 3].map(i => st - i * d); ans = st - 4 * d; rule = `take away ${d} each time`; }
+  else if (kind === 2) { seq = [1, 2, 4, 8]; ans = 16; rule = 'double it each time'; }
+  else { const a = 1 + R(3), b = a + 2 + R(4); seq = [a, b, a, b, a]; ans = b; rule = `${a}, ${b}, ${a}, ${b}… it repeats`; }
+  const o = new Set([ans]); while (o.size < 3) { const x = ans + (R(2) ? 1 : -1) * (1 + R(4)); if (x >= 0) o.add(x); }
+  return { q: `<div class="seq">${seq.map(n => `<span class="num">${n}</span>`).join('')} <span class="gap">?</span></div><div class="label">What number comes next?</div>`, choices: shuffle([...o]).map(x => ({ label: String(x), ok: x === ans })),
+    yay: `The rule is: ${rule}.`, hint: 'How much does it go up or down each time?' };
+}
+const startQuiz = () => Kids.quiz('#quizBox', level === 3 ? numQ : shapeQ, { rounds: 8, onRight: () => ch.check({ level }) });
+$('#lvl').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { level = +b.dataset.l; Kids.sfx.pop(); $('#lvl').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); startQuiz(); }));
+
+/* ---------- make a pattern ---------- */
+const PAL = ['🔴', '🔵', '🟡', '🟢', '🍎', '🍌', '🐶', '🐱', '⭐', '🌙', '🦋', '🌸'];
+let unit = [];
+PAL.forEach(p => { const b = document.createElement('button'); b.textContent = p; b.addEventListener('click', () => { if (unit.length >= 4) { $('#mRes').textContent = '4 is enough! Press the magic button.'; return; } unit.push(p); Kids.sfx.pop(); drawMade(); }); $('#pal').appendChild(b); });
+function drawMade(rep) { $('#made').innerHTML = unit.map(x => `<span>${x}</span>`).join('') + (rep ? Array.from({ length: unit.length * 3 }, (_, i) => `<span class="ext">${unit[i % unit.length]}</span>`).join('') : ''); }
+$('#magic').addEventListener('click', () => {
+  if (unit.length < 2) { Kids.sfx.oops(); $('#mRes').textContent = 'Pick at least 2 things first!'; return; }
+  drawMade(true); Kids.sfx.yay(); Kids.addStar();
+  $('#mRes').className = 'result good'; $('#mRes').textContent = `✨ Your pattern unit is ${unit.join(' ')}. It repeats again and again! Can you say it like a song?`;
+  ch.check({ made: true });
+});
+$('#clear').addEventListener('click', () => { unit = []; drawMade(); $('#mRes').className = 'result'; $('#mRes').textContent = ''; });
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+}));
+const ch = Kids.challenges([
+  { ask: 'Finish an AB pattern ⭐', hint: 'Red, blue, red, blue… what comes next?', ok: c => c.level === 1, yay: 'AB, AB, AB!' },
+  { ask: 'Finish a trickier pattern ⭐⭐', hint: 'Pick ⭐⭐ at the top.', ok: c => c.level === 2, yay: 'Pattern detective!' },
+  { ask: 'Find the next number ⭐⭐⭐', hint: 'Pick ⭐⭐⭐ Numbers.', ok: c => c.level === 3, yay: 'You found the number rule!' },
+  { ask: 'Make your own pattern 🎨', hint: 'Open Make a Pattern.', ok: c => c.made, yay: 'An artist and a mathematician!' },
+], { title: 'Pattern Pro' });
+Kids.learn({
+  why: ['A pattern is something that repeats in a rule. When you spot the rule, you can guess what comes next!',
+    'Patterns are everywhere in maths: counting in 2s (2, 4, 6, 8) is a pattern too.'],
+  imagine: ['Imagine a kolam at the front door. Can you see how the dots and lines repeat? Kolams are beautiful patterns!'],
+  wow: ['Day, night, day, night… and the seasons, and the Moon\'s shapes: nature is full of patterns!', 'Music has patterns too: clap, clap, stamp, clap, clap, stamp!'],
+  talk: ['Find a pattern on your clothes, a sari border or the floor tiles.', 'Make a pattern with spoons and forks on the table.', 'Clap a pattern for a grown-up to copy!'],
+});
+startQuiz();
+</script>
+</body>
+</html>

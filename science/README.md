@@ -21,4 +21,7 @@
 | [volcanoes](volcanoes/) | Why volcanoes erupt, the parts of a volcano, famous volcanoes (Barren Island) |
 | [eclipse](eclipse/) | Solar and lunar eclipses by moving the Moon, and eclipse safety |
 
-**Ideas:** magnets, recycling.
+| [magnets](magnets/) | Guess and test what a magnet picks up; north and south poles |
+| [recycling-sorter](recycling-sorter/) | Sorting rubbish into wet, dry and reject bins; reduce, reuse, recycle |
+
+**Ideas:** seasons of India, build a solar system.
