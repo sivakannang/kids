@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>States &amp; Countries</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=5">
+<script src="../../shared/vendor/d3.min.js"></script>
+<script src="../../shared/vendor/topojson-client.min.js"></script>
+<script src="../../shared/vendor/countries-110m.js"></script>
+<style>
+  .map { width: 100%; display: block; border-radius: 18px; }
+  .map .ocean { fill: #9fd3ff; } .map .land { fill: #f4efe1; }
+  .map .pin { cursor: pointer; } .map .pin circle.d { fill: #ef476f; stroke: #fff; stroke-width: 1.5; }
+  .map .pin.seen circle.d { fill: #06d6a0; } .map .pin.on circle.d { fill: #ffd166; stroke: #2b2d42; }
+  .map .pin text { font-size: 11px; font-weight: 700; fill: #2b2d42; paint-order: stroke; stroke: #fff; stroke-width: 3px; pointer-events: none; }
+  .list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 10px; }
+  .list button { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 4px 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--ink); }
+  .list button.seen { border-color: #06d6a0; } .list button.on { border-color: var(--orange); background: #fff4e0; }
+  .list h4 { width: 100%; text-align: center; margin: 8px 0 2px; color: var(--muted); }
+  .info { text-align: center; } .info .e { font-size: 70px; line-height: 1.1; } .info h2 { margin: 4px 0 8px; color: var(--purple); }
+  .facts { display: grid; gap: 8px; text-align: left; }
+  .facts div { background: #f8f6ff; border-radius: 14px; padding: 8px 12px; font-size: 18px; }
+  .facts b { color: var(--ink); } .facts span { color: var(--muted); font-size: 14px; display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🗺️</span>
+    <div><h1>States &amp; Countries</h1><small>Places, capitals and languages, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="india">🇮🇳 States of India</button>
+  <button class="tab" data-tab="world">🌍 Countries of the World</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="india">
+      <svg id="indiaMap" class="map" viewBox="0 0 600 640"></svg>
+      <div class="list" id="indiaList"></div>
+    </section>
+    <section class="card" data-panel="world" hidden>
+      <svg id="worldMap" class="map" viewBox="0 0 960 500"></svg>
+      <div class="list" id="worldList"></div>
+    </section>
+    <section class="card" data-panel="quiz" hidden>
+      <div class="pick" id="qMode"><button data-m="india" class="active">🇮🇳 India</button><button data-m="world">🌍 World</button></div>
+      <div id="quizBox" style="margin-top:10px"></div>
+    </section>
+  </div>
+  <div>
+    <section class="card info" id="info"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · World 🗺️</footer>
+
+<script src="../../shared/kids.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl, K = Kids.name;
+/* ---------- India: [name, capital, main language(s), how to say hello, known for, lat, lon, 'UT' for union territories] ---------- */
+const IN = [
+  ['Andhra Pradesh', 'Amaravati', 'Telugu', 'Namaskaram', '🛕 Tirupati temple and spicy food 🌶️', 16.51, 80.52],
+  ['Arunachal Pradesh', 'Itanagar', 'English and many local languages', 'Jai Hind (a popular greeting there!)', '🌄 The first sunrise in India', 27.08, 93.61],
+  ['Assam', 'Dispur', 'Assamese', 'Nomoskar', '🍵 Tea gardens and one-horned rhinos 🦏', 26.14, 91.79],
+  ['Bihar', 'Patna', 'Hindi', 'Namaste', '📚 Nalanda, one of the world\'s oldest universities', 25.59, 85.14],
+  ['Chhattisgarh', 'Raipur', 'Hindi (and Chhattisgarhi)', 'Namaste', '🌳 Forests and the Chitrakote waterfall', 21.25, 81.63],
+  ['Goa', 'Panaji', 'Konkani', 'Namaskar', '🏖️ Beautiful beaches', 15.49, 73.83],
+  ['Gujarat', 'Gandhinagar', 'Gujarati', 'Kem cho', '🦁 Asiatic lions in the Gir forest', 23.22, 72.65],
+  ['Haryana', 'Chandigarh', 'Hindi', 'Namaste', '🌾 Farms and champion wrestlers 🤼', 30.73, 76.86],
+  ['Himachal Pradesh', 'Shimla', 'Hindi', 'Namaste', '🍎 Apples and snowy mountains', 31.10, 77.17],
+  ['Jharkhand', 'Ranchi', 'Hindi', 'Namaste', '💦 Waterfalls and minerals', 23.34, 85.31],
+  ['Karnataka', 'Bengaluru', 'Kannada', 'Namaskara', '🏰 Mysore Palace and silk saris (we live here!)', 12.97, 77.59],
+  ['Kerala', 'Thiruvananthapuram', 'Malayalam', 'Namaskaram', '🌴 Backwaters and snake-boat races 🚣', 8.52, 76.94],
+  ['Madhya Pradesh', 'Bhopal', 'Hindi', 'Namaste', '🐅 Tiger forests like Kanha', 23.26, 77.41],
+  ['Maharashtra', 'Mumbai', 'Marathi', 'Namaskar', '🎬 Films and the Ajanta caves', 19.08, 72.88],
+  ['Manipur', 'Imphal', 'Manipuri (Meitei)', 'Khurumjari', '🏞️ Loktak, a lake with floating islands', 24.82, 93.94],
+  ['Meghalaya', 'Shillong', 'Khasi and Garo (and English)', 'Khublei', '🌧️ One of the rainiest places on Earth, and living root bridges', 25.58, 91.89],
+  ['Mizoram', 'Aizawl', 'Mizo', 'Chibai', '🎋 The bamboo dance, Cheraw', 23.73, 92.72],
+  ['Nagaland', 'Kohima', 'English (and Nagamese)', 'Hello', '🎉 The colourful Hornbill Festival', 25.67, 94.11],
+  ['Odisha', 'Bhubaneswar', 'Odia', 'Namaskar', '🛕 The Konark Sun Temple, shaped like a giant chariot', 20.30, 85.82],
+  ['Punjab', 'Chandigarh', 'Punjabi', 'Sat Sri Akal', '🌾 Golden wheat fields and the Golden Temple', 30.73, 76.70],
+  ['Rajasthan', 'Jaipur', 'Hindi (and Rajasthani)', 'Khamma ghani', '🐪 Deserts, camels and huge forts', 26.91, 75.79],
+  ['Sikkim', 'Gangtok', 'Nepali', 'Namaste', '🏔️ Kanchenjunga, India\'s highest mountain', 27.33, 88.61],
+  ['Tamil Nadu', 'Chennai', 'Tamil', 'Vanakkam', '🛕 Temples, jasmine flowers and Bharatanatyam (our family\'s home state!)', 13.08, 80.27],
+  ['Telangana', 'Hyderabad', 'Telugu', 'Namaskaram', '🕌 The Charminar and biryani', 17.39, 78.49],
+  ['Tripura', 'Agartala', 'Bengali (and Kokborok)', 'Nomoshkar', '🏯 The white Ujjayanta Palace', 23.83, 91.29],
+  ['Uttar Pradesh', 'Lucknow', 'Hindi', 'Namaste', '🕌 The Taj Mahal in Agra', 26.85, 80.95],
+  ['Uttarakhand', 'Dehradun', 'Hindi', 'Namaste', '🏔️ The Himalayas, where the river Ganga begins', 30.32, 78.03],
+  ['West Bengal', 'Kolkata', 'Bengali', 'Nomoshkar', '🐯 Sundarbans tigers and sweet rosogolla', 22.57, 88.36],
+  ['Andaman and Nicobar Islands', 'Sri Vijaya Puram (Port Blair)', 'Hindi and Bengali', 'Namaste', '🏝️ Islands, coral and sea turtles', 11.62, 92.73, 'UT'],
+  ['Chandigarh', 'Chandigarh', 'Hindi and Punjabi', 'Namaste', '🪨 The Rock Garden, made from recycled things', 30.73, 76.78, 'UT'],
+  ['Dadra and Nagar Haveli and Daman and Diu', 'Daman', 'Gujarati', 'Kem cho', '🏖️ Quiet beaches and old forts', 20.40, 72.83, 'UT'],
+  ['Delhi', 'New Delhi', 'Hindi', 'Namaste', '🏛️ India Gate, the Red Fort, and India\'s capital!', 28.61, 77.21, 'UT'],
+  ['Jammu and Kashmir', 'Srinagar (summer), Jammu (winter)', 'Kashmiri, Dogri and Urdu', 'Salaam', '🛶 Shikara boats on the Dal Lake', 34.08, 74.80, 'UT'],
+  ['Ladakh', 'Leh', 'Ladakhi', 'Julley', '🏔️ A high, cold mountain desert', 34.15, 77.58, 'UT'],
+  ['Lakshadweep', 'Kavaratti', 'Malayalam', 'Namaskaram', '🐠 Tiny coral islands in the Arabian Sea', 10.57, 72.64, 'UT'],
+  ['Puducherry', 'Puducherry', 'Tamil (and French, Malayalam, Telugu)', 'Vanakkam', '🇫🇷 Colourful French-style streets by the sea', 11.94, 79.81, 'UT'],
+];
+/* ---------- World: [flag, country, capital, language(s), hello, continent, lat, lon] ---------- */
+const W = [
+  ['🇮🇳', 'India', 'New Delhi', 'Hindi and English (and 20 more!)', 'Namaste', 'Asia', 28.61, 77.21], ['🇳🇵', 'Nepal', 'Kathmandu', 'Nepali', 'Namaste', 'Asia', 27.72, 85.32],
+  ['🇧🇹', 'Bhutan', 'Thimphu', 'Dzongkha', 'Kuzuzangpo', 'Asia', 27.47, 89.64], ['🇧🇩', 'Bangladesh', 'Dhaka', 'Bengali', 'Nomoshkar', 'Asia', 23.81, 90.41],
+  ['🇱🇰', 'Sri Lanka', 'Sri Jayawardenepura Kotte', 'Sinhala and Tamil', 'Ayubowan / Vanakkam', 'Asia', 6.89, 79.92], ['🇲🇻', 'Maldives', 'Malé', 'Dhivehi', 'Assalaamu alaikum', 'Asia', 4.18, 73.51],
+  ['🇵🇰', 'Pakistan', 'Islamabad', 'Urdu and English', 'Assalam o alaikum', 'Asia', 33.68, 73.05], ['🇲🇲', 'Myanmar', 'Naypyidaw', 'Burmese', 'Mingalaba', 'Asia', 19.76, 96.08],
+  ['🇨🇳', 'China', 'Beijing', 'Mandarin Chinese', 'Nǐ hǎo', 'Asia', 39.90, 116.41], ['🇯🇵', 'Japan', 'Tokyo', 'Japanese', 'Konnichiwa', 'Asia', 35.68, 139.69],
+  ['🇰🇷', 'South Korea', 'Seoul', 'Korean', 'Annyeonghaseyo', 'Asia', 37.57, 126.98], ['🇹🇭', 'Thailand', 'Bangkok', 'Thai', 'Sawasdee', 'Asia', 13.76, 100.50],
+  ['🇸🇬', 'Singapore', 'Singapore', 'English, Malay, Mandarin and Tamil', 'Hello / Vanakkam', 'Asia', 1.35, 103.82], ['🇲🇾', 'Malaysia', 'Kuala Lumpur', 'Malay', 'Selamat pagi', 'Asia', 3.14, 101.69],
+  ['🇮🇩', 'Indonesia', 'Jakarta', 'Indonesian', 'Halo', 'Asia', -6.21, 106.85], ['🇦🇪', 'United Arab Emirates', 'Abu Dhabi', 'Arabic', 'Marhaba', 'Asia', 24.45, 54.38],
+  ['🇸🇦', 'Saudi Arabia', 'Riyadh', 'Arabic', 'Marhaba', 'Asia', 24.71, 46.68],
+  ['🇬🇧', 'United Kingdom', 'London', 'English', 'Hello', 'Europe', 51.51, -0.13], ['🇫🇷', 'France', 'Paris', 'French', 'Bonjour', 'Europe', 48.86, 2.35],
+  ['🇩🇪', 'Germany', 'Berlin', 'German', 'Hallo', 'Europe', 52.52, 13.40], ['🇮🇹', 'Italy', 'Rome', 'Italian', 'Ciao', 'Europe', 41.90, 12.50],
+  ['🇪🇸', 'Spain', 'Madrid', 'Spanish', 'Hola', 'Europe', 40.42, -3.70], ['🇬🇷', 'Greece', 'Athens', 'Greek', 'Yassou', 'Europe', 37.98, 23.73],
+  ['🇷🇺', 'Russia', 'Moscow', 'Russian', 'Privet', 'Europe', 55.76, 37.62],
+  ['🇪🇬', 'Egypt', 'Cairo', 'Arabic', 'Ahlan', 'Africa', 30.04, 31.24], ['🇰🇪', 'Kenya', 'Nairobi', 'Swahili and English', 'Jambo', 'Africa', -1.29, 36.82],
+  ['🇳🇬', 'Nigeria', 'Abuja', 'English (and Hausa, Yoruba, Igbo)', 'Hello', 'Africa', 9.06, 7.50], ['🇿🇦', 'South Africa', 'Pretoria', '12 languages, like Zulu and English', 'Sawubona', 'Africa', -25.75, 28.19],
+  ['🇲🇦', 'Morocco', 'Rabat', 'Arabic and Berber', 'Salam', 'Africa', 34.02, -6.84],
+  ['🇺🇸', 'United States', 'Washington, D.C.', 'English', 'Hello', 'North America', 38.91, -77.04], ['🇨🇦', 'Canada', 'Ottawa', 'English and French', 'Hello / Bonjour', 'North America', 45.42, -75.70],
+  ['🇲🇽', 'Mexico', 'Mexico City', 'Spanish', 'Hola', 'North America', 19.43, -99.13],
+  ['🇧🇷', 'Brazil', 'Brasília', 'Portuguese', 'Olá', 'South America', -15.79, -47.88], ['🇦🇷', 'Argentina', 'Buenos Aires', 'Spanish', 'Hola', 'South America', -34.60, -58.38],
+  ['🇨🇱', 'Chile', 'Santiago', 'Spanish', 'Hola', 'South America', -33.45, -70.67],
+  ['🇦🇺', 'Australia', 'Canberra', 'English', 'G\'day', 'Oceania', -35.28, 149.13], ['🇳🇿', 'New Zealand', 'Wellington', 'English and Māori', 'Kia ora', 'Oceania', -41.29, 174.78],
+];
+const world = window.WORLD_ATLAS, feats = topojson.feature(world, world.objects.countries).features;
+/* ---------- maps: land drawn in one colour, with no borders between countries ---------- */
+function drawMap(svg, w, h, fitTo, places, onTap, labelOf) {
+  const proj = (fitTo ? d3.geoMercator().fitExtent([[6, 6], [w - 6, h - 6]], fitTo) : d3.geoNaturalEarth1().fitExtent([[6, 6], [w - 6, h - 6]], { type: 'Sphere' }));
+  const path = d3.geoPath(proj);
+  el(fitTo ? 'rect' : 'path', fitTo ? { x: 0, y: 0, width: w, height: h, class: 'ocean' } : { d: path({ type: 'Sphere' }), class: 'ocean' }, svg);
+  const lg = el('g', {}, svg); feats.forEach(f => el('path', { d: path(f), class: 'land' }, lg));
+  return places.map((p, i) => {
+    const [x, y] = proj([p.lon, p.lat]);
+    const g = el('g', { class: 'pin', transform: `translate(${x.toFixed(1)},${y.toFixed(1)})` }, svg);
+    el('circle', { r: 11, fill: 'transparent' }, g); el('circle', { r: 5, class: 'd' }, g);
+    const t = el('text', { y: -8, 'text-anchor': 'middle' }, g); t.textContent = labelOf(p); t.style.display = 'none';
+    g.addEventListener('click', () => onTap(i));
+    return { g, t };
+  });
+}
+const inPlaces = IN.map(s => ({ lat: s[5], lon: s[6] })), wPlaces = W.map(c => ({ lat: c[6], lon: c[7] }));
+const box = { type: 'MultiPoint', coordinates: [[67, 5.5], [98, 37.5], [67, 37.5], [98, 5.5]] };   // the corners of the India view
+const seenIn = new Set(), seenW = new Set();
+const inPins = drawMap($('#indiaMap'), 600, 640, box, IN.map(s => ({ lat: s[5], lon: s[6], n: s[0] })), i => showState(i), p => p.n);
+const wPins = drawMap($('#worldMap'), 960, 500, null, W.map(c => ({ lat: c[6], lon: c[7], n: c[1] })), i => showCountry(i), p => p.n);
+// the list of names under each map
+$('#indiaList').innerHTML = '<h4>28 States</h4>' + IN.map((s, i) => s[7] ? '' : `<button data-i="${i}">${s[0]}</button>`).join('') + '<h4>8 Union Territories</h4>' + IN.map((s, i) => s[7] ? `<button data-i="${i}">${s[0]}</button>` : '').join('');
+$('#indiaList').querySelectorAll('button').forEach(b => b.addEventListener('click', () => showState(+b.dataset.i)));
+const CONTS = ['Asia', 'Europe', 'Africa', 'North America', 'South America', 'Oceania'];
+$('#worldList').innerHTML = CONTS.map(ct => `<h4>${ct}</h4>` + W.map((c, i) => c[5] === ct ? `<button data-i="${i}">${c[0]} ${c[1]}</button>` : '').join('')).join('');
+$('#worldList').querySelectorAll('button').forEach(b => b.addEventListener('click', () => showCountry(+b.dataset.i)));
+function mark(pins, list, set, i) {
+  pins.forEach((p, j) => { p.g.classList.toggle('on', j === i); p.g.classList.toggle('seen', set.has(j)); p.t.style.display = j === i ? '' : 'none'; });
+  list.querySelectorAll('button').forEach(b => { b.classList.toggle('on', +b.dataset.i === i); b.classList.toggle('seen', set.has(+b.dataset.i)); });
+  const g = pins[i].g; g.parentNode.appendChild(g);
+}
+function showState(i) {
+  const s = IN[i]; seenIn.add(i); mark(inPins, $('#indiaList'), seenIn, i); Kids.sfx.pop();
+  $('#info').innerHTML = `<div class="e">${s[4].split(' ')[0]}</div><h2>${s[0]}</h2><div class="hint" style="margin:-4px 0 8px">${s[7] ? 'Union Territory' : 'State'} of India 🇮🇳</div>
+    <div class="facts"><div>🏛️ <b>Capital:</b> ${s[1]}</div><div>🗣️ <b>Language:</b> ${s[2]}</div><div>👋 <b>Say hello:</b> ${s[3]}</div><div>⭐ <b>Famous for:</b> ${s[4].split(' ').slice(1).join(' ')}</div></div>`;
+  Kids.speak(Kids.forSpeech(`${s[0]}. The capital is ${s[1]}. People speak ${s[2]}. Say ${s[3]}!`), true);
+  ch.check({ state: s[0], seenIn: seenIn.size, uts: [...seenIn].filter(k => IN[k][7]).length });
+}
+function showCountry(i) {
+  const c = W[i]; seenW.add(i); mark(wPins, $('#worldList'), seenW, i); Kids.sfx.pop();
+  $('#info').innerHTML = `<div class="e">${c[0]}</div><h2>${c[1]}</h2><div class="hint" style="margin:-4px 0 8px">in ${c[5]}</div>
+    <div class="facts"><div>🏛️ <b>Capital:</b> ${c[2]}</div><div>🗣️ <b>Language:</b> ${c[3]}</div><div>👋 <b>Say hello:</b> ${c[4]}</div></div>`;
+  Kids.speak(Kids.forSpeech(`${c[1]}. The capital is ${c[2]}. People speak ${c[3]}. Say ${c[4]}!`), true);
+  ch.check({ country: c[1], seenW: seenW.size, conts: new Set([...seenW].map(k => W[k][5])).size });
+}
+
+/* ---------- quiz ---------- */
+// wrong answers must be different from the right one (many states share Hindi, many countries share Spanish)
+const others = (list, f, a, n) => shuffle([...new Set(list.map(f))].filter(x => x !== f(a))).slice(0, n);
+const MK = {
+  india: [
+    () => { const a = IN.filter(s => !s[7])[R(28)]; return { q: `What is the capital of <b>${a[0]}</b>?`, choices: shuffle([a[1], ...others(IN.filter(s => !s[7]), s => s[1], a, 3)]).map(x => ({ label: x, ok: x === a[1] })), yay: `${a[0]}'s capital is ${a[1]}.`, hint: 'Look it up on the States of India tab!' }; },
+    () => { const pool = IN.filter(s => !/ and |\(/.test(s[2])), a = pool[R(pool.length)];
+      return { q: `What language do most people speak in <b>${a[0]}</b>?`, choices: shuffle([a[2], ...others(pool, s => s[2], a, 3)]).map(x => ({ label: x, ok: x === a[2] })), yay: `In ${a[0]}, people speak ${a[2]}. Say "${a[3]}"!`, hint: 'Neighbouring states often have different languages.' }; },
+    () => { const pool = IN.filter(s => !s[7] && s[1] !== 'Chandigarh'), a = pool[R(pool.length)];
+      return { q: `<b>${a[1]}</b> is the capital of which state?`, choices: shuffle([a[0], ...others(pool, s => s[0], a, 3)]).map(x => ({ label: x, ok: x === a[0] })), yay: `${a[1]} is the capital of ${a[0]}.`, hint: 'Find the city on the map!' }; },
+  ],
+  world: [
+    () => { const a = W[R(W.length)]; return { q: `${a[0]} What is the capital of <b>${a[1]}</b>?`, choices: shuffle([a[2], ...others(W, c => c[2], a, 3)]).map(x => ({ label: x, ok: x === a[2] })), yay: `${a[1]}'s capital is ${a[2]}.`, hint: 'Look it up on the Countries tab!' }; },
+    () => { const pool = W.filter(c => !/ and |,|\(/.test(c[3])), a = pool[R(pool.length)];
+      return { q: `${a[0]} What language do people speak in <b>${a[1]}</b>?`, choices: shuffle([a[3], ...others(pool, c => c[3], a, 3)]).map(x => ({ label: x, ok: x === a[3] })), yay: `In ${a[1]}, they speak ${a[3]}. Say "${a[4]}"!`, hint: 'Think about the country\'s name. France → French, Japan → Japanese…' }; },
+    // only hellos that belong to one country here, and no other country with the same language as a wrong answer
+    () => { const pool = W.filter(c => !/Hello|G'day|alaikum|Salam|\//.test(c[4]) && W.filter(x => x[4] === c[4]).length === 1), a = pool[R(pool.length)];
+      const langs = c => new Set(c[3].match(/[A-Z][\wé]+/g)), shares = (x, y) => [...langs(x)].some(l => langs(y).has(l));
+      const wrong = shuffle(W.filter(c => c !== a && !shares(c, a))).slice(0, 3);
+      return { q: `Where would people say "<b>${a[4]}</b>"?`, choices: shuffle([a, ...wrong]).map(c => ({ label: `${c[0]} ${c[1]}`, ok: c === a })), yay: `"${a[4]}" is hello in ${a[1]}! They speak ${a[3]}.`, hint: 'Say the hello out loud. Which language does it sound like?' }; },
+  ],
+};
+let qMode = 'india', quizOn = false;
+const startQuiz = () => Kids.quiz('#quizBox', () => MK[qMode][R(MK[qMode].length)](), { rounds: 8, onRight: () => ch.check({ quiz: qMode }) });
+$('#qMode').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { qMode = b.dataset.m; Kids.sfx.pop(); $('#qMode').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); startQuiz(); }));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; startQuiz(); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Find our state, Karnataka, where we live 🏠', hint: 'It is in the south. Look for Bengaluru.', ok: c => c.state === 'Karnataka', yay: 'Karnataka! Capital Bengaluru, language Kannada. Namaskara!' },
+  { ask: 'Find our family\'s home state, Tamil Nadu 🌺', hint: 'It is in the south-east, by the sea. Look for Chennai.', ok: c => c.state === 'Tamil Nadu', yay: 'Tamil Nadu! Capital Chennai. Vanakkam!' },
+  { ask: 'Visit 10 states or union territories 🇮🇳', hint: 'Tap names in the list or dots on the map.', ok: c => c.seenIn >= 10, yay: 'Ten places across India!' },
+  { ask: 'Find a country where people also speak Tamil 🌏', hint: 'Look at India\'s neighbours, and a little island country far to the south-east.', ok: c => c.country === 'Sri Lanka' || c.country === 'Singapore', yay: c => `Yes! People speak Tamil in ${c.country} too!` },
+  { ask: 'Visit a country on every continent 🌍', hint: 'Open Countries of the World and try each group.', ok: c => c.conts >= 6, yay: 'You travelled the whole world!' },
+  { ask: 'Get a quiz question right ❓', hint: 'Open the Quiz tab. Try India and World!', ok: c => !!c.quiz, yay: 'Geography star!' },
+], { title: 'Map Explorer' });
+Kids.learn({
+  why: ['India is divided into 28 states and 8 union territories. Each state has its own capital city, where its government works.',
+    'Many Indian states were made so that people who speak the same language live in the same state. That is why Karnataka speaks Kannada and Tamil Nadu speaks Tamil!'],
+  imagine: ['Imagine a train journey from Kashmir to Kanyakumari. At every big station, people say hello differently: Salaam, Namaste, Namaskar, Namaskara, Vanakkam! 🚂'],
+  wow: ['India has 22 official languages in its Constitution, and hundreds more spoken every day!', 'Chandigarh is the capital of two states, Punjab and Haryana, and is also a union territory itself!',
+    'Tamil is an official language in India, Sri Lanka and Singapore. 🌺'],
+  talk: ['Which state would you like to visit next? Why?', 'How many languages does our family speak?', 'Can you learn to say hello in 5 languages?'],
+});
+$('#info').innerHTML = '<div class="e">🗺️</div><h2>Let\'s explore!</h2><p>Tap a state on the map or in the list to see its capital, its language, and how people say hello.</p>';
+</script>
+</body>
+</html>
