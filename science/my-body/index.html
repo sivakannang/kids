@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Body</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  #body { max-width: 380px; margin: 0 auto; display: block; }
+  #body .org { cursor: pointer; transition: transform .2s; transform-box: fill-box; transform-origin: center; }
+  #body .org:hover { transform: scale(1.08); }
+  #body .org.seen { stroke: #ffd166; stroke-width: 4; }
+  .info { text-align: center; } .info .e { font-size: 80px; } .info h2 { margin: 4px 0; color: var(--purple); }
+  .info p { font-size: 19px; line-height: 1.45; }
+  .beat { font-size: 110px; text-align: center; display: inline-block; }
+  .beat.go { animation: pop var(--d, .8s) ease-in-out infinite; }
+  .big-num { font-size: 60px; font-weight: 700; color: var(--red); text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🫀</span>
+    <div><h1>My Body</h1><small>Heart, lungs, bones and brain, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="inside">🔍 Look Inside</button>
+  <button class="tab" data-tab="heart">❤️ My Heartbeat</button>
+  <button class="tab" data-tab="quiz">❓ Body Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="inside"><svg id="body" viewBox="0 0 300 560"></svg><div class="hint">Tap a part of the body to learn about it.</div></section>
+    <section class="card center" data-panel="heart" hidden>
+      <div class="beat" id="beat">❤️</div>
+      <div class="big-num" id="bpm"></div>
+      <div class="result" id="hRes">Put two fingers gently on your neck or on the inside of your wrist. Can you feel a little thump? That is your heart!</div>
+      <div class="row">
+        <button class="btn big" id="countBtn">⏱️ Count for 15 seconds</button>
+        <button class="btn big orange" id="jumpBtn">🦘 Jump 20 times first!</button>
+      </div>
+      <div class="row" id="tapRow" hidden><button class="btn big red" id="tapBtn" style="font-size:30px">❤️ Tap for each beat</button></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card info" id="info"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+const ORG = {
+  brain: { e: '🧠', n: 'Brain', t: 'Your brain is the boss of your body! It thinks, remembers, dreams and tells every part what to do. It sends messages through nerves, faster than a racing car.', f: 'Your brain uses about one-fifth of all your energy, even when you sleep!' },
+  eyes: { e: '👀', n: 'Eyes', t: 'Your eyes catch light and send pictures to your brain. You blink about 15 times a minute to keep them clean and wet.', f: 'Your eyes see the world upside down, and your brain turns the picture the right way up!' },
+  lungs: { e: '🫁', n: 'Lungs', t: 'Your two lungs fill with air like balloons when you breathe in. They take oxygen from the air and give it to your blood.', f: 'You breathe about 20,000 times every day!' },
+  heart: { e: '🫀', n: 'Heart', t: 'Your heart is a strong muscle, about the size of your fist. It pumps blood all around your body, day and night, without ever stopping.', f: 'Your heart beats about 1 lakh (100,000) times every day!' },
+  stomach: { e: '🍲', n: 'Stomach', t: 'When you eat, food goes down a tube into your stomach. It squeezes and mixes the food with juices to break it down.', f: 'Then the food goes into your intestines, which are longer than a bus when stretched out!' },
+  bones: { e: '🦴', n: 'Bones', t: 'Your bones make a skeleton, a strong frame that holds you up and protects your soft insides. Your skull protects your brain like a helmet.', f: 'A baby has about 300 bones. Some join together as you grow, so a grown-up has 206!' },
+  muscles: { e: '💪', n: 'Muscles', t: 'Muscles pull on your bones to make you move: walk, jump, smile and even blink! Playing and exercising makes them stronger.', f: 'You use more than 10 muscles just to smile! 😊' },
+  skin: { e: '🖐️', n: 'Skin', t: 'Your skin covers your whole body like a stretchy raincoat. It keeps germs out, and it can feel hot, cold, soft and tickly things.', f: 'Skin is the biggest part of your body! It makes new skin all the time.' },
+};
+const s = $('#body');
+const skin = el('path', { d: 'M150 20 a48 52 0 1 1 -0.1 0 Z M110 120 h80 l50 30 l-10 150 l-25 -5 l5 -110 l-10 0 l10 170 l-20 180 h-35 l-5 -160 l-5 160 h-35 l-20 -180 l10 -170 l-10 0 l5 110 l-25 5 l-10 -150 Z', fill: '#f6c9a8', stroke: '#d4a07e', 'stroke-width': 3, class: 'org', 'data-o': 'skin' }, s);
+const add = (o, tag, a) => el(tag, { ...a, class: 'org', 'data-o': o }, s);
+add('brain', 'ellipse', { cx: 150, cy: 58, rx: 34, ry: 24, fill: '#f4a6c1' });
+add('eyes', 'circle', { cx: 134, cy: 90, r: 8, fill: '#fff', stroke: '#333', 'stroke-width': 2 });
+add('eyes', 'circle', { cx: 166, cy: 90, r: 8, fill: '#fff', stroke: '#333', 'stroke-width': 2 });
+add('lungs', 'ellipse', { cx: 128, cy: 190, rx: 22, ry: 42, fill: '#ff8fab' });
+add('lungs', 'ellipse', { cx: 172, cy: 190, rx: 22, ry: 42, fill: '#ff8fab' });
+add('heart', 'path', { d: 'M152 218 C 132 204, 132 188, 142 184 C 148 181, 152 186, 153 190 C 154 186, 158 181, 164 184 C 174 188, 174 204, 152 218 Z', fill: '#d00000' });
+add('stomach', 'path', { d: 'M150 250 C 190 245, 190 290, 160 295 C 135 300, 125 280, 140 270 C 150 262, 140 252, 150 250 Z', fill: '#ffb703' });
+add('bones', 'rect', { x: 117, y: 400, width: 12, height: 120, rx: 6, fill: '#fefae0', stroke: '#ccc5b9', 'stroke-width': 2 });
+add('bones', 'rect', { x: 171, y: 400, width: 12, height: 120, rx: 6, fill: '#fefae0', stroke: '#ccc5b9', 'stroke-width': 2 });
+add('muscles', 'ellipse', { cx: 232, cy: 210, rx: 13, ry: 32, fill: '#e76f51' });
+add('muscles', 'ellipse', { cx: 68, cy: 210, rx: 13, ry: 32, fill: '#e76f51' });
+const seen = new Set();
+function show(o) {
+  const x = ORG[o];
+  $('#info').innerHTML = `<div class="e">${x.e}</div><h2>${x.n}</h2><p>${x.t}</p><p class="hint" style="font-size:17px">🤩 ${x.f}</p>`;
+  s.querySelectorAll(`[data-o="${o}"]`).forEach(e => e.classList.add('seen'));
+  seen.add(o); Kids.sfx.pop(); Kids.speak(Kids.forSpeech(`${x.n}. ${x.t}`), true, 0.9);
+  ch.check({ o, seen: seen.size });
+}
+s.querySelectorAll('.org').forEach(e => e.addEventListener('click', ev => { ev.stopPropagation(); show(e.dataset.o); }));
+$('#info').innerHTML = '<div class="e">🧍</div><h2>What is inside you?</h2><p>Your body is like an amazing machine with lots of parts working together. Tap a part to find out what it does!</p>';
+
+/* ---------- heartbeat ---------- */
+let taps = 0, counting = false, afterJump = false, rest = null;
+$('#countBtn').addEventListener('click', () => startCount(false));
+$('#jumpBtn').addEventListener('click', () => {
+  $('#hRes').textContent = '🦘 Jump 20 times! Count out loud… then tap "Count for 15 seconds" straight away.'; Kids.speak('Jump 20 times! Then count your heartbeat.', true);
+  afterJump = true;
+});
+function startCount() {
+  if (counting) return;
+  counting = true; taps = 0; $('#tapRow').hidden = false; $('#bpm').textContent = '0';
+  $('#hRes').textContent = 'Feel your pulse and tap the red button for every beat. Go!'; Kids.sfx.clock();
+  let left = 15; $('#countBtn').textContent = `⏱️ ${left} s`;
+  const t = setInterval(() => { left--; $('#countBtn').textContent = `⏱️ ${left} s`; Kids.sfx.tick();
+    if (left <= 0) { clearInterval(t); finish(); } }, 1000);
+}
+$('#tapBtn').addEventListener('click', () => { if (!counting) return; taps++; $('#bpm').textContent = taps; Kids.sfx.pop(); });
+function finish() {
+  counting = false; $('#tapRow').hidden = true; $('#countBtn').textContent = '⏱️ Count for 15 seconds';
+  const bpm = taps * 4;
+  $('#bpm').textContent = `${bpm} beats a minute`;
+  $('#beat').style.setProperty('--d', bpm ? (60 / bpm).toFixed(2) + 's' : '.8s'); $('#beat').classList.add('go');
+  let m;
+  if (taps < 5) m = 'Hmm, that seems very slow. Try again with a grown-up helping you find your pulse!';
+  else if (afterJump && rest && bpm > rest) m = `After jumping, your heart beat faster: ${bpm} instead of ${rest}! Your muscles needed more oxygen, so your heart pumped harder. 💪`;
+  else m = `${taps} beats in 15 seconds × 4 = ${bpm} beats in a minute. A child's heart usually beats about 80 to 120 times a minute.`;
+  if (!afterJump && taps >= 5) rest = bpm;
+  $('#hRes').textContent = m; Kids.speak(Kids.forSpeech(m), true);
+  if (taps >= 5) { Kids.addStar(); Kids.sfx.yay(); ch.check({ beat: true, jumped: afterJump && rest && bpm > rest }); }
+  afterJump = false;
+}
+
+/* ---------- quiz ---------- */
+const Q = [['Which part pumps blood around your body?', 'heart'], ['Which part helps you think and remember?', 'brain'], ['Which parts fill with air when you breathe in?', 'lungs'],
+  ['Which part mixes up the food you eat?', 'stomach'], ['What holds your body up, like a frame?', 'bones'], ['What pulls on your bones to make you move?', 'muscles'],
+  ['What covers your whole body like a raincoat?', 'skin'], ['What do you use to see?', 'eyes']];
+const quizMaker = () => { const [q, a] = Q[R(Q.length)]; const o = shuffle([a, ...shuffle(Object.keys(ORG).filter(k => k !== a)).slice(0, 3)]);
+  return { q, choices: o.map(k => ({ label: `<span class="ce">${ORG[k].e}</span>${ORG[k].n}`, ok: k === a })), yay: `The ${ORG[a].n.toLowerCase()}! ${ORG[a].f}`, hint: 'Look Inside can help you!' }; };
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Find your heart 🫀', hint: 'It is in your chest, between the lungs.', ok: c => c.o === 'heart', yay: 'Thump, thump! Your heart never takes a holiday.' },
+  { ask: 'Find the boss of your body 🧠', hint: 'It is inside your head.', ok: c => c.o === 'brain', yay: 'Your brain! It is thinking right now!' },
+  { ask: 'Learn about all 8 parts 🔍', hint: 'Tap the skin too!', ok: c => c.seen >= 8, yay: 'You know your body inside and out!' },
+  { ask: 'Count your heartbeat ❤️', hint: 'Open My Heartbeat. Ask a grown-up to help you find your pulse.', ok: c => c.beat, yay: 'Your very own heartbeat!' },
+  { ask: 'Jump, then count again. Is it faster? 🦘', hint: 'Count once first, then tap Jump 20 times, then count again.', ok: c => c.jumped, yay: 'Exercise makes your heart beat faster!' },
+  { ask: 'Get a Body Quiz question right ❓', hint: 'Open Body Quiz.', ok: c => c.quiz, yay: 'Smart body scientist!' },
+], { title: 'Body Explorer' });
+Kids.learn({
+  why: ['Your body has many parts, and each one has a job. They all work together like a team, so you can run, play, eat, think and grow!',
+    'Healthy food, water, play and sleep help every part of your body stay strong.'],
+  imagine: ['Imagine you are tiny, riding in a red blood cell boat. Your heart pumps, whoosh, and you zoom to the lungs to pick up oxygen, then off to the toes! 🚤'],
+  wow: ['Your blood vessels are so long that they could go around the whole Earth more than twice!', 'You grow a tiny bit taller while you sleep at night.',
+    'Your nose can remember about 50,000 different smells! 👃'],
+  talk: ['Which part of your body do you use to draw? To sing? To dream?', 'What healthy food did you eat today?', 'Why do you think we feel sleepy at night?'],
+});
+</script>
+</body>
+</html>

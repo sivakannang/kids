@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feelings Check-in</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  body { background: linear-gradient(160deg, #ffe5ec 0%, #e9f5ff 50%, #fdf0ff 100%); background-attachment: fixed; }
+  .faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+  .face { border: 4px solid transparent; border-radius: 22px; padding: 8px 4px; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .face .e { display: block; font-size: 52px; }
+  .face.on { border-color: var(--ink); transform: scale(1.05); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chip { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 15px; }
+  .chip.on { border-color: var(--purple); background: #f1e9ff; }
+  .tips { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+  .tip { background: #f8f6ff; border-radius: 16px; padding: 10px; font-size: 16px; text-align: center; }
+  .tip .e { font-size: 34px; display: block; }
+  .week { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .week .d { background: #f8f6ff; border-radius: 14px; padding: 6px 8px; min-width: 64px; text-align: center; font-size: 13px; }
+  .week .d .e { font-size: 30px; display: block; }
+  .size { display: flex; gap: 8px; justify-content: center; }
+  .size button { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 6px 12px; cursor: pointer; font-family: inherit; }
+  .size button.on { border-color: var(--orange); background: #fff4e0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">😊</span>
+    <div><h1>Feelings Check-in</h1><small>How do you feel today, <b data-kid-name>Kavikuyil</b>? Every feeling is okay.</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="check">💗 Check in</button>
+  <button class="tab" data-tab="week">🗓️ My Feelings Diary</button>
+  <button class="tab" data-tab="quiz">🤔 How Would You Feel?</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+    <section class="card" data-panel="check">
+      <h3 style="margin:0 0 10px">1️⃣ Which face is like you right now?</h3>
+      <div class="faces" id="faces"></div>
+      <div id="step2" hidden>
+        <h3 style="margin:16px 0 8px">2️⃣ How big is the feeling?</h3>
+        <div class="size" id="size"><button data-s="1">🤏 A little</button><button data-s="2">✋ Medium</button><button data-s="3">🙌 VERY big</button></div>
+        <h3 style="margin:16px 0 8px">3️⃣ Why do you think you feel this way? (pick any)</h3>
+        <div class="chips" id="why"></div>
+        <div class="row"><button class="btn big green" id="saveBtn">💾 Save my check-in</button></div>
+      </div>
+      <div id="step3" hidden>
+        <h3 style="margin:16px 0 8px">💡 Things that can help</h3>
+        <div class="tips" id="tips"></div>
+        <div class="row"><button class="btn big purple" id="breatheBtn">🌬️ Breathe with me</button></div>
+      </div>
+    </section>
+    <section class="card" data-panel="week" hidden>
+      <h3 style="margin:0 0 10px">The last 14 days</h3>
+      <div class="week" id="week"></div>
+      <div class="result" id="weekRes"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, K = Kids.name, N = Kids.nick;
+const F = {
+  happy: { e: '😊', c: '#ffe066', say: 'Happy feels warm and light, like sunshine inside!', tips: [['🎉', 'Share it! Tell someone what made you happy.'], ['🫙', 'Put it in your Dream Jar so you remember.'], ['💝', 'Do something kind and pass the happiness on.']] },
+  excited: { e: '🤩', c: '#ffb347', say: 'Excited feels fizzy and bouncy, like you can\'t wait!', tips: [['🌬️', 'Take 3 slow breaths if you feel too fizzy.'], ['🗣️', 'Tell someone what you are excited about.'], ['✏️', 'Draw what you are looking forward to.']] },
+  proud: { e: '🦁', c: '#f4a261', say: 'Proud is the feeling when you worked hard and did it!', tips: [['🪜', 'Add a step to your Goal Ladder.'], ['🙌', 'Give yourself a big high five.'], ['🗣️', 'Tell a grown-up what you did.']] },
+  calm: { e: '😌', c: '#a8e6cf', say: 'Calm feels peaceful and quiet, like a still lake.', tips: [['🌱', 'This is a great time for Focus Garden.'], ['📚', 'Read a story slowly.'], ['🌠', 'Try an Imagine Time journey.']] },
+  silly: { e: '🤪', c: '#cdb4db', say: 'Silly feels giggly and wiggly!', tips: [['💃', 'Have a little dance!'], ['😂', 'Tell a joke to someone.'], ['🌬️', 'When it\'s time to focus, take 3 slow breaths.']] },
+  tired: { e: '🥱', c: '#bde0fe', say: 'Tired means your body and brain need rest.', tips: [['🛌', 'Rest or have a nap.'], ['💧', 'Drink some water.'], ['🍎', 'Eat a healthy snack.']] },
+  sad: { e: '😢', c: '#90caf9', say: 'Sad can feel heavy, and sometimes makes us cry. It is okay to feel sad.', tips: [['🤗', 'Ask for a hug.'], ['🗣️', 'Tell someone you trust how you feel.'], ['🖍️', 'Draw your feeling in the Drawing Pad.']] },
+  worried: { e: '😟', c: '#b8c0ff', say: 'Worried feels like butterflies in your tummy, thinking "what if…?"', tips: [['🌬️', 'Breathe in for 4, out for 4.'], ['🗣️', 'Tell a grown-up your worry. Worries get smaller when we share them.'], ['🧸', 'Hold something soft and cosy.']] },
+  scared: { e: '😨', c: '#c3aed6', say: 'Scared is your body trying to keep you safe.', tips: [['🧑‍🧑‍🧒', 'Go near a grown-up you trust.'], ['🌬️', 'Take slow, deep breaths.'], ['💪', 'Say: "I am brave. I am safe."']] },
+  angry: { e: '😠', c: '#ff8a80', say: 'Angry can feel hot, like a volcano inside. It is okay to feel angry, but not okay to hurt anyone.', tips: [['🌬️', 'Blow out slowly, like blowing out birthday candles.'], ['🧊', 'Squeeze your hands tight, then let go. Do it 5 times.'], ['🚶', 'Walk away and come back when you feel cooler.']] },
+};
+const WHY = ['🏫 School', '👫 Friends', '👨‍👩‍👧‍👦 Family', '🎮 Playing', '😴 Sleep', '🍽️ Food', '🤒 Feeling unwell', '🎂 Something special', '🤷 I don\'t know'];
+const KEY = 'feelings.log';
+const log = Kids.store.get(KEY, {});
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+let feel = null, size = 2, why = new Set();
+Object.entries(F).forEach(([k, f]) => {
+  const b = document.createElement('button'); b.className = 'face'; b.style.background = f.c; b.innerHTML = `<span class="e">${f.e}</span>${k}`;
+  b.addEventListener('click', () => {
+    feel = k; Kids.sfx.pop(); [...$('#faces').children].forEach(x => x.classList.toggle('on', x === b));
+    $('#step2').hidden = false; $('#step3').hidden = true;
+    say(`${f.e} ${k[0].toUpperCase() + k.slice(1)}. ${f.say}`); Kids.speak(Kids.forSpeech(`You feel ${k}. ${f.say}`), true);
+    ch.check({ feel: k });
+  });
+  $('#faces').appendChild(b);
+});
+$('#size').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { size = +b.dataset.s; Kids.sfx.pop(); $('#size').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }));
+WHY.forEach(w => { const b = document.createElement('button'); b.className = 'chip'; b.textContent = w;
+  b.addEventListener('click', () => { why.has(w) ? why.delete(w) : why.add(w); b.classList.toggle('on'); Kids.sfx.pop(); }); $('#why').appendChild(b); });
+$('#saveBtn').addEventListener('click', () => {
+  if (!feel) return;
+  const first = !log[Kids.today()];
+  log[Kids.today()] = { f: feel, s: size, w: [...why], t: Date.now() }; Kids.store.set(KEY, log);
+  if (first) Kids.addStar();
+  Kids.sfx.yay();
+  const tough = ['sad', 'worried', 'scared', 'angry'].includes(feel);
+  say(tough ? `Thank you for telling me, ${K}. 💗 Big feelings are okay, and they do not last forever. Here are some things that can help.` : `${Kids.praise()} Thank you for checking in. 💗`, true);
+  Kids.speak(tough ? `Thank you for telling me, ${K}. Big feelings are okay, and they do not last forever.` : `Thank you for checking in, ${N}!`);
+  $('#tips').innerHTML = F[feel].tips.map(([e, t]) => `<div class="tip"><span class="e">${e}</span>${t}</div>`).join('');
+  $('#step3').hidden = false;
+  ch.check({ saved: true, feel, days: Object.keys(log).length });
+});
+let br = null;
+$('#breatheBtn').addEventListener('click', () => {
+  clearTimeout(br); let n = 0;
+  const go = () => { if (n >= 6) { say(`Well done, ${N}. Notice how your body feels now. 🌈`, true); Kids.sfx.yay(); ch.check({ breathe: true }); return; }
+    const inn = n % 2 === 0; say(inn ? '🌬️ Breathe IN slowly… 1, 2, 3, 4' : '😮‍💨 Breathe OUT slowly… 1, 2, 3, 4'); Kids.speak(inn ? 'Breathe in slowly' : 'and breathe out', true, 0.7);
+    n++; br = setTimeout(go, 4500); };
+  go();
+});
+/* ---------- diary ---------- */
+const ds = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function drawWeek() {
+  const out = [], counts = {};
+  for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const x = log[ds(d)]; if (x) counts[x.f] = (counts[x.f] || 0) + 1;
+    out.push(`<div class="d" title="${x ? x.w.join(', ') : ''}"><span class="e">${x ? F[x.f].e : '·'}</span>${d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' })}</div>`); }
+  $('#week').innerHTML = out.join('');
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const n = Object.values(counts).reduce((a, b) => a + b, 0);
+  $('#weekRes').textContent = top ? `You checked in ${n} time${n > 1 ? 's' : ''} in 2 weeks. Most often you felt ${F[top[0]].e} ${top[0]}. Talk about it with a grown-up!` : 'No check-ins yet. Start today! 💗';
+}
+/* ---------- how would you feel? ---------- */
+const SIT = [['Your friend shares their favourite toy with you.', ['happy']], ['You lost your favourite pencil.', ['sad', 'worried']], ['Tomorrow is your birthday!', ['excited']],
+  ['You finally learned to ride your cycle.', ['proud', 'happy']], ['Someone broke your sandcastle on purpose.', ['angry', 'sad']], ['There is a loud thunderstorm at night.', ['scared', 'worried']],
+  ['You stayed up very late.', ['tired']], ['You are lying under a tree, listening to birds.', ['calm']], ['You have a test at school tomorrow.', ['worried']],
+  ['You read a whole book by yourself!', ['proud']], ['Your friend is moving to another city.', ['sad']], ['You are wearing a funny hat and making faces.', ['silly']]];
+function quizMaker() {
+  const [s, ok] = SIT[R(SIT.length)];
+  // wrong choices come from the "opposite" group, so only one answer fits
+  const POS = ['happy', 'excited', 'proud', 'calm', 'silly'], other = POS.includes(ok[0]) ? Object.keys(F).filter(k => !POS.includes(k)) : POS;
+  const wrong = shuffle(other).slice(0, 2);
+  return { q: s + '<div class="label">How might you feel?</div>', choices: shuffle([ok[0], ...wrong]).map(k => ({ label: `<span class="ce">${F[k].e}</span>${k}`, ok: k === ok[0] })),
+    yay: `Many people would feel ${ok.join(' or ')}. ${F[ok[0]].say}`, hint: 'Imagine it is really happening to you. What would your face look like?' };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'week') drawWeek();
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 6, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Pick the face that matches how you feel 💗', hint: 'There is no wrong answer!', ok: c => !!c.feel, yay: 'Naming a feeling is a super skill!' },
+  { ask: 'Save your check-in for today 💾', hint: 'Pick a face, how big it is, and why. Then tap Save.', ok: c => c.saved, yay: 'Checked in! Well done for noticing your feelings.' },
+  { ask: 'Breathe with Kuyil 🌬️', hint: 'Save a check-in, then tap Breathe with me.', ok: c => c.breathe, yay: 'Calm breathing helps with every feeling.' },
+  { ask: 'Guess a feeling in "How Would You Feel?" 🤔', hint: 'Open the third tab.', ok: c => c.quiz, yay: 'You understand feelings, yours and other people\'s!' },
+  { ask: 'Check in on 3 different days 🗓️', hint: 'Come back tomorrow and the day after!', ok: c => c.days >= 3, yay: 'Three days of checking in!' },
+], { title: 'Feelings Friend' });
+Kids.learn({
+  why: ['Feelings are messages from your body and brain. Happy, sad, angry and scared are ALL okay. Nobody feels happy all the time!',
+    'When you can name a feeling, it becomes smaller and easier to handle. "I feel worried" is the first step to feeling better.'],
+  imagine: ['Imagine your feelings are like weather. Sometimes sunny, sometimes rainy, sometimes stormy. But weather always changes, and so do feelings! 🌦️'],
+  wow: ['Scientists found that just saying a feeling out loud helps the brain calm down.', 'Your face shows feelings even before you speak. People all around the world understand a smile!'],
+  talk: ['Grown-ups: share your own feeling today too. Children learn by watching you.', 'What makes you feel calm?', 'Who can you talk to when you feel sad?'],
+});
+say(`Hi ${K}! How are you feeling right now? Tap a face. Every feeling is okay. 💗`);
+</script>
+</body>
+</html>

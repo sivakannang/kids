@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhyme Time</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .fams { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .builder { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  .slot { min-width: 90px; height: 100px; border-radius: 22px; border: 4px dashed #c9b8f0; display: inline-flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 700; color: var(--red); background: #fff; }
+  .end { height: 100px; padding: 0 18px; border-radius: 22px; background: var(--purple); color: #fff; display: inline-flex; align-items: center; font-size: 64px; font-weight: 700; }
+  .letters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .lt { width: 58px; height: 58px; border: none; border-radius: 16px; font-size: 30px; font-weight: 700; color: #fff; background: var(--blue); cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,.15); font-family: inherit; }
+  .lt.used { background: #06d6a0; }
+  .made { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; min-height: 50px; }
+  .made span { background: #f1e9ff; border-radius: 999px; padding: 6px 14px; font-size: 22px; font-weight: 600; }
+  .made span.nonsense { background: #fff3c4; }
+  .wordpic { font-size: 80px; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔁</span>
+    <div><h1>Rhyme Time</h1><small>cat, hat, bat! Words that sound alike at the end, <b data-kid-name>Kavikuyil</b></small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="build">🧱 Word Families</button>
+  <button class="tab" data-tab="find">🔍 Find the Rhyme</button>
+  <button class="tab" data-tab="odd">🙃 Odd One Out</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card center" data-panel="build">
+      <div class="label" style="margin-top:0">Pick a word family:</div>
+      <div class="fams pick" id="fams"></div>
+      <div class="builder"><span class="slot" id="slot">?</span><span class="end" id="end"></span></div>
+      <div class="label">Put a letter in front:</div>
+      <div class="letters" id="letters"></div>
+      <div class="made" id="made"></div>
+      <div class="hint">✅ real words · 🤪 silly words (they rhyme too, but they aren't real words!)</div>
+    </section>
+    <section class="card" id="findBox" data-panel="find" hidden></section>
+    <section class="card" id="oddBox" data-panel="odd" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · English 🔤</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// word families: ending → real words (with a picture when there is one)
+const FAM = {
+  at: { cat: '🐱', hat: '🎩', bat: '🦇', mat: '🧶', rat: '🐀', sat: '🪑', fat: '', pat: '👋' },
+  an: { can: '🥫', fan: '🪭', man: '👨', pan: '🍳', van: '🚐', ran: '🏃', tan: '' },
+  ig: { pig: '🐷', big: '🐘', dig: '⛏️', wig: '💇', fig: '', jig: '💃' },
+  op: { mop: '🧹', top: '🔝', hop: '🐇', pop: '🎈', cop: '👮' },
+  un: { sun: '☀️', run: '🏃', bun: '🍞', fun: '🎉', nun: '' },
+  ed: { bed: '🛏️', red: '🔴', fed: '🍼', wed: '💍' },
+  ug: { bug: '🐛', mug: '☕', hug: '🤗', jug: '🏺', rug: '🧶', dug: '⛏️' },
+  ake: { cake: '🎂', lake: '🏞️', snake: '🐍', bake: '🧁', rake: '🍂', make: '🛠️', shake: '🥤' },
+  ing: { king: '🤴', ring: '💍', sing: '🎤', swing: '🎠', wing: '🪽', thing: '' },
+  ight: { night: '🌙', light: '💡', bright: '✨', right: '✅', might: '💪', sight: '👀' },
+};
+// starting sounds to try; the last two of each make silly (not real) words
+const START = { at: 'bcfhmprszj', an: 'cfmprtvzg', ig: 'bdfjpwzk', op: 'chmptzj', un: 'bfnrszm', ed: 'bfrwjk', ug: 'bdhjmrzk', ake: ['b', 'c', 'l', 'm', 'r', 'sn', 'sh', 'z', 'd'], ing: ['k', 'r', 's', 'w', 'sw', 'th', 'j', 'v'], ight: ['n', 'l', 'r', 'br', 'm', 's', 'z', 'j'] };
+let fam = 'at', made = new Set(), realMade = new Set();
+
+Object.keys(FAM).forEach(f => {
+  const b = document.createElement('button'); b.textContent = '-' + f; b.className = f === fam ? 'active' : '';
+  b.addEventListener('click', () => { fam = f; made = new Set(); Kids.sfx.pop(); [...$('#fams').children].forEach(x => x.classList.toggle('active', x === b)); drawBuild(); });
+  $('#fams').appendChild(b);
+});
+function drawBuild() {
+  $('#end').textContent = fam; $('#slot').textContent = '?'; $('#made').innerHTML = '';
+  $('#letters').innerHTML = '';
+  [...START[fam]].forEach(l => {
+    const b = document.createElement('button'); b.className = 'lt'; b.textContent = l; if (l.length > 1) b.style.width = '76px';
+    b.addEventListener('click', () => build(l, b));
+    $('#letters').appendChild(b);
+  });
+  ch.say(`The "-${fam}" family! Tap a letter to make a word that ends in "${fam}".`);
+}
+function build(l, btn) {
+  const w = l + fam, real = w in FAM[fam];
+  $('#slot').textContent = l; btn.classList.add('used');
+  Kids.speak(real ? `${w}!` : `${w}. That's a silly word!`, true, 0.8);
+  if (!made.has(w)) {
+    made.add(w);
+    $('#made').insertAdjacentHTML('beforeend', `<span class="${real ? '' : 'nonsense'}">${real ? '✅' : '🤪'} ${w} ${FAM[fam][w] || ''}</span>`);
+    if (real) { realMade.add(w); Kids.sfx.yay(); } else Kids.sfx.boing();
+  }
+  ch.check({ fam, real, made: [...made].filter(x => x in FAM[fam]).length, total: realMade.size });
+}
+
+/* ---------- find the rhyme ---------- */
+const PIC = Object.entries(FAM).flatMap(([f, ws]) => Object.entries(ws).filter(([, p]) => p).map(([w, p]) => ({ w, p, f })));
+function findMaker() {
+  const a = PIC[R(PIC.length)];
+  const mates = PIC.filter(x => x.f === a.f && x.w !== a.w);
+  const ans = mates[R(mates.length)];
+  const others = shuffle(PIC.filter(x => x.f !== a.f)).filter((x, i, arr) => arr.findIndex(y => y.f === x.f) === i).slice(0, 2);
+  return { q: `<div class="wordpic">${a.p}</div><b>${a.w}</b><div class="label">Which word rhymes with <b>${a.w}</b>?</div>`,
+    choices: shuffle([ans, ...others]).map(x => ({ label: `<span class="ce">${x.p}</span>${x.w}`, ok: x === ans })),
+    yay: `${a.w} and ${ans.w} both end with "${a.f}"!`, hint: `Listen to the END of ${a.w}: "${a.f}".` };
+}
+/* ---------- odd one out ---------- */
+function oddMaker() {
+  const fs = Object.keys(FAM).filter(f => Object.keys(FAM[f]).length >= 3);
+  const f = fs[R(fs.length)];
+  const three = shuffle(Object.keys(FAM[f])).slice(0, 3);
+  const g = shuffle(Object.keys(FAM).filter(x => x !== f))[0];
+  const odd = shuffle(Object.keys(FAM[g]))[0];
+  return { q: `Which word does <b>not</b> rhyme?`, choices: shuffle([...three, odd]).map(w => ({ label: `<span class="ce">${FAM[f][w] || FAM[g][w] || '🔤'}</span>${w}`, ok: w === odd })),
+    yay: `${odd} ends in "${g}", but the others end in "${f}".`, hint: 'Say each word out loud. Which one has a different ending sound?' };
+}
+const started = {};
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  const t = b.dataset.tab;
+  if (t === 'find' && !started.find) { started.find = 1; Kids.quiz('#findBox', findMaker, { rounds: 8, onRight: () => ch.check({ quiz: 'find' }) }); }
+  if (t === 'odd' && !started.odd) { started.odd = 1; Kids.quiz('#oddBox', oddMaker, { rounds: 6, onRight: () => ch.check({ quiz: 'odd' }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Make 3 real words in the "-at" family 🐱🎩🦇', hint: 'Pick -at and try c, h and b.', ok: c => c.fam === 'at' && c.made >= 3, yay: 'cat, hat, bat… they all rhyme!' },
+  { ask: 'Make a silly word 🤪', hint: 'Some letters make words that are not real. Try a few!', ok: c => c.real === false, yay: 'Ha ha! Silly words still rhyme.' },
+  { ask: 'Make 10 real words in any families 🧱', hint: 'Try different families: -an, -ig, -op…', ok: c => c.total >= 10, yay: 'Ten rhyming words! You are a word builder!' },
+  { ask: 'Find a rhyme in "Find the Rhyme" 🔍', hint: 'Open the Find the Rhyme tab.', ok: c => c.quiz === 'find', yay: 'Great listening!' },
+  { ask: 'Spot the odd one out 🙃', hint: 'Open the Odd One Out tab.', ok: c => c.quiz === 'odd', yay: 'Sharp ears!' },
+], { title: 'Rhyme Star' });
+Kids.learn({
+  why: ['Words rhyme when they sound the same at the end: c-at, h-at, b-at.',
+    'If you can read "cat", you can read "hat", "mat" and "rat" too! Rhymes are a reading shortcut. 🚀'],
+  imagine: ['Imagine a family of words living in one house. The -at family: Mr Cat, Mrs Hat, Baby Bat… Who else lives there?'],
+  wow: ['Many songs and poems use rhymes because they are easy to remember.', 'Silly words like "zat" or "gop" are fun to make. Poets make up words too!'],
+  talk: ['Can you find something at home that rhymes with "bed"?', 'Make a two-line rhyme with a grown-up: "I saw a cat, sitting on a…"', 'What rhymes with your name?'],
+});
+drawBuild();
+</script>
+</body>
+</html>

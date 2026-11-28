@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Plants Grow</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .pot { position: relative; height: 340px; border-radius: 24px; background: linear-gradient(#bde0fe, #e0f7ff 70%); overflow: hidden; }
+  .soil { position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: #8d5524; }
+  .plant { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); font-size: 120px; transition: all .6s; line-height: 1; }
+  .plant.droop { filter: grayscale(.7); transform: translateX(-50%) rotate(-12deg); }
+  .sunny { position: absolute; top: 14px; right: 20px; font-size: 64px; transition: opacity .5s; }
+  .needs { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .meter { width: 200px; } .meter b { font-size: 15px; } .meter .bar { height: 16px; background: #eee; border-radius: 99px; overflow: hidden; } .meter .bar i { display: block; height: 100%; border-radius: 99px; transition: width .4s; }
+  .stages { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; font-size: 30px; }
+  .stages span { opacity: .25; } .stages span.on { opacity: 1; }
+  #parts .lab { cursor: pointer; }
+  .order { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; min-height: 100px; }
+  .order button { font-size: 56px; background: #fff; border: 4px solid #e8defe; border-radius: 22px; padding: 6px 12px; cursor: pointer; }
+  .slots { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+  .slots span { width: 92px; height: 92px; border: 4px dashed #c9b8f0; border-radius: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 56px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌱</span>
+    <div><h1>How Plants Grow</h1><small>From a tiny seed to a big tree, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="grow">🪴 Grow a Plant</button>
+  <button class="tab" data-tab="parts">🌻 Plant Parts</button>
+  <button class="tab" data-tab="order">🔢 In Order</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="grow">
+      <div class="pot" id="pot"><div class="sunny" id="sun">☀️</div><div class="soil"></div><div class="plant" id="plant">🌰</div></div>
+      <div class="stages" id="stages" style="margin-top:8px"></div>
+      <div class="needs" style="margin-top:10px">
+        <div class="meter"><b>💧 Water</b><div class="bar"><i id="wBar" style="background:#3a86ff"></i></div></div>
+        <div class="meter"><b>☀️ Sunlight</b><div class="bar"><i id="sBar" style="background:#ffd166"></i></div></div>
+      </div>
+      <div class="row">
+        <button class="btn big" id="waterBtn">💧 Water it</button>
+        <button class="btn big orange" id="sunBtn">☀️ Sun on / off</button>
+        <button class="btn big green" id="dayBtn">🌙 Next day</button>
+        <button class="btn purple" id="againBtn">🌰 Plant a new seed</button>
+      </div>
+      <div class="result" id="gRes"></div>
+    </section>
+    <section class="card center" data-panel="parts" hidden>
+      <svg id="parts" class="svgbox" viewBox="0 0 600 460" style="max-width:560px;margin:0 auto"></svg>
+      <div class="result" id="pRes">Tap each label to learn what that part does!</div>
+    </section>
+    <section class="card center" data-panel="order" hidden>
+      <div class="label" style="margin-top:0">Put the life of a plant in order. Tap them from first to last!</div>
+      <div class="slots" id="slots"></div>
+      <div class="order" id="order"></div>
+      <div class="result" id="oRes"></div>
+      <div class="row"><button class="btn orange" id="oAgain">🔁 Mix them up</button></div>
+    </section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const el = Kids.svgEl, shuffle = Kids.shuffle, K = Kids.name;
+const STAGES = [['🌰', 'a seed', 'The seed is sleeping in the soil. Give it water!'], ['🌱', 'a sprout', 'A tiny root goes down and a shoot comes up. Hello, little sprout!'],
+  ['🌿', 'a seedling', 'It has its first leaves. Leaves catch sunlight to make food.'], ['🪴', 'a young plant', 'The stem grows taller and stronger every day.'],
+  ['🌼', 'a flowering plant', 'Flowers! Bees and butterflies visit to carry pollen. 🐝'], ['🍅', 'a plant with fruit', 'The flower turned into fruit, with new seeds inside! The circle of life begins again.']];
+let stage = 0, water = 30, sunOn = true, sunlight = 50, days = 0, grownOnce = false;
+$('#stages').innerHTML = STAGES.map(s => `<span>${s[0]}</span>`).join(' ➜ ');
+function draw(msg, good) {
+  $('#plant').textContent = STAGES[stage][0];
+  const sad = water < 15 || water > 90 || sunlight < 15;
+  $('#plant').classList.toggle('droop', sad && stage > 0);
+  $('#plant').style.fontSize = 80 + stage * 14 + 'px';
+  $('#sun').style.opacity = sunOn ? 1 : .15; $('#pot').style.filter = sunOn ? '' : 'brightness(.6)';
+  $('#wBar').style.width = Math.min(100, water) + '%'; $('#sBar').style.width = sunlight + '%';
+  [...$('#stages').querySelectorAll('span')].forEach((s, i) => s.classList.toggle('on', i <= stage));
+  $('#gRes').className = 'result' + (good ? ' good' : sad ? ' hint' : '');
+  $('#gRes').textContent = msg || `Day ${days}: it is ${STAGES[stage][1]}. ${STAGES[stage][2]}`;
+}
+$('#waterBtn').addEventListener('click', () => {
+  water = Math.min(110, water + 25); Kids.sfx.pop();
+  draw(water > 90 ? '😵 Too much water! The roots can\'t breathe. Wait a day before watering again.' : '💧 Glug glug! The roots drink the water.');
+});
+$('#sunBtn').addEventListener('click', () => { sunOn = !sunOn; Kids.sfx.pop(); draw(sunOn ? '☀️ Sunshine! Leaves use sunlight to make food.' : '🌥️ It is dark now. Plants need light to grow.'); });
+$('#dayBtn').addEventListener('click', () => {
+  days++; Kids.sfx.whoosh();
+  sunlight = Math.max(0, Math.min(100, sunlight + (sunOn ? 25 : -30)));
+  water = Math.max(0, water - 20);
+  const happy = water >= 15 && water <= 90 && (stage === 0 || sunlight >= 15);
+  if (happy && stage < STAGES.length - 1) {
+    stage++; Kids.sfx.yay();
+    ch.check({ stage });
+    if (stage === STAGES.length - 1) { Kids.addStar(); Kids.confetti(); Kids.banner(`🍅 ${K} grew a plant in ${days} days!`); draw(`🎉 Day ${days}: Fruit! You grew a plant from a seed. ${STAGES[stage][2]}`, true); grownOnce = true; return; }
+    draw(`🌟 Day ${days}: it grew into ${STAGES[stage][1]}! ${STAGES[stage][2]}`, true); return;
+  }
+  if (stage === STAGES.length - 1) { draw('Your plant is all grown. Plant a new seed to grow another!', true); return; }
+  draw(water < 15 ? `😢 Day ${days}: the plant is thirsty! Give it some water.` : water > 90 ? `😵 Day ${days}: still too wet. Let the soil dry out a bit.` : `🌥️ Day ${days}: not enough sunlight. Turn the Sun on!`);
+});
+$('#againBtn').addEventListener('click', () => { stage = 0; water = 30; sunOn = true; sunlight = 50; days = 0; Kids.sfx.pop(); draw('🌰 A new seed is planted. Water it, give it sunlight, and wait for the next day!'); });
+
+/* ---------- plant parts ---------- */
+const P = $('#parts');
+el('rect', { x: 0, y: 330, width: 600, height: 130, fill: '#a0703e' }, P);
+el('path', { d: 'M300 330 C 300 260, 296 200, 300 120', stroke: '#2d6a4f', 'stroke-width': 14, fill: 'none' }, P);
+['M300 340 Q 260 380 230 440', 'M300 340 Q 300 400 300 450', 'M300 340 Q 350 390 380 440', 'M300 360 Q 270 380 250 400', 'M300 360 Q 330 385 350 405'].forEach(d => el('path', { d, stroke: '#f3d5b5', 'stroke-width': 5, fill: 'none' }, P));
+el('ellipse', { cx: 245, cy: 240, rx: 50, ry: 20, fill: '#52b788', transform: 'rotate(-25 245 240)' }, P);
+el('ellipse', { cx: 355, cy: 200, rx: 50, ry: 20, fill: '#52b788', transform: 'rotate(25 355 200)' }, P);
+for (let i = 0; i < 8; i++) { const t = i / 8 * Math.PI * 2; el('ellipse', { cx: 300 + 34 * Math.cos(t), cy: 100 + 34 * Math.sin(t), rx: 22, ry: 12, fill: '#ffd166', transform: `rotate(${t * 180 / Math.PI} ${300 + 34 * Math.cos(t)} ${100 + 34 * Math.sin(t)})` }, P); }
+el('circle', { cx: 300, cy: 100, r: 22, fill: '#8d5524' }, P);
+el('circle', { cx: 400, cy: 290, r: 20, fill: '#ef476f' }, P); el('path', { d: 'M300 280 Q 360 270 395 275', stroke: '#2d6a4f', 'stroke-width': 4, fill: 'none' }, P);
+const PARTS = [['Flower', 470, 90, 'The flower makes seeds. Its bright colours call bees and butterflies. 🐝'], ['Leaf', 110, 230, 'Leaves are the plant\'s kitchen! They use sunlight, air and water to make food.'],
+  ['Stem', 470, 200, 'The stem holds the plant up and carries water from the roots to the leaves, like a straw.'], ['Fruit', 490, 300, 'The fruit protects the seeds inside. Many fruits are yummy for us too! 🍎'],
+  ['Roots', 110, 420, 'Roots hold the plant in the soil and drink water and food from the ground.'], ['Seed', 470, 410, 'Inside a seed is a baby plant, waiting to grow! 🌰']];
+const learnt = new Set();
+PARTS.forEach(([n, x, y, t]) => {
+  const g = el('g', { class: 'lab' }, P);
+  el('rect', { x: x - 60, y: y - 22, width: 120, height: 40, rx: 20, fill: '#9b5de5' }, g);
+  el('text', { x, y: y + 6, 'text-anchor': 'middle', 'font-size': 20, fill: '#fff', 'font-weight': 700, 'font-family': 'Fredoka, sans-serif' }, g).textContent = n;
+  g.addEventListener('click', () => { learnt.add(n); g.querySelector('rect').setAttribute('fill', '#06d6a0'); $('#pRes').textContent = `${n}: ${t}`; Kids.speak(Kids.forSpeech(`${n}. ${t}`), true); Kids.sfx.pop(); ch.check({ parts: learnt.size }); });
+});
+el('text', { x: 470, y: 445, 'text-anchor': 'middle', 'font-size': 26 }, P).textContent = '🌰';
+
+/* ---------- in order ---------- */
+let next = 0, oFirst = true;
+function newOrder() {
+  next = 0; oFirst = true; $('#oRes').textContent = ''; $('#oRes').className = 'result';
+  $('#slots').innerHTML = STAGES.map(() => '<span></span>').join('');
+  $('#order').innerHTML = '';
+  shuffle(STAGES.map((s, i) => [s, i])).forEach(([s, i]) => {
+    const b = document.createElement('button'); b.textContent = s[0]; b.title = s[1];
+    b.addEventListener('click', () => {
+      if (i === next) { $('#slots').children[next].textContent = s[0]; b.style.visibility = 'hidden'; next++; Kids.sfx.pop();
+        if (next === STAGES.length) { Kids.sfx.yay(); if (oFirst) Kids.addStar(); $('#oRes').textContent = `${Kids.praise()} seed ➜ sprout ➜ seedling ➜ plant ➜ flower ➜ fruit!`; $('#oRes').className = 'result good'; ch.check({ order: true }); } }
+      else { oFirst = false; Kids.sfx.oops(); $('#oRes').textContent = `Not yet! What comes after ${next ? STAGES[next - 1][1] : 'nothing'}? Start with the tiniest one.`; $('#oRes').className = 'result hint'; }
+    });
+    $('#order').appendChild(b);
+  });
+}
+$('#oAgain').addEventListener('click', () => { Kids.sfx.pop(); newOrder(); });
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'order') newOrder();
+}));
+const ch = Kids.challenges([
+  { ask: 'Help your seed sprout 🌱', hint: 'Water it, then tap Next day.', ok: c => c.stage >= 1, yay: 'A sprout! Roots go down, shoots go up.' },
+  { ask: 'Grow your plant until it flowers 🌼', hint: 'Keep the water bar in the middle and the Sun on.', ok: c => c.stage >= 4, yay: 'Beautiful flowers!' },
+  { ask: 'Learn all 6 plant parts 🌻', hint: 'Open Plant Parts and tap every label.', ok: c => c.parts >= 6, yay: 'Roots, stem, leaf, flower, fruit and seed!' },
+  { ask: 'Put the plant\'s life in order 🔢', hint: 'Open In Order. Start with the seed.', ok: c => c.order, yay: 'You know the life cycle of a plant!' },
+], { title: 'Green Thumb' });
+Kids.learn({
+  why: ['Plants need water, sunlight, air and soil to grow. With these, they make their own food in their leaves!',
+    'When plants make food, they give out oxygen, the air we breathe. Thank you, plants! 🌳'],
+  imagine: ['Imagine you are a seed under the soil. It is dark and cosy. You drink some rain, stretch a tiny root down, and push up, up, up towards the light!'],
+  wow: ['A banyan tree can grow so big that it looks like a whole forest! The Great Banyan in Kolkata is more than 250 years old.',
+    'Sunflowers turn to face the Sun when they are young. 🌻', 'Some seeds, like coconuts, can float across the sea to a new island!'],
+  talk: ['Plant a real seed with a grown-up: try methi, mustard or a bean in a cup of soil!', 'Which fruits have seeds you can see?', 'What would happen if there were no plants?'],
+});
+draw('🌰 A seed is planted! Water it, give it sunlight, then tap "Next day".');
+</script>
+</body>
+</html>

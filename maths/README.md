@@ -14,5 +14,9 @@
 | [speed-race](speed-race/) | Speed and time: snail to light, over 100 m up to the Sun |
 | [counting-fun](counting-fun/) | Counting to 20 and adding small numbers |
 | [money-shop](money-shop/) | Rupees, paying, and working out change |
+| [shapes-hunt](shapes-hunt/) | Finding shapes in a picture, sides and corners, flat and solid shapes |
+| [number-bonds](number-bonds/) | Pairs that make 5, 10 and 20: ten frames, bubble pop, missing numbers |
+| [times-tables](times-tables/) | Skip counting on a number line, equal groups, and a quiz (2, 3, 4, 5, 10) |
+| [hot-and-cold](hot-and-cold/) | Reading a thermometer, °C, hotter or colder |
 
-**Ideas:** shapes hunt, number bonds, times tables, hot & cold (temperature).
+**Ideas:** fraction pizza.

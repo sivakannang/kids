@@ -13,7 +13,10 @@
 | [black-hole](black-hole/) | Squeezing the Earth or Sun until escape speed passes light speed; spaghettification; real black holes |
 | [zoom-out](zoom-out/) | Powers-of-ten zoom from her to the observable universe |
 | [many-universes](many-universes/) | A "what if" story about the multiverse (clearly an open question) and a make-your-own-universe builder |
-
 | [animal-homes](animal-homes/) | Where animals live and why |
+| [weather-watch](weather-watch/) | Kinds of weather, the water cycle, dressing for the weather, a weather diary |
+| [how-plants-grow](how-plants-grow/) | Growing a seed (water and sunlight), plant parts, the plant life cycle |
+| [my-body](my-body/) | Brain, heart, lungs, stomach, bones, muscles, skin; counting your own heartbeat |
+| [star-patterns](star-patterns/) | Joining stars into constellations: Saptarishi, Dhruva, Orion, Vrishchika… |
 
-**Ideas:** weather watch, how plants grow, my body, star patterns.
+**Ideas:** volcanoes, eclipses.

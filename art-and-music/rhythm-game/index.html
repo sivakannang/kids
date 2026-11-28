@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhythm Game</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 620px; margin: 0 auto; }
+  .pad { aspect-ratio: 1; border: none; border-radius: 26px; font-size: 48px; color: #fff; cursor: pointer; box-shadow: 0 8px 0 rgba(0,0,0,.2); font-family: inherit; transition: transform .08s; }
+  .pad small { display: block; font-size: 16px; font-weight: 700; }
+  .pad.hit { transform: translateY(6px) scale(.96); box-shadow: 0 2px 0 rgba(0,0,0,.2); filter: brightness(1.25); }
+  .seq { display: grid; grid-template-columns: 70px repeat(8, 1fr); gap: 5px; max-width: 680px; margin: 0 auto; align-items: center; }
+  .seq .nm { font-size: 26px; text-align: center; }
+  .cell { aspect-ratio: 1; border-radius: 10px; border: none; background: #eee9fa; cursor: pointer; }
+  .cell.on { background: var(--c); }
+  .cell.now { outline: 3px solid #ffd166; }
+  .lights { display: flex; gap: 8px; justify-content: center; margin: 10px 0; min-height: 40px; flex-wrap: wrap; }
+  .lights span { font-size: 30px; opacity: .3; transition: opacity .1s; }
+  .lights span.on { opacity: 1; transform: scale(1.2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🥁</span>
+    <div><h1>Rhythm Game</h1><small>Clap and drum along to the beat, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="copy">👂 Copy the Beat</button>
+  <button class="tab" data-tab="free">🥁 Free Drums</button>
+  <button class="tab" data-tab="maker">🎛️ Beat Maker</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card center" data-panel="copy">
+      <div class="pick" id="lvl"><button data-l="1" class="active">⭐ Easy</button><button data-l="2">⭐⭐ Medium</button><button data-l="3">⭐⭐⭐ Tricky</button></div>
+      <div class="lights" id="lights"></div>
+      <div class="result" id="cRes">Tap ▶️ Listen. Then copy the beat on the drums!</div>
+      <div class="row"><button class="btn big purple" id="listenBtn">▶️ Listen</button><button class="btn big orange" id="newBtn">🔀 New beat</button></div>
+    </section>
+    <section class="card center" data-panel="maker" hidden>
+      <div class="seq" id="seq"></div>
+      <div class="row"><button class="btn big green" id="playBtn">▶️ Play</button><button class="btn orange" id="clearSeq">🧽 Clear</button>
+        <div class="pick" id="tempo"><button data-t="400">🐢 Slow</button><button data-t="280" class="active">🚶 Medium</button><button data-t="190">🐇 Fast</button></div></div>
+    </section>
+    <section class="card"><div class="pads" id="pads"></div></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Art &amp; Music 🎨</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+/* ---------- drum sounds, made with WebAudio (no sound files) ---------- */
+let ac;
+const ctx = () => (ac = ac || new (window.AudioContext || window.webkitAudioContext)());
+function noise(t, dur, freq, vol) {
+  const a = ctx(), b = a.createBuffer(1, a.sampleRate * dur, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const s = a.createBufferSource(); s.buffer = b;
+  const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq;
+  const g = a.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(f).connect(g).connect(a.destination); s.start(t); s.stop(t + dur);
+}
+function tone(t, f1, f2, dur, vol, type = 'sine') {
+  const a = ctx(), o = a.createOscillator(), g = a.createGain(); o.type = type;
+  o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+const PADS = [
+  { id: 'boom', e: '🥁', n: 'Boom', c: '#ef476f', play: t => tone(t, 150, 45, .45, .9) },
+  { id: 'clap', e: '👏', n: 'Clap', c: '#ff9f1c', play: t => { [0, .012, .024].forEach(d => noise(t + d, .12, 1500, .7)); } },
+  { id: 'tak', e: '🪘', n: 'Tak', c: '#06a77d', play: t => { tone(t, 420, 300, .25, .6); tone(t, 840, 600, .1, .2, 'triangle'); } },
+  { id: 'ting', e: '🔔', n: 'Ting', c: '#118ab2', play: t => { tone(t, 1320, 1300, .6, .25); tone(t, 2640, 2600, .3, .08); } },
+];
+function hit(i, when) {
+  if (!Kids.sound) return;
+  try { const a = ctx(); if (a.state === 'suspended') a.resume(); PADS[i].play(when || a.currentTime); } catch {}
+}
+const padEls = PADS.map((p, i) => {
+  const b = document.createElement('button'); b.className = 'pad'; b.style.background = p.c; b.innerHTML = `${p.e}<small>${p.n}</small>`;
+  const go = e => { e.preventDefault(); hit(i); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 110); onPad(i); };
+  b.addEventListener('pointerdown', go);
+  $('#pads').appendChild(b); return b;
+});
+document.addEventListener('keydown', e => { const k = { a: 0, s: 1, d: 2, f: 3 }[e.key]; if (k !== undefined) { hit(k); padEls[k].classList.add('hit'); setTimeout(() => padEls[k].classList.remove('hit'), 110); onPad(k); } });
+const flashPad = i => { padEls[i].classList.add('hit'); setTimeout(() => padEls[i].classList.remove('hit'), 140); };
+
+/* ---------- copy the beat ---------- */
+// a beat is a list of [pad, time in beats]
+const BEATS = {
+  1: [[[1, 0], [1, 1], [1, 2]], [[1, 0], [1, 1], [1, 1.5], [1, 2]], [[0, 0], [0, 1], [1, 2]], [[1, 0], [1, .5], [1, 1]], [[0, 0], [1, 1], [0, 2], [1, 3]]],
+  2: [[[0, 0], [0, .5], [1, 1]], [[1, 0], [1, .5], [1, 1], [0, 2]], [[2, 0], [2, 1], [3, 2]], [[0, 0], [2, 1], [2, 1.5], [1, 2]], [[1, 0], [1, 1.5], [1, 2], [0, 3]]],
+  3: [[[0, 0], [2, .5], [2, 1], [1, 1.5], [3, 2.5]], [[1, 0], [1, .5], [0, 1], [2, 2], [2, 2.5], [3, 3]], [[0, 0], [0, .75], [1, 1.5], [2, 2], [3, 2.5]], [[2, 0], [2, .5], [2, 1], [0, 1.5], [1, 2.5], [1, 3]]],
+};
+let level = 1, beat = null, listening = false, taps = [], heard = false, wins = 0;
+const SPB = 0.5; // seconds per beat
+function newBeat() { const list = BEATS[level]; beat = list[R(list.length)]; taps = []; heard = false; drawLights(); $('#cRes').className = 'result'; $('#cRes').textContent = '👂 A new beat! Tap ▶️ Listen first.'; }
+function drawLights(lit = -1) { $('#lights').innerHTML = beat.map((b, i) => `<span class="${i < taps.length || i === lit ? 'on' : ''}">${PADS[b[0]].e}</span>`).join(''); }
+$('#listenBtn').addEventListener('click', () => {
+  if (listening) return;
+  listening = true; taps = []; Kids.sfx.pop();
+  $('#cRes').className = 'result'; $('#cRes').textContent = '👂 Listen…';
+  const t0 = ctx().currentTime + .3;
+  beat.forEach(([p, at], i) => {
+    hit(p, t0 + at * SPB);
+    setTimeout(() => { flashPad(p); drawLights(i); }, (0.3 + at * SPB) * 1000);
+  });
+  const end = (beat[beat.length - 1][1] * SPB + .8) * 1000;
+  setTimeout(() => { listening = false; heard = true; taps = []; drawLights(); $('#cRes').textContent = '🥁 Your turn! Copy the beat on the drums.'; }, end);
+});
+let lastTap = 0;
+function onPad(i) {
+  if (document.querySelector('.tab.active').dataset.tab !== 'copy') { if (document.querySelector('.tab.active').dataset.tab === 'free') freeHits++, ch.check({ free: freeHits }); return; }
+  if (!heard || listening) return;
+  const now = performance.now();
+  if (taps.length && now - lastTap > 4000) taps = [];
+  lastTap = now; taps.push([i, now]); drawLights();
+  const k = taps.length - 1;
+  if (taps[k][0] !== beat[k][0]) {
+    Kids.resetStreak(); $('#cRes').className = 'result hint';
+    $('#cRes').textContent = `Oops! That should be ${PADS[beat[k][0]].e} ${PADS[beat[k][0]].n}. Listen again and try once more!`; taps = []; setTimeout(drawLights, 400); return;
+  }
+  if (taps.length === beat.length) {
+    // timing: compare the gaps between taps with the gaps in the beat
+    let good = true;
+    for (let j = 1; j < beat.length; j++) {
+      const want = (beat[j][1] - beat[j - 1][1]) * SPB * 1000, got = taps[j][1] - taps[j - 1][1];
+      if (Math.abs(got - want) > Math.max(160, want * .45)) good = false;
+    }
+    Kids.sfx.yay(); wins++;
+    if (good) { Kids.addStar(); Kids.confetti(); $('#cRes').className = 'result good'; $('#cRes').textContent = `${Kids.praise()} Perfect rhythm! 🎶`; ch.check({ copy: true, timing: true, level, wins }); }
+    else { $('#cRes').className = 'result good'; $('#cRes').textContent = 'Right drums! 🥁 Now try to match the timing: some gaps are short, some are long. Listen again!'; ch.check({ copy: true, timing: false, level, wins }); }
+    taps = []; heard = false; setTimeout(() => { if (good) newBeat(); else heard = true; }, 1600);
+  }
+}
+$('#newBtn').addEventListener('click', () => { Kids.sfx.pop(); newBeat(); });
+$('#lvl').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { level = +b.dataset.l; Kids.sfx.pop(); $('#lvl').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); newBeat(); }));
+
+/* ---------- free drums ---------- */
+let freeHits = 0;
+/* ---------- beat maker: 4 drums × 8 steps ---------- */
+const grid = PADS.map(() => Array(8).fill(false));
+grid[0][0] = grid[0][4] = grid[1][2] = grid[1][6] = true;
+PADS.forEach((p, r) => {
+  $('#seq').insertAdjacentHTML('beforeend', `<div class="nm">${p.e}</div>`);
+  for (let s = 0; s < 8; s++) {
+    const c = document.createElement('button'); c.className = 'cell' + (grid[r][s] ? ' on' : ''); c.style.setProperty('--c', p.c); c.dataset.s = s;
+    c.addEventListener('click', () => { grid[r][s] = !grid[r][s]; c.classList.toggle('on', grid[r][s]); if (grid[r][s]) hit(r); ch.check({ cells: grid.flat().filter(Boolean).length }); });
+    $('#seq').appendChild(c);
+  }
+});
+let playT = null, step = 0, tempo = 280, loops = 0;
+function tickSeq() {
+  document.querySelectorAll('.cell').forEach(c => c.classList.toggle('now', +c.dataset.s === step));
+  PADS.forEach((p, r) => { if (grid[r][step]) { hit(r); flashPad(r); } });
+  step = (step + 1) % 8; if (step === 0) { loops++; if (loops === 2) ch.check({ played: true }); }
+}
+$('#playBtn').addEventListener('click', () => {
+  if (playT) { clearInterval(playT); playT = null; $('#playBtn').textContent = '▶️ Play'; document.querySelectorAll('.cell').forEach(c => c.classList.remove('now')); return; }
+  step = 0; loops = 0; playT = setInterval(tickSeq, tempo); $('#playBtn').textContent = '⏸️ Stop';
+});
+$('#clearSeq').addEventListener('click', () => { grid.forEach(r => r.fill(false)); document.querySelectorAll('.cell').forEach(c => c.classList.remove('on')); Kids.sfx.pop(); });
+$('#tempo').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  tempo = +b.dataset.t; $('#tempo').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  if (playT) { clearInterval(playT); playT = setInterval(tickSeq, tempo); }
+}));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab !== 'maker' && playT) $('#playBtn').click();
+}));
+const ch = Kids.challenges([
+  { ask: 'Copy an easy beat 👏', hint: 'Tap Listen, then tap the same drums in the same order.', ok: c => c.copy, yay: 'You copied the beat!' },
+  { ask: 'Copy a beat with perfect timing 🎯', hint: 'Listen for short gaps and long gaps.', ok: c => c.copy && c.timing, yay: 'Right on the beat!' },
+  { ask: 'Play 30 drum hits on Free Drums 🥁', hint: 'Open Free Drums and play anything you like!', ok: c => c.free >= 30, yay: 'What a drummer!' },
+  { ask: 'Make a beat with 10 squares in Beat Maker 🎛️', hint: 'Open Beat Maker and tap the squares.', ok: c => c.cells >= 10, yay: 'Your very own beat!' },
+  { ask: 'Play your beat twice round 🔁', hint: 'Tap Play in Beat Maker and listen.', ok: c => c.played, yay: 'Music producer!' },
+  { ask: 'Copy a Medium or Tricky beat ⭐⭐', hint: 'Pick Medium at the top.', ok: c => c.copy && c.level >= 2, yay: 'Super listening!' },
+], { title: 'Rhythm Star' });
+Kids.learn({
+  why: ['Rhythm is the pattern of long and short sounds in music. It is what makes you want to clap and dance!',
+    'Playing rhythms helps your brain with counting, listening and focusing, all at the same time.'],
+  imagine: ['Your heart has a rhythm too: ba-dum, ba-dum. Can you clap along to your heartbeat?'],
+  wow: ['Indian music has amazing rhythms called taal. The tabla and mridangam can play very fast, tricky patterns!',
+    'In Carnatic music, people count rhythms with their hands: clap, then wave, then count on fingers. That is called keeping the tala.'],
+  talk: ['Clap the rhythm of your name: Ka-vi-ku-yil (4 claps)! Pra-ban-jan (3 claps)!', 'What things at home make a good drum? (Careful!)', 'Make up a beat for a grown-up to copy!'],
+});
+newBeat();
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Time · Read Along</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+  .book { border: none; border-radius: 22px; padding: 16px 10px; cursor: pointer; font-family: inherit; color: #fff; font-size: 19px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,.15); position: relative; }
+  .book .e { display: block; font-size: 56px; }
+  .book .d { display: block; font-size: 14px; font-weight: 500; opacity: .92; margin-top: 4px; }
+  .book .done { position: absolute; top: 8px; right: 10px; font-size: 22px; }
+  .scene { font-size: 96px; text-align: center; line-height: 1.1; min-height: 110px; letter-spacing: 6px; }
+  .text { font-size: 34px; line-height: 1.6; text-align: center; max-width: 820px; margin: 10px auto; }
+  .text .w { cursor: pointer; border-radius: 8px; padding: 0 2px; transition: background .15s; }
+  .text .w:hover { background: #f1e9ff; }
+  .text .w.on { background: #ffd166; }
+  .pg { text-align: center; color: var(--muted); font-size: 16px; }
+  .sizes button { font-size: 15px !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">📚</span>
+    <div><h1>Story Time</h1><small>Read along, tap any word to hear it, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+  <section class="card" id="shelfCard"><h2 style="margin:0 0 10px">📚 Pick a book</h2><div class="shelf" id="shelf"></div></section>
+
+  <section class="card" id="reader" hidden>
+    <div class="pg" id="pg"></div>
+    <div class="scene" id="scene"></div>
+    <div class="text" id="text"></div>
+    <div class="row">
+      <button class="btn big purple" id="readBtn">🔊 Read to me</button>
+      <button class="btn big green" id="selfBtn">📖 I read it myself!</button>
+    </div>
+    <div class="navrow">
+      <button class="btn orange" id="prevBtn">⬅️</button>
+      <div class="pick sizes" id="sizes"><button data-s="28">A</button><button data-s="34" class="active">A+</button><button data-s="42">A++</button></div>
+      <button class="btn orange" id="nextBtn">➡️</button>
+    </div>
+    <div class="row"><button class="btn" id="shelfBtn">📚 Back to the books</button></div>
+  </section>
+
+  <section class="card" id="quizCard" hidden>
+    <h2 style="margin:0 0 6px" class="center">🤔 What do you remember?</h2>
+    <div class="quiz-q" id="qq"></div><div class="choices" id="qc"></div><div class="result" id="qr"></div>
+    <div class="row"><button class="btn big orange" id="qNext" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · English 🔤</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const K = Kids.name, N = Kids.nick;
+// original little stories, written for this app
+const BOOKS = [
+  { id: 'mango', e: '🥭', n: 'Kuyil and the Mango Tree', d: 'A bird, a tree, and sharing', c: ['#ff9f1c', '#f3722c'], pages: [
+    ['🌳🐦', 'Kuyil the bird lived in a big mango tree.'],
+    ['🌳🥭🥭', 'One summer, the tree was full of sweet mangoes.'],
+    ['🐦😋', '"These are all mine!" said Kuyil. "I will eat them all."'],
+    ['🐿️🐒🐜', 'A squirrel, a monkey and a little ant came by. They were very hungry.'],
+    ['🐦🤔', 'Kuyil looked at all the mangoes. "There are too many for me," she said.'],
+    ['🐦🐿️🐒🐜🥭', '"Come and share!" They all ate mangoes and sang songs together.'],
+    ['🌳💛', 'Kuyil learned that sharing makes everyone happy, and her too!'],
+  ], q: [['Where did Kuyil live?', ['In a mango tree', 'In a river', 'In a car'], 0], ['Who was hungry?', ['A squirrel, a monkey and an ant', 'A lion and a tiger', 'A fish'], 0], ['What did Kuyil learn?', ['Sharing makes everyone happy', 'Mangoes are sour', 'Birds cannot sing'], 0]] },
+  { id: 'moon', e: '🌙', n: 'The Little Moon', d: 'The Moon wants to see the day', c: ['#3a0ca3', '#7209b7'], pages: [
+    ['🌙⭐', 'Every night, the little Moon came out to shine.'],
+    ['🌙😴', 'But every morning, it had to go to sleep.'],
+    ['🌙❓☀️', '"What is the day like?" the Moon asked the stars. "We do not know," they said.'],
+    ['🌙🌅', 'One morning, the Moon stayed up a little bit longer.'],
+    ['🌙☀️👧🏫', 'It saw the Sun, blue sky, and children walking to school!'],
+    ['🌙😊', '"The day is lovely," said the Moon. "But the night is lovely too."'],
+    ['🌙✨', 'Sometimes you can still see the Moon in the morning. Look up and wave!'],
+  ], q: [['When did the Moon come out to shine?', ['At night', 'At lunch time', 'Never'], 0], ['What did the Moon see in the day?', ['The Sun and children', 'Snow and penguins', 'A dinosaur'], 0], ['Can you see the Moon in the morning sometimes?', ['Yes!', 'No, never'], 0]] },
+  { id: 'umbrella', e: '☂️', n: 'Ravi\'s Red Umbrella', d: 'A rainy day and a kind friend', c: ['#ef476f', '#c9184a'], pages: [
+    ['☁️☁️', 'Dark clouds came over the town. Ravi took his red umbrella to school.'],
+    ['🌧️🌧️', 'Drip, drop, drip, drop! The rain came down.'],
+    ['👦☂️👧', 'Ravi saw his friend Meena. She had no umbrella. She was getting wet!'],
+    ['👦👧☂️', '"Come under my umbrella," said Ravi. "There is room for two."'],
+    ['🐸💦', 'They jumped over puddles. A frog jumped too! Croak, croak!'],
+    ['🏫😊', 'They got to school dry and happy.'],
+    ['🌈', 'After the rain, a big rainbow came out. It was the best day!'],
+  ], q: [['What colour was Ravi\'s umbrella?', ['Red', 'Green', 'Blue'], 0], ['Who had no umbrella?', ['Meena', 'The teacher', 'Ravi'], 0], ['What came out after the rain?', ['A rainbow', 'A rocket', 'A snowman'], 0]] },
+  { id: 'ant', e: '🐜', n: 'The Brave Little Ant', d: 'Small but strong', c: ['#06a77d', '#2d6a4f'], pages: [
+    ['🐜', 'Tiny Ant was the smallest ant in her family.'],
+    ['🐜🐜🐜🍞', 'All the big ants carried big crumbs of bread.'],
+    ['🐜😢', '"I am too small to help," said Tiny Ant sadly.'],
+    ['🌊🐞', 'Then a ladybird fell into a puddle! "Help! Help!" she cried.'],
+    ['🐜🍃', 'Tiny Ant was small, so she ran fast. She pushed a leaf into the water.'],
+    ['🐞🍃😊', 'The ladybird climbed onto the leaf and was safe. "Thank you, Tiny Ant!"'],
+    ['🐜⭐', 'Tiny Ant smiled. Even small friends can do big things!'],
+  ], q: [['Who was the smallest ant?', ['Tiny Ant', 'Big Ant', 'The ladybird'], 0], ['Who fell into the puddle?', ['The ladybird', 'A cat', 'Tiny Ant'], 0], ['What did Tiny Ant use to help?', ['A leaf', 'A boat', 'A rope'], 0]] },
+  { id: 'star', e: '⭐', n: `${K} and the Lost Star`, d: 'A star falls into the garden!', c: ['#118ab2', '#073b4c'], pages: [
+    ['🏡🌃', `One night, ${K} looked out of the window.`],
+    ['💫🌳', 'A little star fell down, down, down into the garden!'],
+    ['⭐😢', `"I am lost," said the star. "I want to go home to the sky."`],
+    ['👧🤔', `${K} thought and thought. "I know! We can ask the wind to help."`],
+    ['🌬️🪁⭐', `The wind blew a big kite up high. The star held on tight.`],
+    ['⭐🌌', 'Up and up it went, back to the sky with its star family.'],
+    ['⭐😉👧', `Now, every night, one star twinkles extra bright for ${K}. Can you find it?`],
+  ], q: [['Where did the star fall?', ['Into the garden', 'Into the sea', 'Onto a bus'], 0], ['Who helped the star go home?', ['The wind and a kite', 'A fish', 'A train'], 0], ['What does the star do every night now?', [`It twinkles for ${K}`, 'It sleeps', 'It hides'], 0]] },
+  { id: 'seed', e: '🌱', n: 'The Patient Seed', d: 'Waiting is part of growing', c: ['#80b918', '#2b9348'], pages: [
+    ['🌰', 'A little seed lay under the soil. It was dark and quiet.'],
+    ['🌰💧', 'Rain gave it a drink. "Grow!" said the rain.'],
+    ['🌰☀️', 'The Sun gave it warmth. "Grow!" said the Sun.'],
+    ['🌱', 'Slowly, slowly, a tiny green shoot poked out. Hello, world!'],
+    ['🪴', 'Every day it grew a little more. One leaf, two leaves, three leaves.'],
+    ['🌻', 'One day, it opened into a big yellow sunflower!'],
+    ['🌻🐝', 'Big things take time. Keep trying a little every day, just like the seed.'],
+  ], q: [['What did the rain give the seed?', ['A drink', 'A hat', 'A song'], 0], ['What did the seed grow into?', ['A sunflower', 'A mango', 'A rock'], 0], ['What does the story teach us?', ['Big things take time', 'Give up quickly', 'Seeds can fly'], 0]] },
+];
+const done = Kids.store.get('storytime.read', {});
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+
+function drawShelf() {
+  $('#shelf').innerHTML = '';
+  BOOKS.forEach(b => {
+    const el = document.createElement('button'); el.className = 'book';
+    el.style.background = `linear-gradient(135deg, ${b.c[0]}, ${b.c[1]})`;
+    el.innerHTML = `${done[b.id] ? '<span class="done">✅</span>' : ''}<span class="e">${b.e}</span>${b.n}<span class="d">${b.d}</span>`;
+    el.addEventListener('click', () => open(b));
+    $('#shelf').appendChild(el);
+  });
+}
+let book = null, page = 0, selfRead = new Set();
+function open(b) {
+  book = b; page = 0; selfRead = new Set(); Kids.sfx.pop();
+  $('#shelfCard').hidden = true; $('#reader').hidden = false; $('#quizCard').hidden = true;
+  say(`📖 ${b.n}. Read it yourself, or tap 🔊 and I will read with you. Tap any word to hear it!`);
+  show();
+}
+function show() {
+  stop();
+  const [scene, text] = book.pages[page];
+  $('#pg').textContent = `Page ${page + 1} of ${book.pages.length}`;
+  $('#scene').textContent = scene;
+  // each word is its own button-like span, with its position in the sentence (for highlighting)
+  let pos = 0;
+  $('#text').innerHTML = text.split(' ').map(w => { const s = `<span class="w" data-i="${pos}">${w}</span>`; pos += w.length + 1; return s; }).join(' ');
+  $('#text').querySelectorAll('.w').forEach(s => s.addEventListener('click', () => { const w = s.textContent.replace(/[^\w']/g, ''); Kids.speak(w, true, 0.7); flash(s); }));
+  $('#prevBtn').disabled = page === 0;
+  $('#nextBtn').textContent = page === book.pages.length - 1 ? '🏁 Finish' : '➡️';
+  $('#selfBtn').disabled = selfRead.has(page);
+}
+const flash = s => { $('#text').querySelectorAll('.w').forEach(x => x.classList.toggle('on', x === s)); };
+function stop() { try { speechSynthesis.cancel(); } catch {} flash(null); }
+$('#readBtn').addEventListener('click', () => {
+  const text = book.pages[page][1];
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.rate = 0.75; u.pitch = 1.1;
+    const spans = [...$('#text').querySelectorAll('.w')];
+    u.onboundary = e => { if (e.name && e.name !== 'word') return; const s = spans.filter(x => +x.dataset.i <= e.charIndex).pop(); if (s) flash(s); };
+    u.onend = () => flash(null);
+    speechSynthesis.speak(u);
+  } catch {}
+});
+$('#selfBtn').addEventListener('click', () => {
+  if (selfRead.has(page)) return;
+  selfRead.add(page); Kids.addStar(); Kids.sfx.yay(); $('#selfBtn').disabled = true;
+  const m = `${Kids.praise()} You read that page all by yourself!`; say(m, true); Kids.speak(Kids.forSpeech(m));
+});
+$('#prevBtn').addEventListener('click', () => { if (page > 0) { page--; Kids.sfx.pop(); show(); } });
+$('#nextBtn').addEventListener('click', () => {
+  Kids.sfx.pop();
+  if (page < book.pages.length - 1) { page++; show(); return; }
+  stop(); $('#reader').hidden = true; startQuiz();
+});
+$('#shelfBtn').addEventListener('click', backToShelf);
+function backToShelf() { stop(); $('#reader').hidden = true; $('#quizCard').hidden = true; $('#shelfCard').hidden = false; drawShelf(); say(`Which story shall we read next, ${K}? 📚`); }
+$('#sizes').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  $('#text').style.fontSize = b.dataset.s + 'px'; $('#sizes').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+}));
+
+/* ---------- questions after the story ---------- */
+let qi = 0, right = 0;
+function startQuiz() { qi = 0; right = 0; $('#quizCard').hidden = false; say('The end! 🎉 Now, what do you remember?'); ask(); }
+function ask() {
+  const [q, opts, ok] = book.q[qi]; let first = true, finished = false;
+  $('#qq').textContent = q; $('#qr').textContent = ''; $('#qr').className = 'result'; $('#qNext').hidden = true; $('#qc').innerHTML = '';
+  Kids.speak(q, true, 0.85);
+  Kids.shuffle(opts.map((o, i) => [o, i])).forEach(([o, i]) => {
+    const b = document.createElement('button'); b.className = 'choice'; b.textContent = o;
+    b.addEventListener('click', () => {
+      if (finished || b.disabled) return;
+      if (i === ok) { finished = true; b.classList.add('right'); if (first) { right++; Kids.addStar(); } Kids.sfx.yay(); const m = Kids.praise(); $('#qr').textContent = m; $('#qr').className = 'result good'; Kids.speak(Kids.forSpeech(m)); $('#qNext').hidden = false; }
+      else { first = false; b.classList.add('wrong'); b.disabled = true; Kids.sfx.oops(); $('#qr').textContent = 'Not quite! Think about the story again.'; $('#qr').className = 'result hint'; }
+    });
+    $('#qc').appendChild(b);
+  });
+  $('#qNext').textContent = qi === book.q.length - 1 ? '🏁 Done' : 'Next ➡️';
+}
+$('#qNext').addEventListener('click', () => {
+  Kids.sfx.pop(); qi++;
+  if (qi < book.q.length) { ask(); return; }
+  if (!done[book.id]) { done[book.id] = true; Kids.store.set('storytime.read', done); Kids.addStar(); }
+  Kids.confetti(); Kids.banner(`📚 You finished "${book.n}"!`);
+  say(`Wonderful reading, ${N}! You got ${right} of ${book.q.length} questions right the first time. 🌟`, true);
+  setTimeout(backToShelf, 2600);
+});
+
+Kids.learn({
+  why: ['Reading is like a magic door: a book can take you to a jungle, the Moon or under the sea, without leaving your chair!',
+    'Every time you read a word, your brain gets faster at reading it next time.'],
+  imagine: ['Close your eyes after a page. Can you see the picture in your mind? What colours, sounds and smells are there?'],
+  wow: ['Reading for just 15 minutes a day adds up to more than a million words a year!',
+    'When you read aloud, your eyes, mouth and ears all work together.'],
+  talk: ['Which character did you like best? Why?', 'Can you tell the story again in your own words?', 'Make up a new ending for one of the stories!'],
+});
+drawShelf();
+say(`Hi ${K}! Pick a book. You can read it yourself, and I'm here to help with any word. 📚`);
+</script>
+</body>
+</html>

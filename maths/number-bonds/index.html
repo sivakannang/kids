@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Bonds</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .frame { display: grid; grid-template-columns: repeat(5, 64px); gap: 6px; justify-content: center; margin: 10px auto; }
+  .frame .c { width: 64px; height: 64px; border-radius: 14px; background: #f1eefc; border: 3px solid #e2dcf5; display: flex; align-items: center; justify-content: center; font-size: 38px; cursor: pointer; }
+  .frame .c.add { background: #d3f8e2; border-color: #06d6a0; }
+  .bond { display: flex; align-items: center; justify-content: center; gap: 0; margin: 10px auto; }
+  .bond svg { width: 320px; max-width: 90%; }
+  .bubbles { position: relative; height: 380px; border-radius: 22px; background: linear-gradient(#bde0fe, #e0f7ff); overflow: hidden; }
+  .bub { position: absolute; width: 76px; height: 76px; border-radius: 50%; border: none; font-size: 34px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: inset -6px -8px 0 rgba(0,0,0,.12); font-family: inherit; transition: transform .2s; }
+  .bub.sel { transform: scale(1.18); outline: 5px solid #ffd166; }
+  .bub.gone { transform: scale(0); }
+  .eq { font-size: 40px; font-weight: 700; text-align: center; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔟</span>
+    <div><h1>Number Bonds</h1><small>Which two numbers make 10, <b data-kid-name>Kavikuyil</b>?</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="frame">🟩 Ten Frame</button>
+  <button class="tab" data-tab="pop">🫧 Bubble Pop</button>
+  <button class="tab" data-tab="quiz">❓ Missing Number</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card center" id="totalCard"><div class="pick" id="total"><button data-t="5">Make 5</button><button data-t="10" class="active">Make 10</button><button data-t="20">Make 20</button></div></section>
+    <section class="card center" data-panel="frame">
+      <div class="label" style="margin-top:0" id="fAsk"></div>
+      <div id="frames"></div>
+      <div class="eq" id="fEq"></div>
+      <div class="row"><button class="btn big orange" id="fNext">New number ➡️</button></div>
+    </section>
+    <section class="card" data-panel="pop" hidden>
+      <div class="label center" style="margin-top:0" id="pAsk"></div>
+      <div class="bubbles" id="bubbles"></div>
+      <div class="eq" id="pEq"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card center"><div class="bond"><svg id="bondSvg" viewBox="0 0 320 220"></svg></div><div class="hint">A number bond: the big number splits into two parts.</div></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Numbers 🔢</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+let T = 10;
+function bond(whole, a, b) {
+  const s = $('#bondSvg'); s.innerHTML = '';
+  el('line', { x1: 160, y1: 60, x2: 80, y2: 160, stroke: '#c9b8f0', 'stroke-width': 6 }, s);
+  el('line', { x1: 160, y1: 60, x2: 240, y2: 160, stroke: '#c9b8f0', 'stroke-width': 6 }, s);
+  [[160, 56, whole, '#9b5de5'], [80, 164, a, '#ef476f'], [240, 164, b, '#118ab2']].forEach(([x, y, v, c]) => {
+    el('circle', { cx: x, cy: y, r: 44, fill: c }, s);
+    el('text', { x, y: y + 14, 'text-anchor': 'middle', 'font-size': 40, 'font-weight': 700, fill: '#fff', 'font-family': 'Fredoka, sans-serif' }, s).textContent = v;
+  });
+}
+/* ---------- ten frame ---------- */
+let have = 0, added = 0;
+function newFrame() {
+  have = 1 + R(T - 1); added = 0;
+  $('#fAsk').textContent = `There are ${have} 🍎. Tap the empty boxes to add more until there are ${T}!`;
+  drawFrame(); bond(T, have, '?');
+}
+function drawFrame() {
+  $('#frames').innerHTML = '';
+  for (let f = 0; f < T / 5 / (T === 5 ? 1 : 2); f++) {
+    const fr = document.createElement('div'); fr.className = 'frame';
+    const n = T === 5 ? 5 : 10;
+    for (let i = 0; i < n; i++) {
+      const k = f * 10 + i, c = document.createElement('div');
+      c.className = 'c' + (k >= have && k < have + added ? ' add' : '');
+      c.textContent = k < have ? '🍎' : k < have + added ? '🍏' : '';
+      if (k >= have + added) c.addEventListener('click', addOne);
+      fr.appendChild(c);
+    }
+    $('#frames').appendChild(fr);
+  }
+  $('#fEq').innerHTML = `${have} + <span style="color:var(--green)">${added || '?'}</span> = ${have + added}`;
+}
+function addOne() {
+  if (have + added >= T) return;
+  added++; Kids.sfx.pop(); drawFrame();
+  if (have + added === T) {
+    Kids.sfx.yay(); Kids.addStar(); bond(T, have, added);
+    const m = `${Kids.praise()} ${have} and ${added} make ${T}!`;
+    $('#fAsk').textContent = m; Kids.speak(Kids.forSpeech(m)); ch.check({ frame: true, T });
+  }
+}
+$('#fNext').addEventListener('click', () => { Kids.sfx.pop(); newFrame(); });
+
+/* ---------- bubble pop: tap two bubbles that make T ---------- */
+const COLS = ['#ef476f', '#ff9f1c', '#06d6a0', '#118ab2', '#9b5de5', '#f15bb5'];
+let sel = null, pairs = 0;
+function newBubbles() {
+  const box = $('#bubbles'); box.innerHTML = ''; sel = null;
+  const nums = [];
+  for (let i = 0; i < 4; i++) { const a = R(T + 1); nums.push(a, T - a); }
+  const W = box.clientWidth || 600, H = 380, spots = [];
+  shuffle(nums).forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'bub'; b.textContent = n; b.dataset.n = n;
+    b.style.background = COLS[i % COLS.length];
+    let x, y, tries = 0;
+    do { x = 10 + Math.random() * (W - 96); y = 10 + Math.random() * (H - 96); tries++; } while (spots.some(([a, c]) => Math.hypot(a - x, c - y) < 90) && tries < 60);
+    spots.push([x, y]); b.style.left = x + 'px'; b.style.top = y + 'px';
+    b.addEventListener('click', () => tapBub(b));
+    box.appendChild(b);
+  });
+  $('#pAsk').textContent = `Tap two bubbles that make ${T} together!`; $('#pEq').textContent = '';
+}
+function tapBub(b) {
+  if (b.classList.contains('gone')) return;
+  if (!sel) { sel = b; b.classList.add('sel'); Kids.sfx.pop(); $('#pEq').textContent = `${b.dataset.n} + ? = ${T}`; return; }
+  if (sel === b) { b.classList.remove('sel'); sel = null; $('#pEq').textContent = ''; return; }
+  const a = +sel.dataset.n, c = +b.dataset.n;
+  if (a + c === T) {
+    sel.classList.add('gone'); b.classList.add('gone'); Kids.sfx.yay(); Kids.addStar(); pairs++;
+    $('#pEq').textContent = `${a} + ${c} = ${T} 🎉`; bond(T, a, c); ch.check({ pop: pairs });
+    if ([...$('#bubbles').children].every(x => x.classList.contains('gone'))) { Kids.confetti(); Kids.banner('🫧 All bubbles popped!'); setTimeout(newBubbles, 1200); }
+  } else { Kids.sfx.oops(); Kids.resetStreak(); $('#pEq').textContent = `${a} + ${c} = ${a + c}, not ${T}. Try another!`; sel.classList.remove('sel'); }
+  sel = null;
+}
+/* ---------- missing number ---------- */
+function quizMaker() {
+  const a = R(T + 1), b = T - a, hideA = R(2), ans = hideA ? a : b;
+  const o = new Set([ans]); while (o.size < 4) o.add(Math.max(0, Math.min(T, ans + R(7) - 3)));
+  return { q: `<span style="font-size:48px">${hideA ? '?' : a} + ${hideA ? b : '?'} = ${T}</span>`, choices: shuffle([...o]).map(x => ({ label: String(x), ok: x === ans })),
+    yay: `${a} + ${b} = ${T}!`, hint: `Start at ${hideA ? b : a} and count up to ${T} on your fingers.` };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'pop') newBubbles();
+  if (b.dataset.tab === 'quiz') { if (!quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); } }
+}));
+$('#total').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  T = +b.dataset.t; Kids.sfx.pop(); $('#total').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  newFrame(); if (!$('#bubbles').closest('[data-panel]').hidden) newBubbles(); bond(T, '?', '?');
+  if (quizOn) Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) });
+}));
+const ch = Kids.challenges([
+  { ask: 'Fill a ten frame to make 10 🟩', hint: 'Tap the empty boxes until all 10 are full.', ok: c => c.frame && c.T === 10, yay: 'A full ten frame!' },
+  { ask: 'Pop 3 pairs of bubbles 🫧', hint: 'Open Bubble Pop. Tap two numbers that add up to the total.', ok: c => c.pop >= 3, yay: 'Pop, pop, pop!' },
+  { ask: 'Find a missing number ❓', hint: 'Open the Missing Number tab.', ok: c => c.quiz, yay: 'Number detective!' },
+  { ask: 'Try "Make 20" with the ten frames 🔢', hint: 'Tap "Make 20" at the top, then fill both frames.', ok: c => c.frame && c.T === 20, yay: 'Two tens make twenty!' },
+], { title: 'Bond Master' });
+Kids.learn({
+  why: ['Number bonds are pairs that make a number: 3 and 7 make 10. If you know them by heart, adding and taking away become super fast!',
+    'Ten is special because we have 10 fingers, and our numbers are built in tens: 10, 20, 30…'],
+  imagine: ['Hold up 10 fingers. Fold down 4. How many are standing? That is a number bond: 4 and 6 make 10!'],
+  wow: ['There are only 6 different pairs that make 10: 0+10, 1+9, 2+8, 3+7, 4+6 and 5+5. Learn those, and you know them all (the other way round too)!',
+    'If 3 + 7 = 10, then 10 − 7 = 3. Number bonds work backwards too!'],
+  talk: ['If you have ₹10 and spend ₹4, how much is left?', 'Play with a grown-up: they say a number, you say its partner to make 10.', 'How many fingers are hiding if I show you 6?'],
+});
+newFrame(); bond(10, '?', '?');
+</script>
+</body>
+</html>

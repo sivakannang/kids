@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>விலங்குகள் · Tamil Animal Words</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .ta { font-family: 'Tamil Sangam MN', 'Noto Sans Tamil', 'Latha', 'Nirmala UI', sans-serif; }
+  .zoo { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  .an { border: 3px solid #eee; background: #fff; border-radius: 20px; padding: 8px 4px; cursor: pointer; font-family: inherit; color: var(--ink); }
+  .an .e { font-size: 50px; display: block; line-height: 1.1; }
+  .an .t { font-size: 20px; display: block; } .an .r { font-size: 13px; color: var(--muted); }
+  .an.seen { border-color: #ffd166; background: #fffbea; }
+  .bigan { text-align: center; } .bigan .e { font-size: 120px; line-height: 1.1; }
+  .bigan .t { font-size: 46px; color: var(--purple); } .bigan .r { font-size: 22px; color: var(--muted); }
+  .bigan .s { font-size: 18px; margin-top: 8px; background: #f1e9ff; border-radius: 14px; padding: 8px; }
+  .choice .ta { font-size: 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🐘</span>
+    <div><h1>Tamil Animal Words <span class="ta">விலங்குகள்</span></h1><small>Say the animals in Tamil, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📖 Learn</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="learn">
+      <div class="pick" id="groups"></div>
+      <div class="zoo" id="zoo" style="margin-top:12px"></div>
+      <div class="hint" id="voiceNote" style="margin-top:8px"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card bigan" id="big"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · தமிழ் 🌺</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// [picture, Tamil, sound, English, group, a little fact]
+const A = [
+  ['🐶', 'நாய்', 'naai', 'dog', 'home', 'A dog says "bow bow" and loves to guard the house.'],
+  ['🐱', 'பூனை', 'poonai', 'cat', 'home', 'A cat says "meow" and can see in the dark.'],
+  ['🐄', 'பசு', 'pasu', 'cow', 'home', 'A cow gives us milk.'],
+  ['🐐', 'ஆடு', 'aadu', 'goat', 'home', 'A goat loves to climb rocks.'],
+  ['🐴', 'குதிரை', 'kuthirai', 'horse', 'home', 'A horse can sleep standing up!'],
+  ['🐔', 'கோழி', 'kozhi', 'hen', 'home', 'A hen lays eggs.'],
+  ['🐃', 'எருமை', 'erumai', 'buffalo', 'home', 'A buffalo loves to sit in muddy water.'],
+  ['🐷', 'பன்றி', 'panri', 'pig', 'home', 'A pig is very clever.'],
+  ['🐭', 'எலி', 'eli', 'mouse', 'home', 'A mouse has a long thin tail.'],
+  ['🐰', 'முயல்', 'muyal', 'rabbit', 'home', 'A rabbit has long ears and loves carrots.'],
+  ['🐘', 'யானை', 'yaanai', 'elephant', 'wild', 'An elephant uses its trunk like a hand.'],
+  ['🦁', 'சிங்கம்', 'singam', 'lion', 'wild', 'A lion\'s roar can be heard far, far away.'],
+  ['🐯', 'புலி', 'puli', 'tiger', 'wild', 'The tiger is India\'s national animal.'],
+  ['🐒', 'குரங்கு', 'kurangu', 'monkey', 'wild', 'A monkey swings from tree to tree.'],
+  ['🦌', 'மான்', 'maan', 'deer', 'wild', 'A deer can run very fast.'],
+  ['🐻', 'கரடி', 'karadi', 'bear', 'wild', 'A bear loves honey.'],
+  ['🐫', 'ஒட்டகம்', 'ottagam', 'camel', 'wild', 'A camel can walk in the desert for days without water.'],
+  ['🦒', 'ஒட்டகச்சிவிங்கி', 'ottagachivingi', 'giraffe', 'wild', 'A giraffe is the tallest animal in the world.'],
+  ['🐍', 'பாம்பு', 'paambu', 'snake', 'wild', 'A snake has no legs, but it can move fast!'],
+  ['🐊', 'முதலை', 'muthalai', 'crocodile', 'water', 'A crocodile has very strong teeth.'],
+  ['🐢', 'ஆமை', 'aamai', 'tortoise', 'water', 'A tortoise carries its house on its back.'],
+  ['🐟', 'மீன்', 'meen', 'fish', 'water', 'A fish breathes under water.'],
+  ['🐸', 'தவளை', 'thavalai', 'frog', 'water', 'A frog can jump very high.'],
+  ['🦀', 'நண்டு', 'nandu', 'crab', 'water', 'A crab walks sideways.'],
+  ['🐋', 'திமிங்கலம்', 'thimingalam', 'whale', 'water', 'A whale is the biggest animal ever!'],
+  ['🦚', 'மயில்', 'mayil', 'peacock', 'birds', 'The peacock is India\'s national bird.'],
+  ['🦜', 'கிளி', 'kili', 'parrot', 'birds', 'A parrot can copy words.'],
+  ['🐦‍⬛', 'காகம்', 'kaagam', 'crow', 'birds', 'A crow is a very clever bird.'],
+  ['🦆', 'வாத்து', 'vaathu', 'duck', 'birds', 'A duck says "quack" and loves to swim.'],
+  ['🦉', 'ஆந்தை', 'aanthai', 'owl', 'birds', 'An owl stays awake at night.'],
+  ['🦋', 'வண்ணத்துப்பூச்சி', 'vannathuppoochi', 'butterfly', 'small', 'A butterfly was once a caterpillar.'],
+  ['🐜', 'எறும்பு', 'erumbu', 'ant', 'small', 'An ant can carry things much heavier than itself.'],
+  ['🐝', 'தேனீ', 'theni', 'honey bee', 'small', 'Bees make honey from flowers.'],
+];
+const GROUPS = [['all', '🌍 All'], ['home', '🏡 Home & farm'], ['wild', '🌳 Wild'], ['water', '🌊 Water'], ['birds', '🐦 Birds'], ['small', '🐞 Tiny']];
+let group = 'all';
+const seen = new Set();
+const say = a => { if (!Kids.speakLang(a[1], 'ta')) Kids.speak(`${a[2]}. ${a[3]}`, true); };
+const note = () => { $('#voiceNote').textContent = Kids.voiceFor('ta') ? '🔊 Tap an animal to hear its Tamil name.' : '🔇 This device has no Tamil voice. Read the English letters together with a grown-up!'; };
+try { speechSynthesis.addEventListener('voiceschanged', note); } catch {}
+
+GROUPS.forEach(([id, label]) => {
+  const b = document.createElement('button'); b.textContent = label; b.className = id === group ? 'active' : '';
+  b.addEventListener('click', () => { group = id; Kids.sfx.pop(); [...$('#groups').children].forEach(x => x.classList.toggle('active', x === b)); drawZoo(); });
+  $('#groups').appendChild(b);
+});
+function big(a) { $('#big').innerHTML = `<div class="e">${a[0]}</div><div class="t ta">${a[1]}</div><div class="r">${a[2]} · ${a[3]}</div><div class="s">${a[5]}</div>`; }
+function drawZoo() {
+  $('#zoo').innerHTML = '';
+  A.filter(a => group === 'all' || a[4] === group).forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'an' + (seen.has(a[1]) ? ' seen' : '');
+    b.innerHTML = `<span class="e">${a[0]}</span><span class="t ta">${a[1]}</span><span class="r">${a[2]}</span>`;
+    b.addEventListener('click', () => { big(a); say(a); seen.add(a[1]); b.classList.add('seen'); ch.check({ tap: a, seen: seen.size }); });
+    $('#zoo').appendChild(b);
+  });
+}
+const four = a => { const o = new Set([a]); while (o.size < 4) o.add(A[R(A.length)]); return shuffle([...o]); };
+const MAKERS = [
+  () => { const a = A[R(A.length)];
+    return { q: `<div class="ta" style="font-size:44px">${a[1]}</div><div class="label">${a[2]}. Which animal is this?</div>`,
+      choices: four(a).map(x => ({ label: `<span class="ce">${x[0]}</span>${x[3]}`, ok: x === a })), yay: `${a[1]} (${a[2]}) is a ${a[3]}!`, hint: 'Say the Tamil word out loud. Does it remind you of an animal?' }; },
+  () => { const a = A[R(A.length)];
+    return { q: `<div style="font-size:90px">${a[0]}</div><div class="label">What is this ${a[3]} called in Tamil?</div>`,
+      choices: four(a).map(x => ({ label: `<span class="ta">${x[1]}</span><br><small>${x[2]}</small>`, ok: x === a })), yay: `A ${a[3]} is ${a[1]} (${a[2]}).`, hint: 'Look at the English letters under each word.' }; },
+];
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)](), { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Find யானை (yaanai), the elephant 🐘', hint: 'It is in the Wild group.', ok: c => c.tap && c.tap[3] === 'elephant', yay: 'யானை! The biggest animal on land.' },
+  { ask: 'Find India\'s national bird 🦚', hint: 'It has a beautiful fan of feathers.', ok: c => c.tap && c.tap[3] === 'peacock', yay: 'மயில் (mayil), the peacock!' },
+  { ask: 'Find an animal that lives in water 🌊', hint: 'Open the Water group.', ok: c => c.tap && c.tap[4] === 'water', yay: c => `${c.tap[1]} lives in water!` },
+  { ask: 'Meet 15 animals 🏆', hint: 'Keep tapping animals until 15 have a yellow ring.', ok: c => c.seen >= 15, yay: 'You know 15 Tamil animal words!' },
+  { ask: 'Play the Quiz and get one right ❓', hint: 'Open the Quiz tab.', ok: c => c.quiz, yay: 'Super Tamil! 🌺' },
+], { title: 'Animal Expert' });
+Kids.learn({
+  why: ['Learning the same word in two languages makes your brain stronger, like exercise for your mind! 🧠',
+    'Tamil is our family\'s language. When you know Tamil animal words, you can talk to Paati and Thatha about the animals you see.'],
+  imagine: ['Imagine you are walking through a jungle. Say each animal\'s Tamil name as you meet it: யானை, புலி, குரங்கு…'],
+  wow: ['The word திமிங்கலம் (whale) is one of the longest animal words here. Can you say it fast?',
+    'Some Tamil animal words are very old. Poets wrote about மயில் (peacock) and யானை (elephant) about 2,000 years ago!'],
+  talk: ['Which animal did you see today? What is it called in Tamil?', 'Play a game: a grown-up says the Tamil word, and you act like the animal!', 'Which animal would you like as a pet?'],
+});
+drawZoo(); big(A[10]); note(); setTimeout(note, 800);
+</script>
+</body>
+</html>

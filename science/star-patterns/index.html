@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Star Patterns</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  body { background: linear-gradient(160deg, #10153d 0%, #2b1d5c 60%, #3b2a7a 100%); background-attachment: fixed; }
+  .logo h1 { color: #ffd166; } .logo small { color: #cfd8ff; } footer { color: #cfd8ff; }
+  .tab { background: rgba(255,255,255,.15); color: #fff; } .tab.active { background: #fff; }
+  #sky { background: radial-gradient(ellipse at 50% 30%, #1d2a6b, #050822); }
+  #sky .st { cursor: pointer; }
+  #sky .ln { stroke: #ffd166; stroke-width: 3; stroke-linecap: round; }
+  #sky .ghost { stroke: rgba(255,255,255,.18); stroke-width: 2; stroke-dasharray: 4 6; }
+  .cons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .info h3 { margin: 0; color: var(--purple); } .info p { font-size: 18px; line-height: 1.45; margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">✨</span>
+    <div><h1>Star Patterns</h1><small>Join the stars to find pictures in the sky, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="join">✏️ Join the Stars</button>
+  <button class="tab" data-tab="quiz">❓ Which Pattern?</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card space-card" data-panel="join">
+      <div class="cons pick" id="cons"></div>
+      <svg id="sky" class="svgbox" viewBox="0 0 600 440"></svg>
+      <div class="hint" id="jHint" style="margin-top:8px"></div>
+      <div class="row"><button class="btn purple" id="showBtn">👀 Show me the lines</button><button class="btn orange" id="clearBtn">🧽 Start again</button></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card info" id="info"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Space 🚀</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+// star positions are drawn to look like the real patterns (not to scale); [x, y, brightness]
+const CONS = [
+  { id: 'dipper', n: 'Saptarishi (Big Dipper)', e: '🥄', stars: [[60, 120, 3], [150, 95, 3], [235, 115, 3], [310, 150, 2], [330, 260, 3], [470, 270, 3], [480, 160, 3]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]],
+    t: 'In India we call these 7 stars Saptarishi, the seven wise sages. Other people see a big spoon or a plough.', f: 'The two stars at the end of the "spoon" point towards Dhruva, the North Star!' },
+  { id: 'little', n: 'Dhruva and the Little Dipper', e: '⭐', stars: [[60, 80, 4], [150, 115, 1], [235, 140, 1], [320, 170, 2], [330, 270, 1], [470, 290, 3], [470, 190, 2]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]],
+    t: 'The bright star at the tip is Dhruva Tara, the North Star (Polaris). All night, the other stars seem to turn around it while it stays still.', f: 'Sailors long ago used Dhruva to find which way is north.' },
+  { id: 'orion', n: 'Orion, the Hunter', e: '🏹', stars: [[170, 70, 4], [400, 90, 3], [250, 225, 3], [290, 215, 3], [330, 205, 3], [200, 380, 2], [430, 360, 4], [290, 40, 1]], lines: [[0, 1], [0, 2], [1, 4], [2, 3], [3, 4], [2, 5], [4, 6], [0, 7], [1, 7]],
+    t: 'Orion looks like a hunter with a belt of 3 stars in a row. In India, this part of the sky is called Mrigashira.', f: 'The red star on his shoulder, Betelgeuse, is so big that it could swallow our Sun hundreds of millions of times!' },
+  { id: 'cass', n: 'Cassiopeia, the Queen', e: '👑', stars: [[60, 130, 3], [180, 300, 3], [300, 190, 3], [420, 320, 3], [540, 150, 3]], lines: [[0, 1], [1, 2], [2, 3], [3, 4]],
+    t: 'Cassiopeia makes a big W (or an M, when it turns upside down). It was named after a queen in an old Greek story.', f: 'You can find it on the other side of Dhruva from Saptarishi.' },
+  { id: 'scorpius', n: 'Vrishchika (Scorpion)', e: '🦂', stars: [[90, 60, 2], [130, 40, 2], [150, 110, 2], [200, 150, 4], [240, 200, 2], [260, 270, 2], [300, 340, 2], [370, 380, 2], [440, 370, 2], [470, 320, 3]], lines: [[0, 2], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9]],
+    t: 'Vrishchika looks like a scorpion with a curly tail. Its bright red heart is the star Antares.', f: 'In India, you can see the scorpion low in the south on summer nights.' },
+  { id: 'leo', n: 'Simha (Leo, the Lion)', e: '🦁', stars: [[170, 60, 2], [110, 100, 2], [110, 170, 2], [170, 210, 3], [180, 300, 4], [400, 260, 2], [520, 300, 3], [400, 180, 2]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [3, 7], [4, 5], [5, 6], [6, 7], [7, 5]],
+    t: 'Simha looks like a lion lying down. The curve at the front, like a backwards question mark, is the lion\'s mane.', f: 'The bright star at the bottom of the mane is Regulus, "the little king".' },
+  { id: 'crux', n: 'Trishanku (Southern Cross)', e: '✝️', stars: [[300, 50, 3], [300, 380, 4], [170, 210, 3], [430, 190, 3], [370, 270, 1]], lines: [[0, 1], [2, 3]],
+    t: 'A small, bright cross of stars. In India it is called Trishanku. It is the smallest of all 88 constellations!', f: 'From the south of India, look low in the south sky in April and May to see it.' },
+];
+let cur = CONS[0], drawn = new Set(), pick = null, finished = new Set();
+const sky = $('#sky');
+const bg = [];
+for (let i = 0; i < 90; i++) bg.push([Math.random() * 600, Math.random() * 440, Math.random() * 1.2 + .3]);
+CONS.forEach(c => {
+  const b = document.createElement('button'); b.textContent = `${c.e} ${c.n.split(' (')[0]}`; b.className = c === cur ? 'active' : '';
+  b.addEventListener('click', () => { cur = c; Kids.sfx.pop(); [...$('#cons').children].forEach(x => x.classList.toggle('active', x === b)); reset(); });
+  $('#cons').appendChild(b);
+});
+const key = (a, b) => a < b ? `${a}-${b}` : `${b}-${a}`;
+function draw(ghost) {
+  sky.innerHTML = '';
+  bg.forEach(([x, y, r]) => el('circle', { cx: x, cy: y, r, fill: '#fff', opacity: .5 }, sky));
+  if (ghost) cur.lines.forEach(([a, b]) => el('line', { x1: cur.stars[a][0], y1: cur.stars[a][1], x2: cur.stars[b][0], y2: cur.stars[b][1], class: 'ghost' }, sky));
+  cur.lines.forEach(([a, b]) => { if (drawn.has(key(a, b))) el('line', { x1: cur.stars[a][0], y1: cur.stars[a][1], x2: cur.stars[b][0], y2: cur.stars[b][1], class: 'ln' }, sky); });
+  cur.stars.forEach(([x, y, m], i) => {
+    const g = el('g', { class: 'st' }, sky);
+    el('circle', { cx: x, cy: y, r: 22, fill: 'transparent' }, g);
+    if (pick === i) el('circle', { cx: x, cy: y, r: 16, fill: 'none', stroke: '#06d6a0', 'stroke-width': 3 }, g);
+    el('circle', { cx: x, cy: y, r: 3 + m * 1.6, fill: cur.id === 'orion' && i === 0 ? '#ffb38a' : cur.id === 'scorpius' && i === 3 ? '#ff7b5c' : '#fffbe6' }, g);
+    g.addEventListener('click', () => tap(i));
+  });
+}
+let ghost = false;
+function reset() { drawn = new Set(); pick = null; ghost = false; draw(false); info(); $('#jHint').textContent = `Tap a star, then tap another to join them. Make the ${cur.n.split(' (')[0]} pattern! (${cur.lines.length} lines)`; }
+function tap(i) {
+  if (pick === null) { pick = i; Kids.sfx.tick(); draw(ghost); return; }
+  if (pick === i) { pick = null; draw(ghost); return; }
+  const k = key(pick, i);
+  if (cur.lines.some(([a, b]) => key(a, b) === k) && !drawn.has(k)) {
+    drawn.add(k); Kids.sfx.pop();
+    if (drawn.size === cur.lines.length) {
+      pick = null; draw(false); Kids.sfx.yay(); Kids.confetti();
+      if (!finished.has(cur.id)) { finished.add(cur.id); Kids.addStar(); }
+      $('#jHint').textContent = `${Kids.praise()} You made ${cur.n}! ${cur.e}`; Kids.speak(Kids.forSpeech(`You made ${cur.n}! ${cur.t}`), true);
+      ch.check({ made: cur.id, count: finished.size }); return;
+    }
+    $('#jHint').textContent = `${drawn.size} of ${cur.lines.length} lines. Keep going!`;
+  } else { Kids.sfx.oops(); $('#jHint').textContent = drawn.has(k) ? 'Those two are already joined!' : 'Those two stars aren\'t joined in this pattern. Try another star! (Tap "Show me the lines" for help.)'; }
+  pick = i; draw(ghost);
+}
+function info() { $('#info').innerHTML = `<h3>${cur.e} ${cur.n}</h3><p>${cur.t}</p><p class="hint" style="font-size:16px;text-align:left">🤩 ${cur.f}</p>`; }
+$('#showBtn').addEventListener('click', () => { ghost = !ghost; Kids.sfx.pop(); draw(ghost); ch.check({ help: true }); });
+$('#clearBtn').addEventListener('click', () => { Kids.sfx.pop(); reset(); });
+
+/* ---------- quiz: which pattern is this? ---------- */
+function mini(c) {
+  const xs = c.stars.map(s => s[0]), ys = c.stars.map(s => s[1]);
+  const x0 = Math.min(...xs) - 30, y0 = Math.min(...ys) - 30, w = Math.max(...xs) - x0 + 30, h = Math.max(...ys) - y0 + 30;
+  return `<svg viewBox="${x0} ${y0} ${w} ${h}" style="width:260px;height:180px;background:#0b1033;border-radius:16px">` +
+    c.lines.map(([a, b]) => `<line x1="${c.stars[a][0]}" y1="${c.stars[a][1]}" x2="${c.stars[b][0]}" y2="${c.stars[b][1]}" stroke="#ffd166" stroke-width="5"/>`).join('') +
+    c.stars.map(([x, y, m]) => `<circle cx="${x}" cy="${y}" r="${6 + m * 2}" fill="#fff"/>`).join('') + '</svg>';
+}
+function quizMaker() {
+  const a = CONS[R(CONS.length)]; const o = shuffle([a, ...shuffle(CONS.filter(c => c !== a)).slice(0, 2)]);
+  return { q: `${mini(a)}<br>Which star pattern is this?`, choices: o.map(c => ({ label: `<span class="ce">${c.e}</span>${c.n.split(' (')[0]}`, ok: c === a })), yay: a.t, hint: 'Look at the shape. Is it a W, a cross, a spoon, a curly tail…?' };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 7, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Join the stars of Saptarishi 🥄', hint: 'Pick Saptarishi and join the 7 stars like a big spoon.', ok: c => c.made === 'dipper', yay: 'The seven sages shine for you!' },
+  { ask: 'Find Dhruva, the North Star ⭐', hint: 'Make the Little Dipper. Dhruva is the bright star at the tip.', ok: c => c.made === 'little', yay: 'Dhruva Tara always points north!' },
+  { ask: 'Give Orion his belt 🏹', hint: 'Pick Orion. The 3 stars in a row are his belt.', ok: c => c.made === 'orion', yay: 'The hunter is ready!' },
+  { ask: 'Make 5 different patterns ✨', hint: 'Try Cassiopeia (a W), Trishanku (a cross)…', ok: c => c.count >= 5, yay: 'You are a sky explorer!' },
+  { ask: 'Name a pattern in the quiz ❓', hint: 'Open Which Pattern?', ok: c => c.quiz, yay: 'Star expert!' },
+], { title: 'Star Gazer' });
+Kids.learn({
+  why: ['Long ago, people looked up at night and joined the stars with imaginary lines to make pictures: a hunter, a lion, a scorpion. These are called constellations.',
+    'The stars in a pattern only look close together. Really, some are much, much farther away than others!'],
+  imagine: ['Look at the night sky and join the stars your own way. What picture do you see? A cat? A kite? You can invent your own constellation!'],
+  wow: ['There are 88 official constellations covering the whole sky.', 'The light from some of these stars left them hundreds of years ago, before your great-great-grandparents were born! 💡',
+    'Indian astronomers divided the sky into 27 nakshatras, star groups along the path of the Moon.'],
+  talk: ['On a clear night, go outside with a grown-up. Can you find Orion\'s belt (in winter) or Saptarishi?', 'Why do you think city lights make stars harder to see?', 'Make up a story about your own star pattern!'],
+});
+reset();
+</script>
+</body>
+</html>

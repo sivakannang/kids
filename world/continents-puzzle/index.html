@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Continents Puzzle</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<script src="../../shared/vendor/d3.min.js"></script>
+<script src="../../shared/vendor/topojson-client.min.js"></script>
+<script src="../../shared/vendor/countries-110m.js"></script>
+<style>
+  #map .ocean { fill: #9fd3ff; } #map .land { fill: #e6e1d3; stroke: #fff; stroke-width: .5; cursor: pointer; transition: fill .4s; }
+  #map .land.hover { fill: #d8d0b8; }
+  #map .olabel { fill: #2b6cb0; font-size: 13px; font-style: italic; font-weight: 600; pointer-events: none; opacity: .75; }
+  #map .clabel { font-size: 15px; font-weight: 700; pointer-events: none; paint-order: stroke; stroke: #fff; stroke-width: 4px; fill: #2b2d42; }
+  .bank { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .cb { border: 3px solid transparent; border-radius: 16px; padding: 8px 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 16px; color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.15); }
+  .cb .e { display: block; font-size: 30px; }
+  .cb.sel { border-color: #2b2d42; transform: translateY(-3px) scale(1.05); }
+  .cb.placed { opacity: .35; cursor: default; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌏</span>
+    <div><h1>Continents Puzzle</h1><small>Put the 7 continents in their places, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="puzzle">🧩 Puzzle</button>
+  <button class="tab" data-tab="quiz">❓ Continent Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="puzzle">
+      <div class="bank" id="bank"></div>
+      <svg id="map" class="svgbox" viewBox="0 0 960 500" style="margin-top:10px"></svg>
+      <div class="result" id="res">Pick a continent card, then tap where it goes on the map!</div>
+      <div class="row"><button class="btn orange" id="againBtn">🔁 Play again</button></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · World 🗺️</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script src="../../shared/continents.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl, K = Kids.name;
+const C = window.CONTINENTS, NAMES = Object.keys(C);
+const svg = $('#map');
+const W = 960, H = 500;
+const proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'Sphere' });
+const path = d3.geoPath(proj);
+el('path', { d: path({ type: 'Sphere' }), class: 'ocean' }, svg);
+const landG = el('g', {}, svg), labelG = el('g', {}, svg);
+const feats = topojson.feature(window.WORLD_ATLAS, window.WORLD_ATLAS.objects.countries).features;
+const byCont = {};
+feats.forEach(f => {
+  const c = window.CONTINENT_OF(f.properties.name);
+  const p = el('path', { d: path(f), class: 'land', 'data-c': c }, landG);
+  (byCont[c] = byCont[c] || []).push(p);
+  p.addEventListener('mouseenter', () => byCont[c].forEach(x => x.classList.add('hover')));
+  p.addEventListener('mouseleave', () => byCont[c].forEach(x => x.classList.remove('hover')));
+  p.addEventListener('click', () => place(c));
+});
+[['Pacific Ocean', -150, 0], ['Atlantic Ocean', -35, 15], ['Indian Ocean', 78, -25], ['Southern Ocean', 20, -60], ['Arctic Ocean', 20, 80]].forEach(([n, lo, la]) => {
+  const [x, y] = proj([lo, la]); el('text', { x, y, 'text-anchor': 'middle', class: 'olabel' }, svg).textContent = n;
+});
+// where to write each continent's name
+const LBL = { 'Asia': [90, 45], 'Europe': [15, 52], 'Africa': [20, 5], 'North America': [-100, 45], 'South America': [-60, -15], 'Australia & Oceania': [134, -25], 'Antarctica': [0, -78] };
+
+let sel = null, placed = new Set(), mistakes = 0, rounds = 0;
+function drawBank() {
+  $('#bank').innerHTML = '';
+  shuffle(NAMES).forEach(n => {
+    const b = document.createElement('button'); b.className = 'cb' + (placed.has(n) ? ' placed' : '') + (sel === n ? ' sel' : '');
+    b.style.background = C[n].c; if (n === 'Antarctica') b.style.color = '#2b2d42';
+    b.innerHTML = `<span class="e">${C[n].e}</span>${n}`;
+    b.addEventListener('click', () => { if (placed.has(n)) return; sel = n; Kids.sfx.pop(); [...$('#bank').children].forEach(x => x.classList.toggle('sel', x === b));
+      $('#res').className = 'result'; $('#res').textContent = `Where is ${n}? Tap it on the map! ${C[n].e}`; Kids.speak(`Where is ${n}?`); });
+    $('#bank').appendChild(b);
+  });
+}
+function place(c) {
+  if (placed.has(c)) { $('#res').textContent = `${C[c].e} ${c}: ${C[c].info}`; Kids.speak(Kids.forSpeech(`${c}. ${C[c].info}`)); return; }
+  if (!sel) { $('#res').className = 'result hint'; $('#res').textContent = 'First pick a continent card at the top!'; Kids.sfx.oops(); return; }
+  if (c === sel) {
+    placed.add(c); byCont[c].forEach(p => p.style.fill = C[c].c);
+    const [x, y] = proj(LBL[c]); el('text', { x, y, 'text-anchor': 'middle', class: 'clabel' }, labelG).textContent = `${C[c].e} ${c}`;
+    Kids.sfx.yay(); Kids.addStar();
+    $('#res').className = 'result good'; $('#res').textContent = `${Kids.praise()} ${c}! ${C[c].info}`; Kids.speak(Kids.forSpeech(`${c}! ${C[c].info}`));
+    sel = null; drawBank(); ch.check({ placed: c, n: placed.size });
+    if (placed.size === NAMES.length) { rounds++; Kids.confetti(); Kids.banner(`🌏 All 7 continents, ${K}!`); $('#res').textContent = `🏆 You finished the world puzzle${mistakes ? ` with only ${mistakes} oops` : ' with no mistakes'}! 🌍`; ch.check({ all: true, perfect: !mistakes }); }
+  } else {
+    mistakes++; Kids.sfx.oops(); Kids.resetStreak();
+    $('#res').className = 'result hint'; $('#res').textContent = `That land is ${c}, not ${sel}. Try again! 💡 ${hint(sel)}`;
+  }
+}
+function hint(n) { return { 'Asia': 'Find India first. Asia is the huge land around it.', 'Europe': 'It is above Africa, to the left of Asia.', 'Africa': 'It is below Europe, shaped a bit like a big ice cream cone.', 'North America': 'It is on the left side, at the top.', 'South America': 'It is on the left side, below North America.', 'Australia & Oceania': 'It is at the bottom right, an island continent.', 'Antarctica': 'It is the icy land at the very bottom.' }[n]; }
+$('#againBtn').addEventListener('click', () => { placed = new Set(); sel = null; mistakes = 0; labelG.innerHTML = ''; landG.querySelectorAll('.land').forEach(p => p.style.fill = ''); Kids.sfx.pop(); drawBank(); $('#res').className = 'result'; $('#res').textContent = 'Pick a continent card, then tap where it goes on the map!'; });
+
+/* ---------- quiz ---------- */
+const FACTS = [['India 🇮🇳', 'Asia'], ['Egypt and its pyramids 🇪🇬', 'Africa'], ['Brazil 🇧🇷', 'South America'], ['France and the Eiffel Tower 🇫🇷', 'Europe'], ['Kangaroos 🦘', 'Australia & Oceania'],
+  ['Penguins and ice everywhere 🐧', 'Antarctica'], ['Canada 🇨🇦', 'North America'], ['Japan 🇯🇵', 'Asia'], ['Kenya 🇰🇪', 'Africa'], ['The Amazon rainforest 🌳', 'South America'],
+  ['The United Kingdom 🇬🇧', 'Europe'], ['Mexico 🇲🇽', 'North America'], ['New Zealand 🇳🇿', 'Australia & Oceania'], ['China and the Great Wall 🇨🇳', 'Asia'], ['The Sahara desert 🏜️', 'Africa'],
+  ['The biggest continent', 'Asia'], ['The coldest continent', 'Antarctica'], ['The smallest continent', 'Australia & Oceania']];
+function quizMaker() {
+  const [q, a] = FACTS[R(FACTS.length)];
+  return { q: `${q}<div class="label">Which continent?</div>`, choices: shuffle([a, ...shuffle(NAMES.filter(n => n !== a)).slice(0, 3)]).map(n => ({ label: `<span class="ce">${C[n].e}</span>${n}`, ok: n === a })),
+    yay: `${C[a].e} ${a}. ${C[a].info}`, hint: hint(a) };
+}
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', quizMaker, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Put our home continent, Asia, in its place 🐘', hint: 'Pick the Asia card, then tap India or China on the map.', ok: c => c.placed === 'Asia', yay: 'Asia! India is in Asia.' },
+  { ask: 'Place 4 continents 🧩', hint: 'Pick a card, then tap the land.', ok: c => c.n >= 4, yay: 'More than half the world!' },
+  { ask: 'Finish the whole world puzzle 🌍', hint: 'Place all 7 continents.', ok: c => c.all, yay: 'The whole world, done!' },
+  { ask: 'Get a Continent Quiz question right ❓', hint: 'Open Continent Quiz.', ok: c => c.quiz, yay: 'World expert!' },
+  { ask: 'Finish the puzzle with no mistakes 🏆', hint: 'Tap Play again and take your time.', ok: c => c.all && c.perfect, yay: 'Perfect! A real map master!' },
+], { title: 'Map Master' });
+Kids.learn({
+  why: ['A continent is a very big piece of land. There are 7 of them, and oceans of water all around.',
+    'Long, long ago, all the continents were joined together in one giant land called Pangaea. Very slowly, they drifted apart!'],
+  imagine: ['Look at South America and Africa. Can you imagine them fitting together like jigsaw pieces? They used to be joined! 🧩'],
+  wow: ['Asia is so big that all the other continents\' people added together are fewer than Asia\'s people!', 'Russia is so big that it is in two continents: Europe and Asia.',
+    'More than two-thirds of the Earth is covered by ocean. 🌊'],
+  talk: ['Which continent would you most like to visit? Why?', 'Which animals live on each continent?', 'Which continent does someone you know live in?'],
+});
+drawBank();
+</script>
+</body>
+</html>

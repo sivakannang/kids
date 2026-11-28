@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather Watch</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  .sky { position: relative; height: 300px; border-radius: 24px; overflow: hidden; transition: background 1s; }
+  .sky .big { position: absolute; font-size: 90px; transition: all 1s; }
+  .drop { position: absolute; top: -20px; font-size: 22px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(340px); } }
+  .blow { position: absolute; font-size: 30px; animation: blow linear forwards; }
+  @keyframes blow { from { transform: translateX(-60px); } to { transform: translateX(900px) rotate(360deg); } }
+  .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 50px; background: #8fd694; }
+  .wx { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  .wx button { border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 6px 12px; cursor: pointer; font-family: inherit; font-weight: 700; font-size: 16px; }
+  .wx button .e { display: block; font-size: 34px; }
+  .wx button.on { border-color: var(--blue); background: #e5f5ff; }
+  .cycle { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .step { border-radius: 18px; padding: 12px; background: #f0f7ff; text-align: center; opacity: .35; transition: opacity .5s; }
+  .step.on { opacity: 1; background: #d3f0ff; }
+  .step .e { font-size: 46px; } .step b { display: block; font-size: 18px; }
+  .diary { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .day { background: #f8f6ff; border-radius: 14px; padding: 6px 10px; text-align: center; font-size: 13px; min-width: 64px; }
+  .day .e { font-size: 30px; display: block; }
+  .clothes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🌦️</span>
+    <div><h1>Weather Watch</h1><small>Rain, clouds, wind and rainbows, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="sky">🌤️ Make Weather</button>
+  <button class="tab" data-tab="cycle">💧 Water Cycle</button>
+  <button class="tab" data-tab="dress">👕 Dress for It</button>
+  <button class="tab" data-tab="diary">📔 My Weather Diary</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="sky">
+      <div class="sky" id="sky"><div class="ground"></div></div>
+      <div class="wx" id="wx"></div>
+      <div class="result" id="wxRes"></div>
+    </section>
+    <section class="card" data-panel="cycle" hidden>
+      <div class="cycle" id="cycle"></div>
+      <div class="row"><button class="btn big" id="cycleBtn">▶️ Show me the water cycle</button></div>
+      <div class="result" id="cycleRes">Where does rain come from? Let's follow one drop of water!</div>
+    </section>
+    <section class="card center" data-panel="dress" hidden>
+      <div style="font-size:90px" id="dWx"></div>
+      <div class="quiz-q" id="dQ"></div>
+      <div class="clothes bigchoices" id="dChoices"></div>
+      <div class="result" id="dRes"></div>
+      <div class="row"><button class="btn big orange" id="dNext" hidden>Next ➡️</button></div>
+    </section>
+    <section class="card center" data-panel="diary" hidden>
+      <div class="label" style="margin-top:0">What is the weather like today? Look out of the window! 🪟</div>
+      <div class="wx" id="dPick"></div>
+      <div class="result" id="diaryRes"></div>
+      <h3>🗓️ The last 14 days</h3>
+      <div class="diary" id="diary"></div>
+    </section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Earth &amp; Sky 🌍</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, K = Kids.name;
+const WX = {
+  sunny: { e: '☀️', n: 'Sunny', bg: 'linear-gradient(#4cc9f0, #bde0fe)', say: 'The Sun is shining! The sky is clear and blue. ☀️' },
+  cloudy: { e: '☁️', n: 'Cloudy', bg: 'linear-gradient(#8d99ae, #d6dde6)', say: 'Clouds are made of billions of tiny water droplets floating in the air. ☁️' },
+  rainy: { e: '🌧️', n: 'Rainy', bg: 'linear-gradient(#5c677d, #9aa5b8)', say: 'When the droplets in a cloud join up and get too heavy, they fall as rain! 🌧️' },
+  windy: { e: '🌬️', n: 'Windy', bg: 'linear-gradient(#90e0ef, #caf0f8)', say: 'Wind is moving air. You cannot see it, but you can see it move leaves and kites! 🍃' },
+  stormy: { e: '⛈️', n: 'Stormy', bg: 'linear-gradient(#22223b, #4a4e69)', say: 'Lightning is a giant spark of electricity, and thunder is the sound it makes! ⚡' },
+  snowy: { e: '❄️', n: 'Snowy', bg: 'linear-gradient(#caf0f8, #ffffff)', say: 'When it is very cold, below 0 °C, water in clouds freezes into snowflakes! Every snowflake has 6 points. ❄️' },
+  rainbow: { e: '🌈', n: 'Rainbow', bg: 'linear-gradient(#4cc9f0, #e0f7ff)', say: 'A rainbow appears when sunlight shines through raindrops. The drops split white light into 7 colours! 🌈' },
+};
+let fx = null, fx2 = null, made = new Set();
+Object.entries(WX).forEach(([k, w]) => {
+  const b = document.createElement('button'); b.innerHTML = `<span class="e">${w.e}</span>${w.n}`;
+  b.addEventListener('click', () => makeWx(k, b));
+  $('#wx').appendChild(b);
+});
+function makeWx(k, btn) {
+  const w = WX[k], sky = $('#sky');
+  [...$('#wx').children].forEach(x => x.classList.toggle('on', x === btn));
+  clearInterval(fx); clearInterval(fx2); sky.querySelectorAll('.big, .drop, .blow').forEach(x => x.remove());
+  sky.style.background = w.bg;
+  const put = (e, l, t, size) => { const d = document.createElement('div'); d.className = 'big'; d.textContent = e; d.style.left = l; d.style.top = t; if (size) d.style.fontSize = size; sky.appendChild(d); return d; };
+  if (k === 'sunny' || k === 'rainbow' || k === 'windy') put('☀️', '75%', '20px');
+  if (k === 'rainbow') { put('🌈', '20%', '60px', '160px'); }
+  if (['cloudy', 'rainy', 'stormy', 'snowy'].includes(k)) { put('☁️', '10%', '10px'); put('☁️', '40%', '30px', '110px'); put('☁️', '70%', '0px'); }
+  if (k === 'windy') put('🪁', '30%', '50px', '70px');
+  const rain = (ch, ms) => { fx = setInterval(() => { const d = document.createElement('div'); d.className = 'drop'; d.textContent = ch; d.style.left = Math.random() * 98 + '%'; d.style.animationDuration = (k === 'snowy' ? 4 : 1) + Math.random() + 's'; sky.appendChild(d); setTimeout(() => d.remove(), 5500); }, ms); };
+  if (k === 'rainy') rain('💧', 90);
+  if (k === 'stormy') { rain('💧', 60); const z = put('⚡', '45%', '110px', '70px'); fx2 = setInterval(() => z.style.opacity = Math.random() < .3 ? 1 : 0, 300); }
+  if (k === 'snowy') rain('❄️', 180);
+  if (k === 'windy') fx = setInterval(() => { const d = document.createElement('div'); d.className = 'blow'; d.textContent = ['🍃', '🍂', '🍃'][R(3)]; d.style.top = 80 + Math.random() * 160 + 'px'; d.style.animationDuration = 2 + Math.random() * 2 + 's'; sky.appendChild(d); setTimeout(() => d.remove(), 4500); }, 250);
+  $('#wxRes').textContent = w.say; Kids.sfx.whoosh(); Kids.speak(Kids.forSpeech(w.say));
+  made.add(k); ch.check({ wx: k, made: made.size });
+}
+
+/* ---------- water cycle ---------- */
+const CYCLE = [['🌊', 'Water', 'Water lies in seas, rivers and lakes.'], ['☀️♨️', 'Evaporation', 'The Sun warms the water. It turns into invisible water vapour and rises up.'],
+  ['☁️', 'Condensation', 'High up it is cold. The vapour turns into tiny droplets and makes clouds.'], ['🌧️', 'Rain', 'The droplets join and get heavy, then fall as rain.'],
+  ['🏞️', 'Back again', 'Rain flows into rivers and back to the sea. Then it all starts again!']];
+$('#cycle').innerHTML = CYCLE.map(c => `<div class="step"><div class="e">${c[0]}</div><b>${c[1]}</b>${c[2]}</div>`).join('');
+let cyT = null;
+$('#cycleBtn').addEventListener('click', () => {
+  clearTimeout(cyT); const steps = [...$('#cycle').children]; steps.forEach(s => s.classList.remove('on'));
+  let i = 0;
+  const go = () => {
+    steps[i].classList.add('on'); $('#cycleRes').textContent = `${CYCLE[i][1]}: ${CYCLE[i][2]}`; Kids.speak(`${CYCLE[i][1]}. ${CYCLE[i][2]}`, true, 0.85); Kids.sfx.pop();
+    i++; if (i < CYCLE.length) cyT = setTimeout(go, 5200); else cyT = setTimeout(() => { Kids.addStar(); Kids.sfx.yay(); $('#cycleRes').textContent = '🔁 The same water goes round and round, for millions of years! The water you drink may once have been drunk by a dinosaur! 🦕'; ch.check({ cycle: true }); }, 5200);
+  };
+  go();
+});
+
+/* ---------- dress for the weather ---------- */
+const DRESS = [['rainy', 'What do you need when it rains?', '☂️', ['🕶️', '🩳']], ['sunny', 'It is a hot, sunny day. What will keep you safe?', '🧢', ['🧣', '🧤']],
+  ['snowy', 'It is snowing! What will keep you warm?', '🧥', ['🩳', '👙']], ['rainy', 'Splashing in puddles! What goes on your feet?', '🥾', ['🩴', '🧦']],
+  ['sunny', 'The Sun is very bright. What protects your eyes?', '🕶️', ['🧣', '☂️']], ['snowy', 'Your hands are freezing! What helps?', '🧤', ['🕶️', '🩴']],
+  ['windy', 'It is a windy day. What fun thing can you fly?', '🪁', ['☂️', '🏊']], ['stormy', 'There is thunder and lightning. Where should you be?', '🏠', ['🌳', '🏖️']]];
+let dFirst = true;
+function newDress() {
+  const [k, q, ans, wrong] = DRESS[R(DRESS.length)]; dFirst = true;
+  $('#dWx').textContent = WX[k].e; $('#dQ').textContent = q; $('#dRes').textContent = ''; $('#dRes').className = 'result'; $('#dNext').hidden = true;
+  Kids.speak(q, true, 0.85);
+  $('#dChoices').innerHTML = ''; let done = false;
+  shuffle([ans, ...wrong]).forEach(x => {
+    const b = document.createElement('button'); b.className = 'bigchoice pic'; b.textContent = x;
+    b.addEventListener('click', () => {
+      if (done || b.disabled) return;
+      if (x === ans) { done = true; b.classList.add('right'); Kids.sfx.yay(); if (dFirst) Kids.addStar(); const m = Kids.praise(); $('#dRes').textContent = m; $('#dRes').className = 'result good'; $('#dNext').hidden = false; ch.check({ dress: true }); }
+      else { dFirst = false; b.classList.add('wrong'); b.disabled = true; Kids.sfx.oops(); $('#dRes').textContent = 'Hmm, would that help in this weather? Try again!'; $('#dRes').className = 'result hint'; }
+    });
+    $('#dChoices').appendChild(b);
+  });
+}
+$('#dNext').addEventListener('click', () => { Kids.sfx.pop(); newDress(); });
+
+/* ---------- weather diary (saved on this device) ---------- */
+const DKEY = 'weather.diary';
+const diary = Kids.store.get(DKEY, {});
+const ds = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+['sunny', 'cloudy', 'rainy', 'windy', 'stormy'].forEach(k => {
+  const b = document.createElement('button'); b.innerHTML = `<span class="e">${WX[k].e}</span>${WX[k].n}`;
+  b.addEventListener('click', () => {
+    const first = !diary[Kids.today()]; diary[Kids.today()] = k; Kids.store.set(DKEY, diary);
+    if (first) { Kids.addStar(); Kids.sfx.yay(); } else Kids.sfx.pop();
+    $('#diaryRes').textContent = `${Kids.praise()} Today is ${WX[k].n.toLowerCase()} ${WX[k].e}. Come back tomorrow and look again!`; $('#diaryRes').className = 'result good';
+    drawDiary(); ch.check({ diary: true });
+  });
+  $('#dPick').appendChild(b);
+});
+function drawDiary() {
+  const out = [];
+  for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const k = diary[ds(d)];
+    out.push(`<div class="day"><span class="e">${k ? WX[k].e : '·'}</span>${d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' })}</div>`); }
+  $('#diary').innerHTML = out.join('');
+  const counts = {}; Object.values(diary).forEach(k => counts[k] = (counts[k] || 0) + 1);
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (top && !$('#diaryRes').textContent) $('#diaryRes').textContent = `You have written ${Object.keys(diary).length} day${Object.keys(diary).length > 1 ? 's' : ''}. Most often: ${WX[top[0]].e} ${WX[top[0]].n}.`;
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'dress') newDress(); if (b.dataset.tab === 'diary') drawDiary();
+}));
+const ch = Kids.challenges([
+  { ask: 'Make it rain 🌧️', hint: 'Tap Rainy.', ok: c => c.wx === 'rainy', yay: 'Drip drop! Rain gives water to plants and animals.' },
+  { ask: 'Make a rainbow 🌈', hint: 'Tap Rainbow.', ok: c => c.wx === 'rainbow', yay: 'Red, orange, yellow, green, blue, indigo, violet!' },
+  { ask: 'Try all 7 kinds of weather 🌦️', hint: 'Tap every weather button.', ok: c => c.made >= 7, yay: 'You are a weather wizard!' },
+  { ask: 'Watch the whole water cycle 💧', hint: 'Open Water Cycle and tap Show me.', ok: c => c.cycle, yay: 'Round and round goes the water!' },
+  { ask: 'Dress for the weather 👕', hint: 'Open Dress for It.', ok: c => c.dress, yay: 'Ready for any weather!' },
+  { ask: 'Write today in your weather diary 📔', hint: 'Look out of the window, then pick the weather.', ok: c => c.diary, yay: 'Real scientists keep weather diaries too!' },
+], { title: 'Weather Wizard' });
+Kids.learn({
+  why: ['Weather is what the air outside is doing: hot or cold, wet or dry, still or windy.',
+    'The Sun drives all our weather. It warms the land and sea, which makes wind, clouds and rain!'],
+  imagine: ['Imagine you are a raindrop. You fall from a cloud, splash into a river, flow to the sea, and the Sun lifts you back up into the sky. Wheee!'],
+  wow: ['Bangalore is cooler than Chennai because it is high up, about 900 metres above the sea!',
+    'India gets most of its rain from the monsoon, which comes every year around June. 🌧️', 'Lightning is about 5 times hotter than the surface of the Sun! ⚡'],
+  talk: ['What is your favourite kind of weather? Why?', 'What do animals do when it rains?', 'Count the seconds between lightning and thunder. The more seconds, the further away the storm!'],
+});
+</script>
+</body>
+</html>

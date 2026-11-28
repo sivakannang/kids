@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kindness Diary</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  body { background: linear-gradient(160deg, #ffe5ec 0%, #fff6e0 50%, #e3f7ea 100%); background-attachment: fixed; }
+  .two { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 10px; }
+  .preset { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 8px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .preset .e { display: block; font-size: 30px; }
+  #custom { width: 100%; font-size: 18px; padding: 8px 12px; border-radius: 12px; border: 3px solid #e5e0f5; font-family: inherit; margin-top: 8px; }
+  .jar { position: relative; width: 240px; height: 300px; margin: 0 auto; border: 6px solid #9fd3ff; border-top: none; border-radius: 0 0 60px 60px; background: rgba(255,255,255,.6); overflow: hidden; display: flex; flex-wrap: wrap-reverse; align-content: flex-start; justify-content: center; padding: 8px; gap: 2px; }
+  .jar::before { content: ''; position: absolute; top: -14px; left: -16px; right: -16px; height: 14px; background: #9fd3ff; border-radius: 8px; }
+  .jar span { font-size: 26px; animation: pop .5s; }
+  .entries { max-height: 340px; overflow: auto; }
+  .entry { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 14px; background: #fff7fb; margin-bottom: 6px; font-size: 16px; }
+  .entry .e { font-size: 26px; } .entry small { color: var(--muted); display: block; }
+  .today { background: #fff3c4; border-radius: 20px; padding: 14px; text-align: center; font-size: 20px; }
+  .today .e { font-size: 50px; display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">💝</span>
+    <div><h1>Kindness Diary</h1><small>Kind things I did, and kind things done for me, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card"><div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div></section>
+    <section class="card">
+      <div class="today" id="today"></div>
+      <div class="row"><button class="btn big green" id="didToday">✅ I did it!</button><button class="btn" id="otherIdea">🔀 Another idea</button></div>
+    </section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">✍️ Write in my diary</h3>
+      <div class="two pick" id="kind"><button data-k="did" class="active">💪 I was kind</button><button data-k="got">🤗 Someone was kind to me</button></div>
+      <div class="presets" id="presets"></div>
+      <input id="custom" maxlength="80" placeholder="…or write your own (a grown-up can help!)">
+      <input id="who" maxlength="30" placeholder="Who? (e.g. Amma, my friend, my teacher)" style="width:100%;font-size:16px;padding:8px 12px;border-radius:12px;border:3px solid #e5e0f5;font-family:inherit;margin-top:6px">
+      <div class="row"><button class="btn big pink" id="addBtn">💝 Add a heart to my jar</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card center">
+      <h3 style="margin:0 0 18px">🫙 My Kindness Jar</h3>
+      <div class="jar" id="jar"></div>
+      <div class="stats" id="stats"></div>
+    </section>
+    <section class="card"><h3 style="margin:0 0 8px">📖 My diary</h3><div class="entries" id="entries"></div></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Growing Me 🧠</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, K = Kids.name, N = Kids.nick;
+const DID = [['🤝', 'I shared my toys'], ['🧹', 'I helped clean up'], ['🫂', 'I hugged someone who was sad'], ['🙏', 'I said thank you'], ['🎨', 'I made a card for someone'],
+  ['🌱', 'I watered the plants'], ['🐦', 'I put water out for the birds'], ['👫', 'I played with someone who was alone'], ['🍽️', 'I helped set the table'], ['😊', 'I said something nice to a friend']];
+const GOT = [['🍱', 'Someone shared their food with me'], ['📚', 'Someone helped me learn'], ['🤗', 'Someone gave me a hug'], ['🧸', 'Someone let me play with their toy'],
+  ['🩹', 'Someone helped me when I got hurt'], ['🎁', 'Someone gave me a surprise'], ['👂', 'Someone listened to me'], ['😊', 'Someone said something nice to me']];
+const CHALLENGES = [['💌', 'Say "I love you" to someone in your family'], ['🧺', 'Help fold the clothes'], ['🙌', 'Give 3 people a compliment'], ['📞', 'Call Paati or Thatha and ask about their day'],
+  ['🎁', 'Give one of your toys to a friend to play with'], ['🧃', 'Bring someone a glass of water'], ['🖍️', 'Draw a picture for your teacher'], ['🐶', 'Be gentle with an animal'],
+  ['🍪', 'Share your snack'], ['🙏', 'Say thank you to the watchman, driver or helper'], ['🧹', 'Tidy up without being asked'], ['😄', 'Make someone laugh today']];
+const KEY = 'kindness.log';
+let log = Kids.store.get(KEY, []);
+const say = (t, good) => { $('#bubble').textContent = t; $('#bubble').classList.toggle('done', !!good); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let kind = 'did', preset = null;
+const dayNo = Math.floor(new Date(new Date().toDateString()) / 86400000);
+let ci = dayNo % CHALLENGES.length;
+function drawToday() {
+  const c = CHALLENGES[ci], done = log.some(x => x.day === Kids.today() && x.challenge === c[1]);
+  $('#today').innerHTML = `<span class="e">${c[0]}</span><b>Today's kindness challenge:</b><br>${c[1]}`;
+  $('#didToday').disabled = done; $('#didToday').textContent = done ? '🌟 Done today!' : '✅ I did it!';
+}
+$('#otherIdea').addEventListener('click', () => { ci = (ci + 1) % CHALLENGES.length; Kids.sfx.pop(); drawToday(); });
+$('#didToday').addEventListener('click', () => { const c = CHALLENGES[ci]; add({ k: 'did', e: c[0], t: c[1], challenge: c[1] }); });
+function drawPresets() {
+  $('#presets').innerHTML = '';
+  (kind === 'did' ? DID : GOT).forEach(p => {
+    const b = document.createElement('button'); b.className = 'preset'; b.innerHTML = `<span class="e">${p[0]}</span>${p[1]}`;
+    b.style.borderColor = preset === p ? 'var(--pink)' : '';
+    b.addEventListener('click', () => { preset = p; $('#custom').value = ''; Kids.sfx.pop(); drawPresets(); });
+    $('#presets').appendChild(b);
+  });
+}
+$('#kind').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  kind = b.dataset.k; preset = null; Kids.sfx.pop(); $('#kind').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); drawPresets();
+  $('#who').placeholder = kind === 'did' ? 'For whom? (e.g. Amma, my brother, my friend)' : 'Who? (e.g. Appa, my friend, my teacher)';
+}));
+$('#addBtn').addEventListener('click', () => {
+  const text = $('#custom').value.trim() || (preset && preset[1]);
+  if (!text) { Kids.sfx.oops(); say('Pick an idea, or write your own, first! ✍️'); return; }
+  add({ k: kind, e: $('#custom').value.trim() ? (kind === 'did' ? '💪' : '🤗') : preset[0], t: text, who: $('#who').value.trim() });
+  $('#custom').value = ''; $('#who').value = ''; preset = null; drawPresets();
+});
+function add(x) {
+  x.day = Kids.today(); x.at = Date.now(); log.unshift(x); Kids.store.set(KEY, log);
+  Kids.addStar(); Kids.sfx.yay();
+  const m = x.k === 'did' ? `${Kids.praise()} Being kind makes the world brighter. 💖` : `How lovely! Saying thank you for kindness is kind too, ${N}. 💖`;
+  say(m, true); Kids.speak(Kids.forSpeech(m));
+  const total = log.length;
+  if ([5, 10, 25, 50, 100].includes(total)) { Kids.confetti(); Kids.banner(`💝 ${total} hearts in your Kindness Jar, ${K}!`); }
+  draw();
+}
+function draw() {
+  $('#jar').innerHTML = log.slice(0, 60).reverse().map(x => `<span title="${esc(x.t)}">${x.k === 'did' ? '💖' : '💛'}</span>`).join('');
+  const did = log.filter(x => x.k === 'did').length, got = log.length - did;
+  const week = log.filter(x => Date.now() - x.at < 7 * 86400000).length;
+  $('#stats').innerHTML = `<div class="stat"><b>💖 ${did}</b>kind things I did</div><div class="stat"><b>💛 ${got}</b>kind things for me</div><div class="stat"><b>${week}</b>this week</div>`;
+  $('#entries').innerHTML = log.length ? log.slice(0, 50).map((x, i) => `<div class="entry"><span class="e">${x.e}</span><div>${esc(x.t)}${x.who ? ` · <b>${esc(x.who)}</b>` : ''}<small>${new Date(x.at).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} · ${x.k === 'did' ? '💖 I was kind' : '💛 Someone was kind to me'}</small></div></div>`).join('')
+    : '<div class="hint">Your diary is empty. Add your first kind thing!</div>';
+  drawToday();
+}
+Kids.learn({
+  why: ['Being kind makes other people happy, and it makes YOU happy too. Scientists have found that helping others makes our brains feel good!',
+    'Noticing when people are kind to us helps us feel thankful and loved.'],
+  imagine: ['Imagine every kind thing is a little light. If everyone in your school did one kind thing today, how bright would the school be? ✨'],
+  wow: ['Kindness spreads! When someone is kind to you, you are more likely to be kind to someone else. It\'s like a chain of hearts. 💞',
+    'Even tiny things, like a smile or saying thank you, count as kindness.'],
+  talk: ['What was the kindest thing someone did for you this week?', 'How did it feel when you helped someone?', 'Who could you be kind to tomorrow?'],
+});
+drawPresets(); draw();
+say(`Hi ${K}! Every kind thing you do adds a heart to your jar. 💖 What kind thing happened today?`);
+</script>
+</body>
+</html>

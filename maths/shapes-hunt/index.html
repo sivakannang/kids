@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shapes Hunt</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=4">
+<style>
+  #scene .sh { cursor: pointer; transition: opacity .2s; }
+  #scene .sh.found { stroke: #ffd166 !important; stroke-width: 6 !important; }
+  .targets { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .tgt { border: 3px solid #eee; background: #fff; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 17px; cursor: pointer; font-family: inherit; }
+  .tgt.active { border-color: var(--purple); background: #f1e9ff; }
+  .shapecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .sc { border-radius: 20px; padding: 10px; background: #f8f6ff; text-align: center; }
+  .sc svg { width: 80px; height: 80px; }
+  .sc b { display: block; font-size: 18px; } .sc small { color: var(--muted); }
+  .solid { font-size: 56px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔷</span>
+    <div><h1>Shapes Hunt</h1><small>Shapes are hiding everywhere, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="hunt">🔍 Hunt</button>
+  <button class="tab" data-tab="learn">📐 Sides &amp; Corners</button>
+  <button class="tab" data-tab="quiz">❓ Shape Detective</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="hunt">
+      <div class="targets" id="targets"></div>
+      <svg id="scene" class="svgbox" viewBox="0 0 800 500" style="margin-top:10px"></svg>
+      <div class="result" id="huntRes">Pick a shape, then tap every one you can find in the picture!</div>
+    </section>
+    <section class="card" data-panel="learn" hidden>
+      <h3 style="margin:0 0 10px">Flat shapes (2D)</h3><div class="shapecards" id="flat"></div>
+      <h3 style="margin:16px 0 10px">Solid shapes (3D): you can hold these!</h3><div class="shapecards" id="solid"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div><section class="card" data-kuyil></section></div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Numbers 🔢</footer>
+
+<script src="../../shared/kids.js?v=4"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, el = Kids.svgEl;
+const svg = $('#scene');
+// the picture: a house, a sun, a kite, a car… every part is a shape
+const S = [];
+const add = (kind, tag, attrs) => { const e = el(tag, { ...attrs, class: 'sh', 'data-k': kind }, svg); S.push(e); return e; };
+el('rect', { x: 0, y: 0, width: 800, height: 380, fill: '#cfeaff' }, svg);
+el('rect', { x: 0, y: 380, width: 800, height: 120, fill: '#8fd694' }, svg);
+add('circle', 'circle', { cx: 690, cy: 80, r: 46, fill: '#ffd166', stroke: '#f4a261', 'stroke-width': 3 });
+add('triangle', 'polygon', { points: '120,200 260,90 400,200', fill: '#ef476f', stroke: '#9d0208', 'stroke-width': 3 });
+add('square', 'rect', { x: 140, y: 200, width: 240, height: 240, fill: '#ffe8a3', stroke: '#b08900', 'stroke-width': 3 });
+add('rectangle', 'rect', { x: 230, y: 330, width: 60, height: 110, fill: '#8d5524', stroke: '#5c3317', 'stroke-width': 3 });
+add('square', 'rect', { x: 165, y: 230, width: 55, height: 55, fill: '#9fd3ff', stroke: '#118ab2', 'stroke-width': 3 });
+add('square', 'rect', { x: 300, y: 230, width: 55, height: 55, fill: '#9fd3ff', stroke: '#118ab2', 'stroke-width': 3 });
+add('circle', 'circle', { cx: 278, cy: 388, r: 5, fill: '#ffd166', stroke: '#b08900', 'stroke-width': 2 });
+add('circle', 'circle', { cx: 260, cy: 150, r: 18, fill: '#9fd3ff', stroke: '#118ab2', 'stroke-width': 3 });
+add('diamond', 'polygon', { points: '560,60 600,120 560,180 520,120', fill: '#9b5de5', stroke: '#5a189a', 'stroke-width': 3 });
+el('path', { d: 'M560 180 q 20 40 -10 80 q -20 40 10 90', fill: 'none', stroke: '#555', 'stroke-width': 2 }, svg);
+add('triangle', 'polygon', { points: '640,440 690,340 740,440', fill: '#2d6a4f', stroke: '#1b4332', 'stroke-width': 3 });
+add('triangle', 'polygon', { points: '700,440 740,360 780,440', fill: '#40916c', stroke: '#1b4332', 'stroke-width': 3 });
+add('rectangle', 'rect', { x: 430, y: 380, width: 170, height: 50, rx: 6, fill: '#118ab2', stroke: '#073b4c', 'stroke-width': 3 });
+add('rectangle', 'rect', { x: 465, y: 345, width: 95, height: 40, rx: 6, fill: '#3aa6dd', stroke: '#073b4c', 'stroke-width': 3 });
+add('circle', 'circle', { cx: 470, cy: 435, r: 20, fill: '#333', stroke: '#000', 'stroke-width': 3 });
+add('circle', 'circle', { cx: 565, cy: 435, r: 20, fill: '#333', stroke: '#000', 'stroke-width': 3 });
+add('oval', 'ellipse', { cx: 470, cy: 70, rx: 60, ry: 24, fill: '#fff', stroke: '#ccc', 'stroke-width': 3 });
+add('oval', 'ellipse', { cx: 90, cy: 60, rx: 50, ry: 20, fill: '#fff', stroke: '#ccc', 'stroke-width': 3 });
+{ const p = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? 7 : 16, t = -Math.PI / 2 + i * Math.PI / 5; p.push(`${(40 + r * Math.cos(t)).toFixed(1)},${(150 + r * Math.sin(t)).toFixed(1)}`); }
+  add('star', 'polygon', { points: p.join(' '), fill: '#ffd166', stroke: '#f4a261', 'stroke-width': 2 }); }
+add('heart', 'path', { d: 'M90 470 C 60 450, 58 430, 72 422 C 82 417, 89 423, 90 430 C 91 423, 98 417, 108 422 C 122 430, 120 450, 90 470 Z', fill: '#ef476f', stroke: '#9d0208', 'stroke-width': 2 });
+
+const KINDS = ['circle', 'square', 'triangle', 'rectangle', 'oval', 'diamond', 'star', 'heart'];
+const count = k => S.filter(e => e.dataset.k === k).length;
+let target = 'circle', found = new Set(), hunted = new Set();
+KINDS.forEach(k => {
+  const b = document.createElement('button'); b.className = 'tgt' + (k === target ? ' active' : ''); b.textContent = `${k} (${count(k)})`;
+  b.addEventListener('click', () => { target = k; Kids.sfx.pop(); [...$('#targets').children].forEach(x => x.classList.toggle('active', x === b)); resetHunt(); });
+  $('#targets').appendChild(b);
+});
+function resetHunt() { found = new Set(); S.forEach(e => e.classList.remove('found')); $('#huntRes').className = 'result'; $('#huntRes').textContent = `Find all ${count(target)} ${target}${count(target) > 1 ? 's' : ''}! Tap them in the picture.`; }
+S.forEach(e => e.addEventListener('click', () => {
+  if (e.dataset.k === target) {
+    if (found.has(e)) return;
+    found.add(e); e.classList.add('found'); Kids.sfx.pop();
+    const left = count(target) - found.size;
+    if (left === 0) { Kids.sfx.yay(); Kids.addStar(); hunted.add(target); $('#huntRes').className = 'result good'; $('#huntRes').textContent = `${Kids.praise()} You found all the ${target}s!`; ch.check({ hunted: hunted.size, k: target }); }
+    else $('#huntRes').textContent = `Yes, a ${target}! ${left} more to find.`;
+  } else { Kids.sfx.oops(); $('#huntRes').className = 'result hint'; $('#huntRes').textContent = `That one is a ${e.dataset.k}. Keep looking for ${target}s!`; }
+}));
+
+/* ---------- learn ---------- */
+const FLAT = [['circle', 0, 0, '<circle cx="50" cy="50" r="40" fill="#ffd166"/>'], ['triangle', 3, 3, '<polygon points="50,8 92,88 8,88" fill="#ef476f"/>'],
+  ['square', 4, 4, '<rect x="12" y="12" width="76" height="76" fill="#06d6a0"/>'], ['rectangle', 4, 4, '<rect x="4" y="26" width="92" height="48" fill="#118ab2"/>'],
+  ['pentagon', 5, 5, '<polygon points="50,6 94,38 77,90 23,90 6,38" fill="#9b5de5"/>'], ['hexagon', 6, 6, '<polygon points="27,10 73,10 96,50 73,90 27,90 4,50" fill="#ff9f1c"/>'],
+  ['oval', 0, 0, '<ellipse cx="50" cy="50" rx="44" ry="28" fill="#f15bb5"/>'], ['diamond', 4, 4, '<polygon points="50,4 90,50 50,96 10,50" fill="#3a86ff"/>']];
+$('#flat').innerHTML = FLAT.map(([n, s, c, d]) => `<div class="sc"><svg viewBox="0 0 100 100">${d}</svg><b>${n}</b><small>${s ? `${s} sides · ${c} corners` : 'no straight sides, no corners'}</small></div>`).join('');
+const SOLID = [['sphere', '⚽', 'a ball'], ['cube', '🎲', 'a dice'], ['cylinder', '🥫', 'a tin'], ['cone', '🍦', 'an ice cream cone'], ['cuboid', '📦', 'a box'], ['pyramid', '🔺', 'the pyramids in Egypt']];
+$('#solid').innerHTML = SOLID.map(([n, e, x]) => `<div class="sc"><div class="solid">${e}</div><b>${n}</b><small>like ${x}</small></div>`).join('');
+
+/* ---------- shape detective ---------- */
+const THINGS = [['🍕', 'a pizza slice', 'triangle'], ['🕐', 'a clock', 'circle'], ['📺', 'a TV', 'rectangle'], ['🪟', 'a window', 'square'], ['🥚', 'an egg', 'oval'],
+  ['🪁', 'a kite', 'diamond'], ['⚽', 'a football', 'sphere'], ['🎲', 'a dice', 'cube'], ['🥫', 'a tin', 'cylinder'], ['🍦', 'an ice cream cone', 'cone'], ['📦', 'a box', 'cuboid'],
+  ['🚪', 'a door', 'rectangle'], ['🍪', 'a biscuit', 'circle'], ['⛺', 'a tent', 'triangle'], ['📱', 'a phone', 'rectangle']];
+const SIDES = FLAT.filter(f => f[1]);
+const MAKERS = [
+  () => { const a = THINGS[R(THINGS.length)]; const solid = SOLID.some(s => s[0] === a[2]);
+    const pool = solid ? SOLID.map(s => s[0]) : ['circle', 'triangle', 'square', 'rectangle', 'oval', 'diamond'];
+    const o = shuffle([a[2], ...shuffle(pool.filter(x => x !== a[2])).slice(0, 3)]);
+    return { q: `<div style="font-size:84px">${a[0]}</div>What shape is ${a[1]}?`, choices: o.map(x => ({ label: x, ok: x === a[2] })), yay: `${a[1]} is a ${a[2]}!`, hint: solid ? 'It is a solid shape you can hold.' : 'Trace its outline in the air with your finger.' }; },
+  () => { const a = SIDES[R(SIDES.length)]; const o = shuffle([...new Set([a[1], 3, 4, 5, 6])]).slice(0, 4); if (!o.includes(a[1])) o[0] = a[1];
+    return { q: `<svg viewBox="0 0 100 100" width="120">${a[3]}</svg><br>How many sides does a ${a[0]} have?`, choices: shuffle(o).map(x => ({ label: String(x), ok: x === a[1] })), yay: `A ${a[0]} has ${a[1]} sides.`, hint: 'Count each straight edge with your finger.' }; },
+];
+const started = {};
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !started.q) { started.q = 1; Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)](), { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+const ch = Kids.challenges([
+  { ask: 'Find all the circles in the picture ⭕', hint: 'Look at the sun, the wheels, the doorknob…', ok: c => c.k === 'circle', yay: 'Circles are round, with no corners!' },
+  { ask: 'Find all the triangles 🔺', hint: 'Look at the roof and the trees.', ok: c => c.k === 'triangle', yay: 'Three sides, three corners!' },
+  { ask: 'Hunt 5 different shapes 🔍', hint: 'Pick a new shape at the top each time.', ok: c => c.hunted >= 5, yay: 'You are a shape hunter!' },
+  { ask: 'Solve a Shape Detective case ❓', hint: 'Open the Shape Detective tab.', ok: c => c.quiz, yay: 'Case solved, detective!' },
+], { title: 'Shape Hunter' });
+Kids.learn({
+  why: ['Shapes help us build things. Wheels are round so they roll. Roofs are often triangles so the rain slides off!',
+    'Flat shapes (like a square) are drawn on paper. Solid shapes (like a cube) you can hold in your hand.'],
+  imagine: ['Imagine a world with square wheels. Bump, bump, bump! Why are round wheels better?'],
+  wow: ['Bees build their honeycomb out of hexagons, 6-sided shapes that fit together perfectly. 🐝',
+    'The Great Pyramid in Egypt is a giant pyramid shape made of more than 2 million stone blocks!'],
+  talk: ['How many circles can you find in the kitchen?', 'Which shape is your bed? Your book? Your plate?', 'Can you draw a house using only shapes?'],
+});
+resetHunt();
+</script>
+</body>
+</html>
