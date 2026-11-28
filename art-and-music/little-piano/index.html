@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Little Piano</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .piano { position: relative; height: 230px; user-select: none; -webkit-user-select: none; touch-action: none; margin-top: 10px; }
+  .white { position: absolute; top: 0; bottom: 0; border: 2px solid #c9c3e6; border-radius: 0 0 14px 14px; background: #fff; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; font-weight: 700; font-size: 15px; color: #6a4c93; cursor: pointer; box-shadow: inset 0 -8px 0 rgba(0,0,0,.05); }
+  .white .dot { width: 26px; height: 26px; border-radius: 50%; margin-bottom: 6px; }
+  .black { position: absolute; top: 0; height: 60%; border-radius: 0 0 10px 10px; background: #2b2d42; z-index: 2; cursor: pointer; color: #fff; font-size: 11px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; }
+  .white.down { background: #ffe8a3; } .black.down { background: #6a4c93; }
+  .white.next, .black.next { box-shadow: 0 0 0 5px #06d6a0, 0 0 22px #06d6a0; animation: pulseKey 1s ease-in-out infinite; }
+  @keyframes pulseKey { 50% { box-shadow: 0 0 0 8px #06d6a0, 0 0 30px #06d6a0; } }
+  .song-prog { text-align: center; font-size: 20px; min-height: 30px; margin-top: 10px; }
+  .song-prog b { color: var(--purple); }
+  .rec.on { background: var(--red); animation: pop 1s infinite; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🎹</span>
+    <div><h1>Little Piano</h1><small>Play tunes and make your own music, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="row" style="margin-top:0">
+        <span class="pick" id="inst"></span>
+        <span class="pick" id="names"><button data-n="sargam" class="active">Sa Re Ga</button><button data-n="abc">C D E</button></span>
+      </div>
+      <div class="piano" id="piano"></div>
+      <div class="hint">You can also play with the computer keys: A S D F G H J K L ;</div>
+      <div class="song-prog" id="prog"></div>
+    </section>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🎵 Learn a tune: follow the glowing key!</h3>
+      <div class="pick" id="songs"></div>
+      <div class="row">
+        <button class="btn purple" id="listenBtn">👂 Listen first</button>
+        <button class="btn orange" id="stopSong">⏹️ Stop</button>
+      </div>
+      <h3 style="margin:16px 0 8px">⏺️ Make your own tune</h3>
+      <div class="row" style="justify-content:flex-start">
+        <button class="btn rec" id="recBtn">⏺️ Record</button>
+        <button class="btn green" id="playRec">▶️ Play my tune</button>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Art &amp; Music 🎨</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const NOTE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const SARGAM = { 0: 'Sa', 2: 'Re', 4: 'Ga', 5: 'Ma', 7: 'Pa', 9: 'Dha', 11: 'Ni' };
+const RAIN = ['#ef476f', '#ff924c', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#f15bb5'];
+const WHITE_KEYS = 'asdfghjkl;'.split(''), BLACK_KEYS = { 61: 'w', 63: 'e', 66: 't', 68: 'y', 70: 'u', 73: 'o', 75: 'p' };
+const LOW = 60, HIGH = 83;   // middle C to the B above the next C
+const INST = [['piano', '🎹 Piano'], ['flute', '🪈 Flute'], ['xylo', '🎶 Xylophone']];
+let inst = 'piano', names = 'sargam';
+const usedInst = new Set(['piano']);
+
+/* ---------- sound ---------- */
+let ac;
+function play(m, dur = 0.9) {
+  if (!Kids.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const f = 440 * 2 ** ((m - 69) / 12), t = ac.currentTime, out = ac.createGain();
+    out.connect(ac.destination);
+    const osc = (type, freq, vol) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = freq; o.connect(g).connect(out); g.gain.value = vol; o.start(t); o.stop(t + dur + .1); };
+    if (inst === 'piano') { osc('triangle', f, .5); osc('sine', f * 2, .15); out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(.5, t + .01); out.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
+    if (inst === 'flute') { osc('sine', f, .5); osc('sine', f * 2, .05); out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(.4, t + .08); out.gain.setValueAtTime(.4, t + dur * .6); out.gain.exponentialRampToValueAtTime(0.0001, t + dur); }
+    if (inst === 'xylo') { osc('sine', f * 2, .6); osc('sine', f * 8, .08); out.gain.setValueAtTime(0.0001, t); out.gain.exponentialRampToValueAtTime(.5, t + .005); out.gain.exponentialRampToValueAtTime(0.0001, t + .45); }
+  } catch {}
+}
+
+/* ---------- keyboard ---------- */
+const keys = {};
+const label = m => {
+  const pc = m % 12, up = m >= 72 ? "'" : '';
+  return names === 'sargam' ? (SARGAM[pc] ? SARGAM[pc] + up : '') : NOTE[pc].length === 1 ? NOTE[pc] + up : '';
+};
+function buildPiano() {
+  const p = $('#piano'); p.innerHTML = '';
+  const whites = []; for (let m = LOW; m <= HIGH; m++) if (NOTE[m % 12].length === 1) whites.push(m);
+  const w = 100 / whites.length;
+  whites.forEach((m, i) => {
+    const k = document.createElement('div'); k.className = 'white'; k.style.left = `${i * w}%`; k.style.width = `${w}%`;
+    k.innerHTML = `<div class="dot" style="background:${RAIN[i % 7]}"></div>${label(m)}<small style="opacity:.5">${WHITE_KEYS[i] ? WHITE_KEYS[i].toUpperCase() : ''}</small>`;
+    p.appendChild(k); keys[m] = k;
+    if (NOTE[(m + 1) % 12].length === 2 && m + 1 <= HIGH) {
+      const b = document.createElement('div'); b.className = 'black'; b.style.left = `${(i + 1) * w - w * 0.32}%`; b.style.width = `${w * 0.64}%`;
+      b.textContent = names === 'abc' ? NOTE[(m + 1) % 12] : ''; p.appendChild(b); keys[m + 1] = b;
+    }
+  });
+  Object.entries(keys).forEach(([m, k]) => {
+    k.addEventListener('pointerdown', e => { e.preventDefault(); press(+m); });
+  });
+  markNext();
+}
+function press(m) {
+  play(m); const k = keys[m]; if (k) { k.classList.add('down'); setTimeout(() => k.classList.remove('down'), 180); }
+  stats.notes++;
+  if (rec.on) rec.notes.push({ m, t: performance.now() - rec.t0 });
+  follow(m);
+  ch.check({ notes: stats.notes, inst: usedInst.size });
+}
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.target.tagName === 'INPUT') return;
+  const i = WHITE_KEYS.indexOf(e.key.toLowerCase());
+  if (i >= 0) { const whites = Object.keys(keys).map(Number).filter(m => NOTE[m % 12].length === 1).sort((a, b) => a - b); if (whites[i]) press(whites[i]); return; }
+  const bm = Object.entries(BLACK_KEYS).find(([, k]) => k === e.key.toLowerCase()); if (bm) press(+bm[0]);
+});
+
+/* ---------- songs (old public-domain tunes) ---------- */
+const SONGS = {
+  '🎼 Sa Re Ga Ma': [60, 62, 64, 65, 67, 69, 71, 72, 71, 69, 67, 65, 64, 62, 60],
+  '⭐ Twinkle Twinkle': [60, 60, 67, 67, 69, 69, 67, 65, 65, 64, 64, 62, 62, 60, 67, 67, 65, 65, 64, 64, 62, 67, 67, 65, 65, 64, 64, 62, 60, 60, 67, 67, 69, 69, 67, 65, 65, 64, 64, 62, 62, 60],
+  '🐑 Mary Had a Little Lamb': [64, 62, 60, 62, 64, 64, 64, 62, 62, 62, 64, 67, 67, 64, 62, 60, 62, 64, 64, 64, 64, 62, 62, 64, 62, 60],
+  '🎉 Ode to Joy': [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, 62, 62, 64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 62, 60, 60],
+  '🔔 Jingle Bells': [64, 64, 64, 64, 64, 64, 64, 67, 60, 62, 64, 65, 65, 65, 65, 65, 64, 64, 64, 64, 62, 62, 64, 62, 67],
+};
+let song = null, pos = 0, done = new Set(), listenTimer = null;
+const stats = { notes: 0 };
+function renderSongs() {
+  $('#songs').innerHTML = '';
+  Object.keys(SONGS).forEach(n => { const b = document.createElement('button'); b.textContent = (done.has(n) ? '✅ ' : '') + n; b.className = n === song ? 'active' : '';
+    b.addEventListener('click', () => { song = n; pos = 0; Kids.sfx.pop(); renderSongs(); markNext(); }); $('#songs').appendChild(b); });
+}
+function markNext() {
+  Object.values(keys).forEach(k => k.classList.remove('next'));
+  if (!song) { $('#prog').textContent = 'Play anything you like, or pick a tune below! 🎶'; return; }
+  const s = SONGS[song];
+  if (keys[s[pos]]) keys[s[pos]].classList.add('next');
+  $('#prog').innerHTML = `${song}: note <b>${pos + 1}</b> of <b>${s.length}</b>`;
+}
+function follow(m) {
+  if (!song) return;
+  const s = SONGS[song];
+  if (m !== s[pos]) return;                 // other keys just play: no penalty
+  pos++;
+  if (pos >= s.length) {
+    const n = song; done.add(n); Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+    Kids.banner(`🎵 You played ${n.replace(/^\S+ /, '')}!`);
+    ch.check({ song: n, notes: stats.notes });
+    song = null; pos = 0; renderSongs();
+  }
+  markNext();
+}
+function playSeq(notes, gap = 380) {
+  clearTimeout(listenTimer);
+  let i = 0;
+  const step = () => { if (i >= notes.length) return; const n = notes[i++]; const m = typeof n === 'number' ? n : n.m;
+    play(m); const k = keys[m]; if (k) { k.classList.add('down'); setTimeout(() => k.classList.remove('down'), 200); }
+    const next = notes[i]; listenTimer = setTimeout(step, typeof n === 'number' ? gap : Math.min(1500, Math.max(120, next ? next.t - n.t : 0))); };
+  step();
+}
+$('#listenBtn').addEventListener('click', () => { if (!song) { $('#prog').textContent = 'Pick a tune first! 🎵'; return; } playSeq(SONGS[song]); });
+$('#stopSong').addEventListener('click', () => { clearTimeout(listenTimer); song = null; pos = 0; renderSongs(); markNext(); });
+
+/* ---------- record ---------- */
+const rec = { on: false, notes: [], t0: 0 };
+$('#recBtn').addEventListener('click', () => {
+  rec.on = !rec.on;
+  if (rec.on) { rec.notes = []; rec.t0 = performance.now(); }
+  $('#recBtn').classList.toggle('on', rec.on);
+  $('#recBtn').textContent = rec.on ? '⏹️ Stop recording' : '⏺️ Record';
+  Kids.sfx.pop();
+});
+$('#playRec').addEventListener('click', () => {
+  if (!rec.notes.length) { $('#prog').textContent = 'Press Record, play some notes, then press Stop. 🎤'; return; }
+  rec.on = false; $('#recBtn').classList.remove('on'); $('#recBtn').textContent = '⏺️ Record';
+  playSeq(rec.notes); ch.check({ played: rec.notes.length });
+});
+
+/* ---------- pickers ---------- */
+INST.forEach(([id, l]) => { const b = document.createElement('button'); b.textContent = l; b.className = id === inst ? 'active' : '';
+  b.addEventListener('click', () => { inst = id; usedInst.add(id); play(72); $('#inst').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); ch.check({ inst: usedInst.size, notes: stats.notes }); });
+  $('#inst').appendChild(b); });
+$('#names').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { names = b.dataset.n; $('#names').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); buildPiano(); }));
+
+const ch = Kids.challenges([
+  { ask: 'Play any 10 notes 🎹', hint: 'Tap the keys, or use the computer keys A S D F…', ok: c => c.notes >= 10, yay: 'Music is just notes, one after another!' },
+  { ask: 'Play the Sa Re Ga Ma scale 🎼', hint: 'Pick "Sa Re Ga Ma" and follow the glowing key.', ok: c => c.song === '🎼 Sa Re Ga Ma', yay: 'Sa Re Ga Ma Pa Dha Ni Sa! Up and down the scale!' },
+  { ask: 'Play Twinkle Twinkle Little Star ⭐', hint: 'Pick Twinkle Twinkle. Press "Listen first" if you want to hear it.', ok: c => c.song === '⭐ Twinkle Twinkle', yay: 'Twinkle, twinkle! You played a whole song! ⭐' },
+  { ask: 'Try all 3 instruments 🪈', hint: 'Tap Piano, Flute and Xylophone.', ok: c => c.inst >= 3, yay: 'Same notes, different sounds!' },
+  { ask: 'Record your OWN tune and play it back 🎤', hint: 'Press Record, play, press Stop, then "Play my tune".', ok: c => c.played > 0, yay: 'You composed your own music, like a real composer! 🎼' },
+], { title: 'Little Musician' });
+
+Kids.learn({
+  why: ['Every sound is made by something shaking, or vibrating. Fast vibrations make high notes, and slow vibrations make low notes.',
+    'In Indian music we name the notes Sa Re Ga Ma Pa Dha Ni. In Western music they are C D E F G A B. Same notes, different names!'],
+  imagine: ['Close your eyes and imagine each note is a colour. A low note is a deep blue ocean, and a high note is a bright yellow star. ✨'],
+  wow: ['The note A above middle C shakes the air 440 times every second!', 'A real piano has 88 keys. Ours has 24.'],
+  talk: ['Which instrument sound do you like best?', 'Can you play a happy tune? A sleepy tune?', 'What instrument would you like to learn?'],
+});
+buildPiano(); renderSongs(); markNext();
+</script>
+</body>
+</html>

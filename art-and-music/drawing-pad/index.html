@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drawing Pad</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  #pad { width: 100%; aspect-ratio: 4 / 3; background: #fff; border-radius: 18px; border: 4px solid #e8defe; touch-action: none; cursor: crosshair; display: block; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin-top: 10px; }
+  .swatch { width: 36px; height: 36px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #ddd; cursor: pointer; }
+  .swatch.active { box-shadow: 0 0 0 4px var(--purple); }
+  .swatch.rainbow { background: conic-gradient(red, orange, yellow, lime, cyan, blue, violet, red); }
+  .tool { border: 3px solid #eee; background: #fff; border-radius: 12px; padding: 5px 10px; cursor: pointer; font-size: 17px; font-family: inherit; font-weight: 600; color: var(--ink); }
+  .tool.active { border-color: var(--purple); background: #f1e9ff; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .stamp { font-size: 26px; border: 3px solid transparent; background: none; border-radius: 10px; cursor: pointer; padding: 0 4px; }
+  .stamp.active { border-color: var(--purple); background: #f1e9ff; }
+  .pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+  .page-btn { border: 3px solid #eee; background: #fff; border-radius: 14px; padding: 6px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; }
+  .page-btn .e { display: block; font-size: 34px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🖍️</span>
+    <div><h1>Drawing Pad</h1><small>Draw, stamp and colour anything, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <canvas id="pad" width="1200" height="900"></canvas>
+      <div class="bar" id="colors"></div>
+      <div class="bar" id="tools"></div>
+      <div class="stamps" id="stamps" hidden></div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🖼️ Colouring pages</h3>
+      <div class="pages" id="pages"></div>
+      <p class="label" style="font-size:15px">Pick a picture, choose the 🪣 Fill tool, and tap inside a shape to colour it!</p>
+    </section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Art &amp; Music 🎨</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const pad = $('#pad'), ctx = pad.getContext('2d', { willReadFrequently: true });
+const COLORS = ['#2b2d42', '#ef476f', '#ff9f1c', '#ffd166', '#06d6a0', '#118ab2', '#9b5de5', '#f15bb5', '#8d5524', '#ffffff', 'rainbow'];
+const STAMPS = ['⭐', '❤️', '🌸', '🦋', '🐱', '🐶', '🌈', '☀️', '🌙', '🚀', '🍦', '🎈', '🌳', '🐟', '👑'];
+let color = COLORS[1], size = 12, tool = 'brush', stamp = STAMPS[0], mirror = false, hue = 0;
+const undo = [], used = new Set();
+const save = () => { try { undo.push(ctx.getImageData(0, 0, pad.width, pad.height)); if (undo.length > 15) undo.shift(); } catch {} };
+
+function bars() {
+  $('#colors').innerHTML = '';
+  COLORS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'swatch' + (c === 'rainbow' ? ' rainbow' : '') + (c === color ? ' active' : '');
+    if (c !== 'rainbow') d.style.background = c;
+    d.title = c === 'rainbow' ? 'Rainbow brush' : c;
+    d.addEventListener('click', () => { color = c; if (tool === 'eraser' || tool === 'stamp') tool = 'brush'; bars(); });
+    $('#colors').appendChild(d);
+  });
+  const T = [['brush', '🖌️ Brush'], ['fill', '🪣 Fill'], ['stamp', '⭐ Stamps'], ['eraser', '🧽 Eraser']];
+  $('#tools').innerHTML = '';
+  T.forEach(([id, label]) => { const b = document.createElement('button'); b.className = 'tool' + (tool === id ? ' active' : ''); b.textContent = label;
+    b.addEventListener('click', () => { tool = id; Kids.sfx.pop(); bars(); }); $('#tools').appendChild(b); });
+  [[6, '•'], [12, '●'], [26, '⬤']].forEach(([s, l]) => { const b = document.createElement('button'); b.className = 'tool' + (size === s ? ' active' : ''); b.textContent = l;
+    b.addEventListener('click', () => { size = s; bars(); }); $('#tools').appendChild(b); });
+  const extra = [['mirror', mirror ? '🦋 Mirror: ON' : '🦋 Mirror: off', () => { mirror = !mirror; used.add('mirror'); ch.check({ used }); }],
+    ['undo', '↩️ Undo', () => { const s = undo.pop(); if (s) ctx.putImageData(s, 0, 0); }],
+    ['clear', '🗑️ Clear', () => { if (confirm('Clear the whole drawing?')) { save(); blank(); } }],
+    ['save', '💾 Save picture', () => { const a = document.createElement('a'); a.download = `${Kids.name}-drawing.png`; a.href = pad.toDataURL('image/png'); a.click(); Kids.sfx.yay(); used.add('save'); ch.check({ used }); }]];
+  extra.forEach(([id, label, fn]) => { const b = document.createElement('button'); b.className = 'tool' + (id === 'mirror' && mirror ? ' active' : ''); b.textContent = label;
+    b.addEventListener('click', () => { fn(); bars(); }); $('#tools').appendChild(b); });
+  $('#stamps').hidden = tool !== 'stamp';
+  $('#stamps').innerHTML = '';
+  STAMPS.forEach(s => { const b = document.createElement('button'); b.className = 'stamp' + (s === stamp ? ' active' : ''); b.textContent = s;
+    b.addEventListener('click', () => { stamp = s; bars(); }); $('#stamps').appendChild(b); });
+}
+function blank() { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, pad.width, pad.height); }
+const pos = e => { const r = pad.getBoundingClientRect(); return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height]; };
+const strokeColor = () => tool === 'eraser' ? '#ffffff' : color === 'rainbow' ? `hsl(${(hue += 4) % 360}, 90%, 55%)` : color;
+function line(a, b) {
+  const seg = (p, q) => { ctx.strokeStyle = strokeColor(); ctx.lineWidth = tool === 'eraser' ? size * 3 : size; ctx.lineCap = ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(...p); ctx.lineTo(...q); ctx.stroke(); };
+  seg(a, b);
+  if (mirror) seg([pad.width - a[0], a[1]], [pad.width - b[0], b[1]]);
+}
+function putStamp(p) {
+  const draw = q => { ctx.font = `${size * 6}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(stamp, ...q); };
+  draw(p); if (mirror) draw([pad.width - p[0], p[1]]);
+}
+let last = null;
+pad.addEventListener('pointerdown', e => {
+  e.preventDefault(); try { pad.setPointerCapture(e.pointerId); } catch {}
+  const p = pos(e); save();
+  if (tool === 'fill') { fill(Math.round(p[0]), Math.round(p[1])); used.add('fill'); ch.check({ used }); return; }
+  if (tool === 'stamp') { putStamp(p); Kids.sfx.pop(); used.add('stamp'); ch.check({ used }); return; }
+  last = p; line(p, [p[0] + .1, p[1] + .1]);
+  if (color === 'rainbow' && tool === 'brush') used.add('rainbow');
+  used.add('draw'); ch.check({ used });
+});
+pad.addEventListener('pointermove', e => { if (!last) return; const p = pos(e); line(last, p); last = p; });
+const up = () => { last = null; };
+pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
+
+/* ---------- paint-bucket fill ---------- */
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function fill(x, y) {
+  const W = pad.width, H = pad.height, img = ctx.getImageData(0, 0, W, H), d = img.data;
+  const c = color === 'rainbow' ? hexToRgb(['#ef476f', '#ff9f1c', '#ffd166', '#06d6a0', '#118ab2', '#9b5de5'][Kids.rand(6)]) : hexToRgb(color);
+  const i0 = (y * W + x) * 4, t = [d[i0], d[i0 + 1], d[i0 + 2]];
+  if (Math.abs(t[0] - c[0]) + Math.abs(t[1] - c[1]) + Math.abs(t[2] - c[2]) < 10) return;
+  const near = i => Math.abs(d[i] - t[0]) + Math.abs(d[i + 1] - t[1]) + Math.abs(d[i + 2] - t[2]) < 90;
+  const stack = [[x, y]];
+  while (stack.length) {
+    let [px, py] = stack.pop(), i = (py * W + px) * 4;
+    while (px >= 0 && near(i)) { px--; i -= 4; }
+    px++; i += 4; let upOk = false, dnOk = false;
+    while (px < W && near(i)) {
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+      if (py > 0) { const u = i - W * 4; if (near(u)) { if (!upOk) { stack.push([px, py - 1]); upOk = true; } } else upOk = false; }
+      if (py < H - 1) { const dn = i + W * 4; if (near(dn)) { if (!dnOk) { stack.push([px, py + 1]); dnOk = true; } } else dnOk = false; }
+      px++; i += 4;
+    }
+  }
+  ctx.putImageData(img, 0, 0); Kids.sfx.pop();
+}
+
+/* ---------- colouring pages (simple outlines) ---------- */
+const PAGES = {
+  '🏠 House': c => { c.strokeRect(350, 400, 500, 380); c.beginPath(); c.moveTo(300, 410); c.lineTo(600, 160); c.lineTo(900, 410); c.closePath(); c.stroke();
+    c.strokeRect(540, 580, 120, 200); c.strokeRect(400, 470, 100, 90); c.strokeRect(700, 470, 100, 90);
+    c.beginPath(); c.arc(1020, 140, 70, 0, 7); c.stroke(); c.beginPath(); c.moveTo(0, 780); c.lineTo(1200, 780); c.stroke(); },
+  '🐟 Fish': c => { c.beginPath(); c.ellipse(560, 450, 300, 180, 0, 0, 7); c.stroke(); c.beginPath(); c.moveTo(850, 450); c.lineTo(1050, 300); c.lineTo(1050, 600); c.closePath(); c.stroke();
+    c.beginPath(); c.arc(400, 410, 30, 0, 7); c.stroke(); c.beginPath(); c.moveTo(560, 270); c.quadraticCurveTo(620, 180, 700, 290); c.stroke();
+    [[200, 200, 30], [150, 120, 20], [230, 80, 15]].forEach(([x, y, r]) => { c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); }); },
+  '🦋 Butterfly': c => { c.beginPath(); c.ellipse(600, 450, 30, 200, 0, 0, 7); c.stroke();
+    [[430, 330, 160, 130, -.4], [770, 330, 160, 130, .4], [450, 590, 120, 100, .4], [750, 590, 120, 100, -.4]].forEach(([x, y, a, b, r]) => { c.beginPath(); c.ellipse(x, y, a, b, r, 0, 7); c.stroke(); });
+    [[430, 330], [770, 330]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 45, 0, 7); c.stroke(); });
+    c.beginPath(); c.moveTo(590, 260); c.quadraticCurveTo(540, 160, 500, 140); c.moveTo(610, 260); c.quadraticCurveTo(660, 160, 700, 140); c.stroke(); },
+  '🌸 Flower': c => { for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; c.beginPath(); c.ellipse(600 + Math.cos(a) * 140, 360 + Math.sin(a) * 140, 95, 60, a, 0, 7); c.stroke(); }
+    c.beginPath(); c.arc(600, 360, 75, 0, 7); c.stroke(); c.beginPath(); c.moveTo(600, 500); c.lineTo(600, 860); c.stroke();
+    c.beginPath(); c.ellipse(680, 700, 80, 35, -.5, 0, 7); c.stroke(); c.beginPath(); c.ellipse(520, 760, 80, 35, .5, 0, 7); c.stroke(); },
+  '🚀 Rocket': c => { c.beginPath(); c.moveTo(600, 100); c.quadraticCurveTo(760, 300, 720, 650); c.lineTo(480, 650); c.quadraticCurveTo(440, 300, 600, 100); c.stroke();
+    c.beginPath(); c.arc(600, 360, 70, 0, 7); c.stroke();
+    c.beginPath(); c.moveTo(480, 520); c.lineTo(380, 720); c.lineTo(480, 650); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(720, 520); c.lineTo(820, 720); c.lineTo(720, 650); c.closePath(); c.stroke();
+    c.beginPath(); c.moveTo(520, 650); c.lineTo(600, 830); c.lineTo(680, 650); c.stroke(); },
+};
+Object.entries(PAGES).forEach(([name, fn]) => {
+  const b = document.createElement('button'); b.className = 'page-btn';
+  b.innerHTML = `<span class="e">${name.split(' ')[0]}</span>${name.split(' ')[1]}`;
+  b.addEventListener('click', () => {
+    save(); blank(); ctx.strokeStyle = '#2b2d42'; ctx.lineWidth = 8; ctx.lineCap = ctx.lineJoin = 'round'; fn(ctx);
+    tool = 'fill'; bars(); Kids.sfx.pop(); used.add('page'); ch.check({ used });
+  });
+  $('#pages').appendChild(b);
+});
+
+const ch = Kids.challenges([
+  { ask: 'Draw anything you like! 🖌️', hint: 'Pick a colour and draw on the white page.', ok: c => c.used.has('draw'), yay: 'Beautiful! Every artist starts with one line.' },
+  { ask: 'Try the RAINBOW brush 🌈', hint: 'Tap the rainbow-coloured circle, then draw.', ok: c => c.used.has('rainbow'), yay: 'A rainbow from your fingers! 🌈' },
+  { ask: 'Turn on MIRROR and draw a butterfly 🦋', hint: 'Press "Mirror", then draw on one side.', ok: c => c.used.has('mirror'), yay: 'Mirror drawing makes both sides the same: symmetry!' },
+  { ask: 'Add some stamps ⭐', hint: 'Press Stamps, pick one, and tap the page.', ok: c => c.used.has('stamp'), yay: 'Stamp, stamp, stamp! ⭐' },
+  { ask: 'Colour in a colouring page with the Fill bucket 🪣', hint: 'Pick a colouring page, then tap inside the shapes.', ok: c => c.used.has('page') && c.used.has('fill'), yay: 'Lovely colouring!' },
+  { ask: 'Save your picture 💾', hint: 'Press "Save picture" to keep it.', ok: c => c.used.has('save'), yay: 'Saved! Show it to someone you love. 💖' },
+], { title: 'Little Artist' });
+
+Kids.learn({
+  why: ['Drawing helps you share what\'s in your imagination, even things nobody has ever seen!',
+    'When you draw, your eyes, brain and hands all work together as a team.'],
+  imagine: ['Close your eyes and imagine a magic animal: maybe a flying elephant, or a fish with wings. Now open your eyes and draw it!'],
+  wow: ['People have been drawing for more than 40,000 years, on cave walls!', 'Butterflies are symmetrical: both wings are the same, like your mirror drawing. 🦋'],
+  talk: ['What did you draw? Tell the story of your picture.', 'Which colours make you feel happy?', 'What would you like to draw tomorrow?'],
+});
+blank(); bars();
+</script>
+</body>
+</html>

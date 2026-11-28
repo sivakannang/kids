@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counting Fun</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .field { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; min-height: 160px; padding: 14px; background: #f0fff4; border-radius: 20px; }
+  .obj { font-size: 52px; border: none; background: none; cursor: pointer; position: relative; transition: transform .15s; padding: 0 4px; }
+  .obj.counted { transform: scale(.85); opacity: .55; }
+  .obj .num { position: absolute; top: -6px; right: -6px; background: var(--purple); color: #fff; border-radius: 999px; font-size: 16px; font-weight: 700; padding: 2px 8px; font-family: 'Fredoka', sans-serif; }
+  .count-big { font-size: 64px; font-weight: 700; color: var(--purple); text-align: center; min-height: 80px; }
+  .q-objs { font-size: 40px; max-width: 520px; margin: 0 auto; line-height: 1.3; }
+  .plus { font-size: 40px; font-weight: 700; color: var(--orange); margin: 0 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🍎</span>
+    <div><h1>Counting Fun</h1><small>Count fruits, stars and animals, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="tap">👆 Tap &amp; Count</button>
+  <button class="tab" data-tab="many">🤔 How Many?</button>
+  <button class="tab" data-tab="add">➕ Add Them Up</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="tap">
+      <div class="label center" style="margin-top:0">Tap each one to count it!</div>
+      <div class="field" id="field"></div>
+      <div class="count-big" id="countBig"></div>
+      <div class="row"><button class="btn big green" id="newField">🔄 New things to count</button></div>
+    </section>
+    <section class="card" data-panel="many" hidden>
+      <div class="pick" id="lvl"><button data-max="5" class="active">🐣 Up to 5</button><button data-max="10">🐥 Up to 10</button><button data-max="20">🦅 Up to 20</button></div>
+      <div id="manyBox" style="margin-top:12px"></div>
+    </section>
+    <section class="card" id="addBox" data-panel="add" hidden></section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Numbers 🔢</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const THINGS = ['🍎','⭐','🐟','🌸','🎈','🍌','🐞','🐥','🚗','🍓','🐢','🦋'];
+const WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
+
+/* ---------- tap & count ---------- */
+let counted = 0, total = 0, fields = 0;
+function newField() {
+  total = 3 + R(13); counted = 0; const t = THINGS[R(THINGS.length)];
+  $('#field').innerHTML = ''; $('#countBig').textContent = '';
+  for (let i = 0; i < total; i++) {
+    const b = document.createElement('button'); b.className = 'obj'; b.textContent = t;
+    b.addEventListener('click', () => {
+      if (b.classList.contains('counted')) return;
+      counted++; b.classList.add('counted'); b.insertAdjacentHTML('beforeend', `<span class="num">${counted}</span>`);
+      $('#countBig').textContent = counted; Kids.speak(WORDS[counted]); Kids.sfx.pop();
+      if (counted === total) {
+        fields++; Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+        $('#countBig').textContent = `${total}! 🎉`;
+        setTimeout(() => Kids.speak(`${WORDS[total]}! There are ${WORDS[total]}.`), 500);
+        ch.check({ tapped: total, fields });
+      }
+    });
+    $('#field').appendChild(b);
+  }
+}
+$('#newField').addEventListener('click', () => { Kids.sfx.pop(); newField(); });
+
+/* ---------- how many? ---------- */
+let maxN = 5;
+function opts(a, lo, hi) { const o = new Set([a]); while (o.size < 4) { const v = Math.max(lo, Math.min(hi, a + R(7) - 3)); o.add(v); if (o.size < 4 && hi - lo < 4) o.add(lo + R(hi - lo + 1)); } return shuffle([...o]).slice(0, 4); }
+function makeMany() {
+  const n = 1 + R(maxN), t = THINGS[R(THINGS.length)];
+  return { q: `<div class="q-objs">${t.repeat(n)}</div>How many?`, choices: opts(n, 1, Math.max(maxN, 6)).map(v => ({ label: String(v), ok: v === n })),
+    yay: `There are ${n}! ${WORDS[n]}.`, hint: 'Touch each one with your finger as you count.' };
+}
+let manyOn = false;
+function startMany() { manyOn = true; Kids.quiz('#manyBox', makeMany, { rounds: 8, onRight: () => ch.check({ many: maxN }) }); }
+$('#lvl').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  maxN = +b.dataset.max; Kids.sfx.pop(); $('#lvl').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); startMany();
+}));
+
+/* ---------- add them up ---------- */
+function makeAdd() {
+  const a = 1 + R(5), b = 1 + R(5), t = THINGS[R(THINGS.length)], s = a + b;
+  return { q: `<div class="q-objs">${t.repeat(a)}<span class="plus">+</span>${t.repeat(b)}</div>${a} + ${b} = ?`,
+    choices: opts(s, 2, 10).map(v => ({ label: String(v), ok: v === s })), yay: `${a} + ${b} = ${s}!`, hint: 'Count all of them together, starting from the first group.' };
+}
+let addOn = false;
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'many' && !manyOn) startMany();
+  if (b.dataset.tab === 'add' && !addOn) { addOn = true; Kids.quiz('#addBox', makeAdd, { rounds: 8, onRight: () => ch.check({ add: true }) }); }
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Tap and count ALL the things on the board 👆', hint: 'Tap each one once. Kuyil counts with you!', ok: c => c.tapped, yay: c => `You counted ${c.tapped}!` },
+  { ask: 'Count 3 boards of things 🔄', hint: 'Press "New things to count" after each board.', ok: c => c.fields >= 3, yay: 'Three boards counted!' },
+  { ask: 'Play How Many? up to 10 and get one right 🐥', hint: 'Open How Many? and pick "Up to 10".', ok: c => c.many >= 10, yay: 'Counting to ten like a pro!' },
+  { ask: 'Try How Many? up to 20 🦅', hint: 'Pick "Up to 20". Count carefully!', ok: c => c.many >= 20, yay: 'Big numbers! 🦅' },
+  { ask: 'Add two groups together ➕', hint: 'Open Add Them Up.', ok: c => c.add, yay: 'Adding is just counting everything together!' },
+], { title: 'Counting Champion' });
+
+Kids.learn({
+  why: ['Counting tells us HOW MANY. Each thing gets one number: one, two, three… and the last number you say is how many there are!',
+    'Adding is putting groups together and counting them all.'],
+  imagine: ['Imagine a basket of mangoes 🥭. You take them out one by one: one, two, three… How many will fit in your arms?'],
+  wow: ['The number zero was first used as a real number by mathematicians in ancient India!', 'If you counted one number every second, it would take more than 11 days to count to ten lakh!'],
+  talk: ['Count the stairs in your house together.', 'How many people live in your home? How many legs is that altogether?', 'Count backwards from 10 like a rocket launch! 🚀'],
+});
+newField();
+</script>
+</body>
+</html>

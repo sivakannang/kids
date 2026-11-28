@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Money Shop</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .item { border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 8px 4px; cursor: pointer; font-family: inherit; text-align: center; }
+  .item .e { font-size: 44px; }
+  .item .n { font-size: 15px; font-weight: 600; }
+  .item .p { font-size: 20px; font-weight: 700; color: var(--green); color: #04a57c; }
+  .item.active { border-color: var(--purple); background: #f1e9ff; }
+  .wallet { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+  .money { border: none; cursor: pointer; font-family: inherit; font-weight: 700; color: #3b2a00; box-shadow: 0 4px 0 rgba(0,0,0,.18); }
+  .money:active { transform: translateY(3px); }
+  .coin { width: 66px; height: 66px; border-radius: 50%; font-size: 20px; background: radial-gradient(circle at 35% 30%, #fff6c9, #d4af37); border: 3px solid #b8901d; }
+  .coin.c10 { background: radial-gradient(circle at 35% 30%, #fff6c9, #d4af37 55%, #c0c0c0 56%); }
+  .note { width: 112px; height: 58px; border-radius: 10px; font-size: 22px; border: 3px solid rgba(0,0,0,.15); }
+  .tray { min-height: 90px; border: 3px dashed #c9b6f2; border-radius: 18px; padding: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; background: #faf7ff; }
+  .tray .money { transform: scale(.8); }
+  .till { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 22px; font-weight: 600; margin-top: 10px; }
+  .till b { color: var(--purple); }
+  .buying { text-align: center; font-size: 26px; font-weight: 600; min-height: 40px; }
+  .buying .e { font-size: 50px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🛒</span>
+    <div><h1>Money Shop</h1><small>Buy things with ₹ coins and notes, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <h3 style="margin:0 0 8px">🏪 1. Pick something to buy</h3>
+      <div class="shelf" id="shelf"></div>
+    </section>
+    <section class="card">
+      <div class="buying" id="buying">Pick something from the shop!</div>
+      <h3 style="margin:10px 0 6px">👛 2. Tap money to pay</h3>
+      <div class="wallet" id="wallet"></div>
+      <div class="label center">Your money goes here (tap a coin to take it back):</div>
+      <div class="tray" id="tray"></div>
+      <div class="till"><span>💰 You gave: <b id="given">₹0</b></span><span>🏷️ Price: <b id="price">₹0</b></span></div>
+      <div class="row"><button class="btn big green" id="payBtn">✅ Pay</button><button class="btn orange" id="clearBtn">↩️ Take it all back</button></div>
+      <div id="changeBox"></div>
+      <div class="result" id="res"></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Numbers 🔢</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const ITEMS = [
+  { id: 'sweet', e: '🍬', n: 'Sweet', p: 2 }, { id: 'pencil', e: '✏️', n: 'Pencil', p: 5 }, { id: 'banana', e: '🍌', n: 'Banana', p: 7 },
+  { id: 'balloon', e: '🎈', n: 'Balloon', p: 10 }, { id: 'juice', e: '🧃', n: 'Juice', p: 15 }, { id: 'notebook', e: '📒', n: 'Notebook', p: 25 },
+  { id: 'kite', e: '🪁', n: 'Kite', p: 30 }, { id: 'teddy', e: '🧸', n: 'Teddy', p: 60 }, { id: 'ball', e: '⚽', n: 'Football', p: 120 },
+];
+// pretend money (simple drawings, not real notes)
+const MONEY = [
+  { v: 1, coin: true }, { v: 2, coin: true }, { v: 5, coin: true }, { v: 10, coin: true, cls: 'c10' },
+  { v: 20, bg: '#d6f0a0' }, { v: 50, bg: '#a7e3e6' }, { v: 100, bg: '#d9c8f0' },
+];
+let item = null, tray = [], changeQ = null;
+function moneyBtn(m, onClick) {
+  const b = document.createElement('button');
+  b.className = `money ${m.coin ? 'coin' : 'note'} ${m.cls || ''}`; b.textContent = `₹${m.v}`;
+  if (!m.coin) b.style.background = m.bg;
+  b.addEventListener('click', onClick); return b;
+}
+ITEMS.forEach(it => {
+  const b = document.createElement('button'); b.className = 'item';
+  b.innerHTML = `<div class="e">${it.e}</div><div class="n">${it.n}</div><div class="p">₹${it.p}</div>`;
+  b.addEventListener('click', () => { item = it; tray = []; changeQ = null; Kids.sfx.pop(); render(); Kids.speak(`${it.n}. It costs ${it.p} rupees.`); });
+  $('#shelf').appendChild(b);
+});
+MONEY.forEach(m => $('#wallet').appendChild(moneyBtn(m, () => { if (!item || changeQ) return; if (tray.length >= 20) return; tray.push(m.v); Kids.sfx.tick(); render(); })));
+const total = () => tray.reduce((a, b) => a + b, 0);
+function render() {
+  [...$('#shelf').children].forEach((b, i) => b.classList.toggle('active', ITEMS[i] === item));
+  $('#buying').innerHTML = item ? `Buying: <span class="e">${item.e}</span> ${item.n} for <b>₹${item.p}</b>` : 'Pick something from the shop!';
+  $('#tray').innerHTML = '';
+  tray.slice().sort((a, b) => b - a).forEach(v => $('#tray').appendChild(moneyBtn(MONEY.find(m => m.v === v), () => {
+    if (changeQ) return; tray.splice(tray.indexOf(v), 1); Kids.sfx.pop(); render();
+  })));
+  $('#given').textContent = `₹${total()}`; $('#price').textContent = item ? `₹${item.p}` : '₹0';
+  if (!changeQ) { $('#changeBox').innerHTML = ''; }
+}
+$('#clearBtn').addEventListener('click', () => { if (changeQ) return; tray = []; Kids.sfx.pop(); render(); });
+$('#payBtn').addEventListener('click', () => {
+  if (!item || changeQ) return;
+  const t = total();
+  if (t < item.p) { Kids.sfx.oops(); res(`Not enough yet! You need ₹${item.p - t} more. 🤔`, false); return; }
+  if (t === item.p) { done(true, 0); return; }
+  // paid too much: work out the change
+  const chg = t - item.p;
+  changeQ = chg;
+  const o = new Set([chg]); while (o.size < 4) o.add(Math.max(1, chg + (R(2) ? 1 : -1) * (1 + R(Math.max(3, Math.round(chg / 2))))));
+  $('#changeBox').innerHTML = `<div class="label center">You gave ₹${t}. It costs ₹${item.p}. How much CHANGE should the shopkeeper give back?</div><div class="choices" id="chg"></div>`;
+  shuffle([...o]).forEach(v => {
+    const b = document.createElement('button'); b.className = 'choice'; b.textContent = `₹${v}`;
+    b.addEventListener('click', () => {
+      if (v === chg) { b.classList.add('right'); done(false, chg); }
+      else { b.classList.add('wrong'); b.disabled = true; Kids.sfx.oops(); Kids.resetStreak(); res(`Try again! ₹${t} take away ₹${item.p} is…? Count up from ${item.p} to ${t}.`, false); }
+    });
+    $('#chg').appendChild(b);
+  });
+  Kids.sfx.pop(); res('You gave more than the price. Now work out the change! 🧮', false);
+});
+function res(t, good) { $('#res').textContent = t; $('#res').className = 'result ' + (good ? 'good' : 'hint'); }
+function done(exact, change) {
+  const paid = tray.slice();
+  Kids.sfx.yay(); Kids.confetti(); Kids.addStar();
+  const msg = exact ? `${Kids.praise()} Exactly ₹${item.p}. Here is your ${item.n}! ${item.e}` : `${Kids.praise()} Your change is ₹${change}. Enjoy your ${item.n}! ${item.e}`;
+  res(msg, true); Kids.speak(Kids.forSpeech(msg));
+  ch.check({ item: item.id, paid, exact, change });
+  setTimeout(() => { tray = []; changeQ = null; render(); }, 2500);
+}
+
+const ch = Kids.challenges([
+  { ask: 'Buy a pencil ✏️ with exactly the right money', hint: 'A pencil costs ₹5. Which coin is ₹5?', ok: c => c.item === 'pencil' && c.exact, yay: 'Exactly ₹5. No change needed!' },
+  { ask: 'Buy the juice 🧃 using just 2 coins or notes', hint: '₹15 = ₹10 + ₹5', ok: c => c.item === 'juice' && c.exact && c.paid.length === 2, yay: '₹10 + ₹5 = ₹15. Clever!' },
+  { ask: 'Buy the balloon 🎈 using only ₹2 coins', hint: 'How many ₹2 coins make ₹10? Count in twos: 2, 4, 6…', ok: c => c.item === 'balloon' && c.exact && c.paid.every(v => v === 2), yay: '5 coins of ₹2 = ₹10!' },
+  { ask: 'Pay for the teddy 🧸 with a ₹100 note and get the right change', hint: 'Give ₹100, then work out ₹100 − ₹60.', ok: c => c.item === 'teddy' && c.change === 40, yay: '₹100 − ₹60 = ₹40 change!' },
+  { ask: 'Buy the football ⚽ with the FEWEST coins and notes', hint: 'Use the biggest notes first: ₹120 = ₹100 + ₹20.', ok: c => c.item === 'ball' && c.exact && c.paid.length === 2, yay: 'Just 2 notes: ₹100 + ₹20!' },
+], { title: 'Smart Shopper' });
+
+Kids.learn({
+  why: ['Money helps people swap things fairly. The shopkeeper gives you a kite, and you give money that is worth the same.',
+    'In India we use <b>rupees (₹)</b>. Coins and notes have different values, so we can make any amount by adding them up.'],
+  imagine: ['Imagine you own a little shop. 🏪 A customer gives you ₹50 for a ₹30 kite. What do you give back? Count up: 30… 40, 50. That\'s ₹20!'],
+  wow: ['Long, long ago, before coins, people swapped things directly: a basket of rice for a pot! That is called barter.',
+    'The ₹ symbol was chosen in 2010. It mixes the Devanagari letter "र" (ra) and the letter R.'],
+  talk: ['What would you buy with ₹10?', 'Next time you go shopping, can you help pay and check the change?', 'Why do you think we save money in a piggy bank? 🐷'],
+});
+render();
+</script>
+</body>
+</html>

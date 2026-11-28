@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phonics Fun</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
+  .tile { border: none; border-radius: 18px; padding: 8px 4px; cursor: pointer; font-family: inherit; color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.15); transition: transform .12s; }
+  .tile:active { transform: translateY(3px); }
+  .tile .L { font-size: 34px; font-weight: 700; line-height: 1; }
+  .tile .e { font-size: 26px; }
+  .tile.seen { outline: 4px solid #ffd166; }
+  .big-card { text-align: center; }
+  .big-card .L { font-size: 110px; font-weight: 700; color: var(--purple); line-height: 1; }
+  .big-card .e { font-size: 80px; }
+  .big-card .w { font-size: 34px; font-weight: 600; }
+  .big-card .w b { color: var(--red); }
+  .find { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 12px; }
+  .find button { width: 88px; height: 88px; border-radius: 20px; border: none; font-size: 50px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,.18); font-family: inherit; }
+  .find button.wrong { opacity: .3; animation: shake .45s; }
+  .find button.right { background: #06d6a0 !important; outline: 5px solid #ffd166; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔊</span>
+    <div><h1>Phonics Fun</h1><small>A says a, as in apple! Letters and their sounds, <b data-kid-name>Kavikuyil</b></small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="abc">🔤 Alphabet</button>
+  <button class="tab" data-tab="first">🍎 First Sound</button>
+  <button class="tab" data-tab="find">👂 Find the Letter</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="abc">
+      <div class="abc" id="abc"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="first" hidden></section>
+    <section class="card center" data-panel="find" hidden>
+      <div class="label" style="margin-top:0">Listen, then tap the letter you hear!</div>
+      <div class="row"><button class="btn big purple" id="hearBtn">🔊 Hear the letter</button></div>
+      <div class="find" id="find"></div>
+      <div class="result" id="findRes"></div>
+      <div class="row"><button class="btn big orange" id="findNext" hidden>Next ➡️</button></div>
+    </section>
+  </div>
+  <div>
+    <section class="card big-card" id="big"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Class 1 English 📖</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const ABC = [['A','apple','🍎'],['B','ball','⚽'],['C','cat','🐱'],['D','dog','🐶'],['E','egg','🥚'],['F','fish','🐟'],['G','grapes','🍇'],['H','hat','🎩'],
+  ['I','ink','🖋️'],['J','jar','🫙'],['K','kite','🪁'],['L','lion','🦁'],['M','mango','🥭'],['N','nest','🪺'],['O','octopus','🐙'],['P','pen','🖊️'],
+  ['Q','queen','👸'],['R','rabbit','🐰'],['S','sun','☀️'],['T','tiger','🐯'],['U','umbrella','☂️'],['V','van','🚐'],['W','watch','⌚'],['X','box','📦', true],
+  ['Y','yo-yo','🪀'],['Z','zebra','🦓']];
+const COLORS = ['#ef476f','#ff9f1c','#ffca3a','#8ac926','#06d6a0','#118ab2','#4267ac','#9b5de5','#f15bb5'];
+const seen = new Set();
+const sayLetter = (l, force = true) => Kids.speak(l[3] ? `${l[0]}. ${l[0]} makes the sound at the end of ${l[1]}` : `${l[0]}. ${l[0]} is for ${l[1]}`, force);
+
+function showBig(l) {
+  const w = l[1], i = l[3] ? w.lastIndexOf(l[0].toLowerCase()) : 0;
+  $('#big').innerHTML = `<div class="L">${l[0]}${l[0].toLowerCase()}</div><div class="e">${l[2]}</div>
+    <div class="w">${w.slice(0, i)}<b>${w[i]}</b>${w.slice(i + 1)}</div>
+    <div class="label">${l[3] ? `X is at the END of "${w}"` : `${l[0]} is for ${w}`}</div>`;
+}
+ABC.forEach((l, k) => {
+  const b = document.createElement('button');
+  b.className = 'tile'; b.style.background = COLORS[k % COLORS.length];
+  b.innerHTML = `<div class="L">${l[0]}${l[0].toLowerCase()}</div><div class="e">${l[2]}</div>`;
+  b.addEventListener('click', () => {
+    showBig(l); sayLetter(l); seen.add(l[0]); b.classList.add('seen');
+    ch.check({ tap: l[0], seen: seen.size });
+  });
+  $('#abc').appendChild(b);
+});
+
+/* ---------- first sound quiz ---------- */
+const NORMAL = ABC.filter(l => !l[3]);
+function makeQ() {
+  const a = NORMAL[R(NORMAL.length)];
+  const opts = new Set([a[0]]); while (opts.size < 4) opts.add(ABC[R(ABC.length)][0]);
+  setTimeout(() => Kids.speak(a[1]), 300);
+  return { q: `<div style="font-size:90px">${a[2]}</div><button class="btn purple" onclick="Kids.speak('${a[1]}', true)">🔊 ${a[1]}</button><div class="label">Which letter does it START with?</div>`,
+    choices: shuffle([...opts]).map(x => ({ label: x + x.toLowerCase(), ok: x === a[0] })), yay: `${a[1]} starts with ${a[0]}!`, hint: `Say it slowly: ${a[1][0]}… ${a[1]}. What is the first sound?` };
+}
+let quizOn = false;
+function startQuiz() { if (!quizOn) { quizOn = true; Kids.quiz('#quizBox', makeQ, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); } }
+
+/* ---------- find the letter ---------- */
+const fd = { target: null, first: true, done: false, right: 0 };
+function newFind() {
+  fd.target = ABC[R(ABC.length)]; fd.first = true; fd.done = false;
+  const opts = new Set([fd.target]); while (opts.size < 6) opts.add(ABC[R(ABC.length)]);
+  $('#find').innerHTML = ''; $('#findRes').textContent = ''; $('#findRes').className = 'result'; $('#findNext').hidden = true;
+  shuffle([...opts]).forEach((l, k) => {
+    const b = document.createElement('button'); b.textContent = Math.random() < .5 ? l[0] : l[0].toLowerCase(); b.style.background = COLORS[k * 2 % COLORS.length];
+    b.addEventListener('click', () => {
+      if (fd.done) return;
+      if (l === fd.target) {
+        fd.done = true; b.classList.add('right'); if (fd.first) { Kids.addStar(); fd.right++; }
+        Kids.sfx.yay(); $('#findRes').textContent = `${Kids.praise()} That's ${l[0]}!`; $('#findRes').className = 'result good'; $('#findNext').hidden = false;
+        showBig(l); ch.check({ found: fd.right });
+      } else { fd.first = false; b.classList.add('wrong'); Kids.sfx.oops(); Kids.resetStreak(); }
+    });
+    $('#find').appendChild(b);
+  });
+  setTimeout(() => Kids.speak(fd.target[0]), 300);
+}
+$('#hearBtn').addEventListener('click', () => Kids.speak(`${fd.target[0]}`, true));
+$('#findNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'first') startQuiz();
+  if (b.dataset.tab === 'find' && !fd.target) newFind();
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Tap the FIRST letter of your name: K!', hint: 'Find K. It has a kite 🪁.', ok: c => c.tap === 'K', yay: 'K is for Kavikuyil… and kite! 🪁' },
+  { ask: 'Tap 10 different letters and listen to them 🔤', hint: 'Tap any letters on the alphabet board.', ok: c => c.seen >= 10, yay: 'Ten letters, ten sounds!' },
+  { ask: 'Tap ALL 26 letters, from A to Z! 🏆', hint: 'Keep going until every letter has a yellow ring.', ok: c => c.seen >= 26, yay: 'You heard the whole alphabet!' },
+  { ask: 'Play First Sound and get one right 🍎', hint: 'Open the First Sound tab.', ok: c => c.quiz, yay: 'You can hear the first sound in a word!' },
+  { ask: 'Find 3 letters by listening 👂', hint: 'Open Find the Letter and listen carefully.', ok: c => c.found >= 3, yay: 'Great listening ears! 👂' },
+], { title: 'Phonics Star' });
+
+Kids.learn({
+  why: ['Each letter has a NAME (like "bee" for B) and a SOUND (like "b-b-b" in ball). We use the sounds to read words!',
+    'When you know the sounds, you can read new words you have never seen before.'],
+  imagine: ['Imagine each letter is a little animal that makes its own noise. S hisses like a snake: sss! M hums: mmm! What noise does B make?'],
+  wow: ['The letter E is the most common letter in English words.', 'The sentence "The quick brown fox jumps over the lazy dog" uses ALL 26 letters!'],
+  talk: ['What sound does your name start with?', 'Can you find something at home that starts with B? With S?', 'Which letter is your favourite? Why?'],
+});
+showBig(ABC[0]);
+</script>
+</body>
+</html>

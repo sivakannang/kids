@@ -10,4 +10,4 @@ Games for focus, goals, dreams and imagination.
 | [why-jar](why-jar/) | Collecting questions, guessing first, finding out together, and keeping the answers |
 | [imagine-time](imagine-time/) | Five calm, read-aloud guided imagination journeys |
 
-**Ideas:** kindness diary, feelings check-in, gratitude jar.
+**Ideas:** Feelings Check-in, Kindness Diary, gratitude jar.

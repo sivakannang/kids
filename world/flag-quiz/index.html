@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flag Quiz</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .conts { display: flex; flex-direction: column; gap: 16px; }
+  .cont h3 { margin: 0 0 8px; }
+  .flags { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+  .fl { border: 3px solid #eee; background: #fff; border-radius: 16px; padding: 6px 4px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .fl .e { display: block; font-size: 46px; line-height: 1.1; }
+  .fl.seen { border-color: #ffd166; }
+  .info { text-align: center; }
+  .info .e { font-size: 110px; line-height: 1.1; }
+  .info h2 { margin: 0; font-size: 30px; color: var(--purple); }
+  .info p { font-size: 18px; margin: 6px 0; }
+  .big-flag { font-size: 110px; line-height: 1.1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🚩</span>
+    <div><h1>Flag Quiz</h1><small>Flags and countries around the world, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="explore">🌍 Explore</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="explore"><div class="conts" id="conts"></div></section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card info" id="info"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · World 🗺️</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// [flag, country, capital, continent, hello]
+const C = [
+  ['🇮🇳','India','New Delhi','Asia','Namaste'], ['🇳🇵','Nepal','Kathmandu','Asia','Namaste'], ['🇧🇹','Bhutan','Thimphu','Asia','Kuzuzangpo'],
+  ['🇧🇩','Bangladesh','Dhaka','Asia','Nomoshkar'], ['🇯🇵','Japan','Tokyo','Asia','Konnichiwa'], ['🇨🇳','China','Beijing','Asia','Nǐ hǎo'],
+  ['🇰🇷','South Korea','Seoul','Asia','Annyeonghaseyo'], ['🇹🇭','Thailand','Bangkok','Asia','Sawasdee'], ['🇸🇬','Singapore','Singapore','Asia','Hello'],
+  ['🇦🇪','United Arab Emirates','Abu Dhabi','Asia','Marhaba'],
+  ['🇬🇧','United Kingdom','London','Europe','Hello'], ['🇫🇷','France','Paris','Europe','Bonjour'], ['🇩🇪','Germany','Berlin','Europe','Hallo'],
+  ['🇮🇹','Italy','Rome','Europe','Ciao'], ['🇪🇸','Spain','Madrid','Europe','Hola'], ['🇬🇷','Greece','Athens','Europe','Yassou'], ['🇷🇺','Russia','Moscow','Europe','Privet'],
+  ['🇪🇬','Egypt','Cairo','Africa','Marhaba'], ['🇰🇪','Kenya','Nairobi','Africa','Jambo'], ['🇳🇬','Nigeria','Abuja','Africa','Hello'], ['🇲🇦','Morocco','Rabat','Africa','Salam'],
+  ['🇺🇸','United States','Washington, D.C.','North America','Hello'], ['🇨🇦','Canada','Ottawa','North America','Hello, Bonjour'], ['🇲🇽','Mexico','Mexico City','North America','Hola'],
+  ['🇧🇷','Brazil','Brasília','South America','Olá'], ['🇦🇷','Argentina','Buenos Aires','South America','Hola'], ['🇨🇱','Chile','Santiago','South America','Hola'],
+  ['🇦🇺','Australia','Canberra','Oceania','G\'day'], ['🇳🇿','New Zealand','Wellington','Oceania','Kia ora'],
+];
+const CONTS = ['Asia', 'Europe', 'Africa', 'North America', 'South America', 'Oceania'];
+const CE = { Asia: '🌏', Europe: '🏰', Africa: '🦁', 'North America': '🗽', 'South America': '🦜', Oceania: '🦘' };
+const seen = new Set();
+function showInfo(c) {
+  $('#info').innerHTML = `<div class="e">${c[0]}</div><h2>${c[1]}</h2><p>🏛️ Capital city: <b>${c[2]}</b></p><p>${CE[c[3]]} Continent: <b>${c[3]}</b></p><p>👋 Say hello: <b>${c[4]}</b></p>`;
+}
+CONTS.forEach(ct => {
+  const d = document.createElement('div'); d.className = 'cont';
+  d.innerHTML = `<h3>${CE[ct]} ${ct}</h3><div class="flags"></div>`;
+  C.filter(c => c[3] === ct).forEach(c => {
+    const b = document.createElement('button'); b.className = 'fl'; b.innerHTML = `<span class="e">${c[0]}</span>${c[1]}`;
+    b.addEventListener('click', () => { showInfo(c); seen.add(c[1]); b.classList.add('seen'); Kids.sfx.pop(); Kids.speak(Kids.forSpeech(`${c[1]}. The capital is ${c[2]}. In ${c[3]}.`)); ch.check({ tap: c[1], seen: seen.size, conts: new Set(C.filter(x => seen.has(x[1])).map(x => x[3])).size }); });
+    d.querySelector('.flags').appendChild(b);
+  });
+  $('#conts').appendChild(d);
+});
+const pick4 = a => { const o = new Set([a]); while (o.size < 4) o.add(C[R(C.length)]); return shuffle([...o]); };
+const MAKERS = [
+  () => { const a = C[R(C.length)]; return { q: `<div class="big-flag">${a[0]}</div>Which country's flag is this?`, choices: pick4(a).map(x => ({ label: x[1], ok: x === a })), yay: `That's the flag of ${a[1]}!`, hint: 'Look at the colours and shapes. Check the Explore board!' }; },
+  () => { const a = C[R(C.length)]; return { q: `Find the flag of <b>${a[1]}</b>`, choices: pick4(a).map(x => ({ label: `<span class="ce">${x[0]}</span>`, ok: x === a })), yay: `${a[0]} is ${a[1]}'s flag!`, hint: 'Look at the Explore board to remember.' }; },
+  () => { const a = C[R(C.length)]; const o = new Set([a[3]]); while (o.size < 4) o.add(CONTS[R(CONTS.length)]);
+    return { q: `<div class="big-flag">${a[0]}</div>Which continent is <b>${a[1]}</b> in?`, choices: shuffle([...o]).map(x => ({ label: `${CE[x]} ${x}`, ok: x === a[3] })), yay: `${a[1]} is in ${a[3]}.`, hint: 'Think about the world map!' }; },
+  () => { const a = C.filter(c => c[1] !== c[2])[R(C.length - 1)]; const o = new Set([a]); while (o.size < 4) o.add(C[R(C.length)]);
+    return { q: `What is the capital city of <b>${a[1]}</b> ${a[0]}?`, choices: shuffle([...o]).map(x => ({ label: x[2], ok: x === a })), yay: `The capital of ${a[1]} is ${a[2]}.`, hint: 'Tap the country on the Explore board to see its capital.' }; },
+];
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', () => { let m; do { m = MAKERS[R(MAKERS.length)](); } while (!m || !m.choices); return m; }, { rounds: 10, onRight: () => ch.check({ quiz: true }) }); }
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Find the flag of INDIA 🇮🇳', hint: 'Look in Asia. Saffron, white and green, with a blue wheel!', ok: c => c.tap === 'India', yay: 'Our tiranga! The wheel in the middle is the Ashoka Chakra.' },
+  { ask: 'Find a country in every continent 🌍', hint: 'Tap one flag from each group.', ok: c => c.conts >= 6, yay: 'You visited all 6 continents with flags!' },
+  { ask: 'Find the flag with a red circle in the middle 🔴', hint: 'It is in Asia, the land of the rising sun!', ok: c => c.tap === 'Japan', yay: 'Japan! The red circle is the Sun.' },
+  { ask: 'Find the flag with a big maple leaf 🍁', hint: 'Look in North America.', ok: c => c.tap === 'Canada', yay: 'Canada and its maple leaf! 🍁' },
+  { ask: 'Play the Quiz and get one right ❓', hint: 'Open the Quiz tab.', ok: c => c.quiz, yay: 'Flag expert in training! 🚩' },
+], { title: 'Flag Explorer' });
+
+Kids.learn({
+  why: ['Every country has its own flag. Its colours and shapes often tell a story about the country\'s history, land or people.',
+    'India\'s flag is called the <b>Tiranga</b> (three colours): saffron for courage, white for peace and truth, and green for faith and growth, with the blue Ashoka Chakra in the middle.'],
+  imagine: ['Imagine you are a pilot ✈️ flying around the world. Each time you land, you see a new flag waving and hear people say hello in a new language: Bonjour! Konnichiwa! Jambo!'],
+  wow: ['There are about 195 countries in the world!', 'Nepal\'s flag is the only national flag that is not a rectangle: it looks like two triangles! 🇳🇵'],
+  talk: ['If you made your own flag, what colours and pictures would you put on it?', 'Which country would you like to visit? Why?', 'Can you say hello in 3 languages?'],
+});
+showInfo(C[0]);
+</script>
+</body>
+</html>

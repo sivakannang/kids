@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>உயிர் எழுத்துக்கள் · Uyir Ezhuthukkal</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .ta { font-family: 'Tamil Sangam MN', 'Noto Sans Tamil', 'Latha', 'Nirmala UI', sans-serif; }
+  .grid12 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  @media (max-width: 600px) { .grid12 { grid-template-columns: repeat(4, 1fr); } }
+  .v { border: none; border-radius: 18px; padding: 10px 4px; cursor: pointer; color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.15); font-family: inherit; }
+  .v .t { font-size: 44px; line-height: 1.2; }
+  .v .r { font-size: 15px; font-weight: 600; opacity: .95; }
+  .v.kuril { background: linear-gradient(135deg, #f774c4, #e0409e); }
+  .v.nedil { background: linear-gradient(135deg, #9b5de5, #7b3fe0); }
+  .v.seen { outline: 4px solid #ffd166; }
+  .legend { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 10px; font-size: 15px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 18px; height: 18px; border-radius: 6px; display: inline-block; }
+  .big-card { text-align: center; }
+  .big-card .t { font-size: 110px; color: var(--purple); line-height: 1.15; }
+  .big-card .r { font-size: 24px; color: var(--muted); }
+  .big-card .e { font-size: 70px; }
+  .big-card .w { font-size: 34px; }
+  .big-card .w b { color: var(--red); }
+  .voice-note { font-size: 14px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .choice .ta { font-size: 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big ta">அ</span>
+    <div><h1>Uyir Ezhuthukkal <span class="ta">உயிர் எழுத்துக்கள்</span></h1><small>The 12 Tamil vowels, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">📖 Learn</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="learn">
+      <div class="grid12" id="grid"></div>
+      <div class="legend"><span><i style="background:#e0409e"></i>Kuril (short sound) குறில்</span><span><i style="background:#7b3fe0"></i>Nedil (long sound) நெடில்</span></div>
+      <div class="voice-note" id="voiceNote"></div>
+    </section>
+    <section class="card" id="quizBox" data-panel="quiz" hidden></section>
+  </div>
+  <div>
+    <section class="card big-card" id="big"></section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · தமிழ் 🌺</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// [letter, sound, kuril/nedil, word, word (sound), meaning, picture]
+const V = [
+  ['அ', 'a', 'kuril', 'அம்மா', 'amma', 'mother', '👩'],
+  ['ஆ', 'aa', 'nedil', 'ஆடு', 'aadu', 'goat', '🐐'],
+  ['இ', 'i', 'kuril', 'இலை', 'ilai', 'leaf', '🍃'],
+  ['ஈ', 'ee', 'nedil', 'ஈ', 'ee', 'housefly', '🪰'],
+  ['உ', 'u', 'kuril', 'உப்பு', 'uppu', 'salt', '🧂'],
+  ['ஊ', 'oo', 'nedil', 'ஊஞ்சல்', 'oonjal', 'swing', '🎠'],
+  ['எ', 'e', 'kuril', 'எலி', 'eli', 'mouse', '🐭'],
+  ['ஏ', 'ae', 'nedil', 'ஏணி', 'aeni', 'ladder', '🪜'],
+  ['ஐ', 'ai', 'nedil', 'ஐந்து', 'aindhu', 'five', '5️⃣'],
+  ['ஒ', 'o', 'kuril', 'ஒட்டகம்', 'ottagam', 'camel', '🐫'],
+  ['ஓ', 'oa', 'nedil', 'ஓடம்', 'oadam', 'boat', '⛵'],
+  ['ஔ', 'au', 'nedil', 'ஔவையார்', 'auvaiyaar', 'Avvaiyar, a famous poet', '📜'],
+];
+
+/* ---------- Tamil voice (if this device has one) ---------- */
+let taVoice = null;
+function findVoice() { try { taVoice = speechSynthesis.getVoices().find(v => /^ta/i.test(v.lang)) || null; } catch {}
+  $('#voiceNote').textContent = taVoice ? `🔊 Using the Tamil voice "${taVoice.name}".` : '🔇 This device has no Tamil voice, so ask a grown-up to say the sounds with you!'; }
+try { speechSynthesis.onvoiceschanged = findVoice; } catch {}
+function sayTa(text, en) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    if (taVoice) { const u = new SpeechSynthesisUtterance(text); u.voice = taVoice; u.lang = taVoice.lang; u.rate = 0.75; speechSynthesis.speak(u); }
+    else if (en) Kids.speak(en, true);
+  } catch {}
+}
+
+/* ---------- learn ---------- */
+const seen = new Set();
+function showBig(v) {
+  $('#big').innerHTML = `<div class="t ta">${v[0]}</div><div class="r">"${v[1]}" · ${v[2] === 'kuril' ? 'short sound (kuril)' : 'long sound (nedil)'}</div>
+    <div class="e">${v[6]}</div><div class="w ta"><b>${v[0]}</b>${v[3].slice(v[0].length)}</div><div class="r">${v[4]}: ${v[5]}</div>`;
+}
+V.forEach(v => {
+  const b = document.createElement('button');
+  b.className = `v ${v[2]}`; b.innerHTML = `<div class="t ta">${v[0]}</div><div class="r">${v[1]}</div>`;
+  b.addEventListener('click', () => { showBig(v); sayTa(`${v[0]}. ${v[3]}`, `${v[1]}, as in ${v[4]}`); seen.add(v[0]); b.classList.add('seen'); ch.check({ tap: v[0], seen: seen.size }); });
+  $('#grid').appendChild(b);
+});
+
+/* ---------- quiz ---------- */
+const MAKERS = [
+  () => { const a = V[R(V.length)]; const o = new Set([a]); while (o.size < 4) o.add(V[R(V.length)]);
+    return { q: `<div style="font-size:80px">${a[6]}</div><div class="ta" style="font-size:34px">${a[3]}</div><div class="label">${a[4]} (${a[5]}). Which letter does it start with?</div>`,
+      choices: shuffle([...o]).map(x => ({ label: `<span class="ta">${x[0]}</span>`, ok: x === a })), yay: `${a[4]} starts with ${a[0]} (${a[1]})!`, hint: 'Say the word slowly. Listen to the very first sound.' }; },
+  () => { const a = V[R(V.length)]; const o = new Set([a]); while (o.size < 4) o.add(V[R(V.length)]);
+    return { q: `Which letter says "<b>${a[1]}</b>"?`, choices: shuffle([...o]).map(x => ({ label: `<span class="ta">${x[0]}</span>`, ok: x === a })), yay: `${a[0]} says "${a[1]}".`, hint: 'Short sounds are pink, long sounds are purple on the Learn board.' }; },
+  () => { const pairs = [[0, 1], [2, 3], [4, 5], [6, 7], [9, 10]]; const [k, n] = pairs[R(pairs.length)]; const longQ = Math.random() < .5;
+    const a = longQ ? V[n] : V[k];
+    return { q: `<span class="ta" style="font-size:44px">${V[k][0]}  ${V[n][0]}</span><br>Which one is the ${longQ ? 'LONG' : 'SHORT'} sound?`,
+      choices: shuffle([V[k], V[n]]).map(x => ({ label: `<span class="ta">${x[0]}</span>`, ok: x === a })), yay: `${a[0]} (${a[1]}) is the ${longQ ? 'long (nedil)' : 'short (kuril)'} sound.`, hint: 'Long sounds are stretched out: aaa. Short sounds are quick: a.' }; },
+];
+let quizOn = false;
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', () => MAKERS[R(MAKERS.length)](), { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Tap அ, the very first letter 👩', hint: 'It is the first pink letter.', ok: c => c.tap === 'அ', yay: 'அ for அம்மா (amma)! 👩' },
+  { ask: 'Tap a LONG sound (nedil) letter 💜', hint: 'Long sounds are purple.', ok: c => c.tap && V.find(v => v[0] === c.tap)[2] === 'nedil', yay: 'A long, stretched sound!' },
+  { ask: 'Tap ALL 12 uyir letters 🏆', hint: 'Keep tapping until every letter has a yellow ring.', ok: c => c.seen >= 12, yay: 'You know all 12 உயிர் எழுத்துக்கள்!' },
+  { ask: 'Play the Quiz and get one right ❓', hint: 'Open the Quiz tab.', ok: c => c.quiz, yay: 'Super Tamil reading! 🌺' },
+], { title: 'Tamil Star' });
+
+Kids.learn({
+  why: ['Uyir means "life". These 12 letters are the vowels: they give life to every Tamil word!',
+    'Some are short sounds (kuril), like அ, and some are long sounds (nedil), like ஆ.'],
+  imagine: ['Imagine each letter is a little seed. When it joins other letters, a whole word grows, like அம்மா!'],
+  wow: ['Tamil is one of the oldest languages in the world that people still speak every day, more than 2,000 years old!',
+    'There are 12 uyir (vowel) letters and 18 mei (consonant) letters. Together they make 216 uyirmei letters!'],
+  talk: ['Which Tamil words do you already know?', 'Can you find a word at home that starts with அ?', 'Ask a grown-up to tell you a Tamil word they love.'],
+});
+showBig(V[0]); findVoice();
+</script>
+</body>
+</html>

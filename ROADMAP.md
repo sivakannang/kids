@@ -78,3 +78,22 @@ She earns ⭐ for trying and exploring, not only for right answers, so curiosity
 ### Suggested order
 Start with the ones that build on the clock she already knows: **10 Spin the Earth → 2 How Long Is a Second → 3 Time Ladder**, then **13 Planet Jump** (pure fun), and **21 Focus Garden** alongside.
 Big ideas (black holes, light years, many universes) come later, but they're built on games she has already played, so they never feel out of nowhere.
+
+---
+
+## 🎒 Round 2: the "coming soon" games (✅ done)
+| Game | Where | She discovers |
+|---|---|---|
+| 🧩 Word Match | `english/` | Reading and spelling Class 1 words |
+| 🔊 Phonics Fun | `english/` | Letter sounds A–Z |
+| அ Uyir Ezhuthukkal | `tamil/` | The 12 Tamil vowels |
+| 🔢 Tamil Numbers & Colours | `tamil/` | Counting and colours in Tamil |
+| 🍎 Counting Fun | `maths/` | Counting to 20, adding |
+| 🛒 Money Shop | `maths/` | Rupees and change |
+| 🐾 Animal Homes | `science/` | Where animals live |
+| 🚩 Flag Quiz | `world/` | Flags, capitals, continents |
+| 🖍️ Drawing Pad | `art-and-music/` | Drawing, symmetry, colouring |
+| 🎹 Little Piano | `art-and-music/` | Notes, tunes, composing |
+
+## 🌱 Coming soon (ideas on the home page)
+Story Time · Rhyme Time · Mei Ezhuthukkal · Tamil Animal Words · Shapes Hunt · Number Bonds · Times Tables · Hot & Cold · Weather Watch · How Plants Grow · My Body · Star Patterns · Continents Puzzle · Famous Landmarks · Colour Mixing · Rhythm Game · Feelings Check-in · Kindness Diary

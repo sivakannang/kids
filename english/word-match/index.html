@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Match</title>
+<link rel="stylesheet" href="../../shared/kids.css">
+<style>
+  .pic { font-size: 110px; text-align: center; line-height: 1.1; }
+  .word { font-size: 56px; font-weight: 700; text-align: center; color: var(--purple); letter-spacing: 2px; }
+  .spell-slots { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+  .slot { width: 58px; height: 66px; border-radius: 14px; border: 3px dashed #c9b6f2; font-size: 40px; font-weight: 700; display: flex; align-items: center; justify-content: center; color: var(--purple); background: #faf7ff; }
+  .slot.filled { border-style: solid; background: #f1e9ff; }
+  .letters { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .letter { width: 62px; height: 62px; border-radius: 16px; border: none; font-size: 34px; font-weight: 700; color: #fff; background: var(--blue); cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.18); font-family: inherit; }
+  .letter:nth-child(3n+2) { background: var(--orange); } .letter:nth-child(3n) { background: var(--pink); }
+  .letter:disabled { opacity: .25; cursor: default; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🧩</span>
+    <div><h1>Word Match</h1><small>Read, match and spell words, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="p2w">🖼️ Picture → Word</button>
+  <button class="tab" data-tab="w2p">🔤 Word → Picture</button>
+  <button class="tab" data-tab="spell">✍️ Spell It</button>
+</nav>
+
+<main class="page">
+  <section class="card">
+    <div class="label center" style="margin-top:0">Pick a topic</div>
+    <div class="pick" id="themes"></div>
+  </section>
+  <section class="card" id="quizBox" data-panel="quiz"></section>
+  <section class="card center" id="spellBox" data-panel="spell" hidden>
+    <div class="pic" id="spPic"></div>
+    <div class="row"><button class="btn purple" id="spSay">🔊 Hear it</button></div>
+    <div class="spell-slots" id="slots"></div>
+    <div class="letters" id="letters"></div>
+    <div class="result" id="spRes"></div>
+    <div class="row"><button class="btn orange" id="spUndo">⬅️ Undo</button><button class="btn big green" id="spNext">Next word ➡️</button></div>
+  </section>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Class 1 English 📖</footer>
+
+<script src="../../shared/kids.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// words from the Class 1 theme lists, each with a picture
+const THEMES = {
+  '🍎 Fruits': [['apple','🍎'],['mango','🥭'],['banana','🍌'],['orange','🍊'],['grapes','🍇'],['melon','🍉'],['lemon','🍋'],['pear','🍐'],['cherry','🍒']],
+  '🐶 Animals': [['cat','🐱'],['dog','🐶'],['cow','🐄'],['hen','🐔'],['fish','🐟'],['bird','🐦'],['lion','🦁'],['tiger','🐯'],['monkey','🐒'],['elephant','🐘'],['rabbit','🐰'],['duck','🦆']],
+  '🍛 Food': [['rice','🍚'],['roti','🫓'],['curry','🍛'],['milk','🥛'],['egg','🥚'],['bread','🍞'],['cake','🍰'],['tea','🍵'],['water','💧'],['corn','🌽']],
+  '🎒 School': [['book','📕'],['pen','🖊️'],['pencil','✏️'],['bag','🎒'],['bus','🚌'],['bell','🔔'],['chair','🪑'],['ruler','📏'],['scissors','✂️']],
+  '🌳 Nature': [['sun','☀️'],['moon','🌙'],['star','⭐'],['tree','🌳'],['flower','🌸'],['rain','🌧️'],['cloud','☁️'],['leaf','🍃'],['sea','🌊']],
+  '🏠 Home': [['bed','🛏️'],['door','🚪'],['key','🔑'],['lamp','💡'],['clock','⏰'],['cup','☕'],['ball','⚽'],['box','📦'],['car','🚗'],['house','🏠']],
+  '🎨 Colours': [['red','🟥'],['blue','🟦'],['green','🟩'],['yellow','🟨'],['orange','🟧'],['purple','🟪'],['black','⬛'],['white','⬜'],['brown','🟫']],
+};
+let theme = Object.keys(THEMES)[0], mode = 'p2w';
+const words = () => THEMES[theme];
+function pickN(n, must) { const s = new Set([must]); const w = words(); while (s.size < Math.min(n, w.length)) s.add(w[R(w.length)]); return shuffle([...s]); }
+function makeQ() {
+  const w = words(), a = w[R(w.length)];
+  if (mode === 'p2w') return {
+    q: `<div class="pic">${a[1]}</div>What is this?`, choices: pickN(4, a).map(x => ({ label: x[0], ok: x === a })),
+    yay: `It's ${a[0].match(/^[aeiou]/) ? 'an' : 'a'} ${a[0]}!`, hint: 'Look at the first letter of each word. Say the sounds slowly.' };
+  return {
+    q: `<div class="word">${a[0]}</div><button class="btn purple" onclick="Kids.speak('${a[0]}', true)">🔊 Hear it</button><div class="label">Which picture is it?</div>`,
+    choices: pickN(4, a).map(x => ({ label: `<span class="ce">${x[1]}</span>`, ok: x === a })), yay: `Yes! That's ${a[0]}.`, hint: 'Sound out the word: one letter at a time.' };
+}
+let quiz = null;
+function startQuiz() { quiz = Kids.quiz('#quizBox', makeQ, { rounds: 8 }); }
+
+/* ---------- spelling ---------- */
+const sp = { word: '', pic: '', typed: [], used: [], first: true };
+function newSpell() {
+  const short = words().filter(w => w[0].length <= 6);
+  let w; do { w = short[R(short.length)]; } while (w[0] === sp.word && short.length > 1);
+  sp.word = w[0]; sp.pic = w[1]; sp.typed = []; sp.used = []; sp.first = true;
+  $('#spPic').textContent = sp.pic; $('#spRes').textContent = ''; $('#spRes').className = 'result';
+  const extra = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(c => !sp.word.includes(c));
+  sp.tiles = shuffle([...sp.word.split(''), ...shuffle(extra).slice(0, 2)]);
+  renderSpell();
+}
+function renderSpell() {
+  $('#slots').innerHTML = sp.word.split('').map((_, i) => `<div class="slot ${sp.typed[i] ? 'filled' : ''}">${sp.typed[i] || ''}</div>`).join('');
+  $('#letters').innerHTML = '';
+  sp.tiles.forEach((c, i) => {
+    const b = document.createElement('button'); b.className = 'letter'; b.textContent = c; b.disabled = sp.used.includes(i);
+    b.addEventListener('click', () => tapLetter(c, i)); $('#letters').appendChild(b);
+  });
+}
+function tapLetter(c, i) {
+  if (sp.typed.length >= sp.word.length) return;
+  sp.typed.push(c); sp.used.push(i); Kids.sfx.pop(); renderSpell();
+  if (sp.typed.length === sp.word.length) {
+    if (sp.typed.join('') === sp.word) {
+      if (sp.first) Kids.addStar();
+      Kids.sfx.yay(); Kids.confetti();
+      const msg = `${Kids.praise()} ${sp.word.toUpperCase().split('').join(' - ')}: ${sp.word}!`;
+      $('#spRes').textContent = msg; $('#spRes').className = 'result good'; Kids.speak(Kids.forSpeech(`${sp.word.split('').join(', ')}. ${sp.word}!`));
+    } else {
+      sp.first = false; Kids.resetStreak(); Kids.sfx.oops();
+      $('#spRes').textContent = 'Almost! Press Undo and try again. Say the sounds slowly. 🐢'; $('#spRes').className = 'result hint';
+    }
+  }
+}
+$('#spUndo').addEventListener('click', () => { sp.typed.pop(); sp.used.pop(); $('#spRes').textContent = ''; $('#spRes').className = 'result'; renderSpell(); });
+$('#spNext').addEventListener('click', () => { Kids.sfx.pop(); newSpell(); });
+$('#spSay').addEventListener('click', () => Kids.speak(sp.word, true));
+
+/* ---------- themes + tabs ---------- */
+function renderThemes() {
+  $('#themes').innerHTML = '';
+  Object.keys(THEMES).forEach(t => {
+    const b = document.createElement('button'); b.textContent = t; b.className = t === theme ? 'active' : '';
+    b.addEventListener('click', () => { theme = t; Kids.sfx.pop(); renderThemes(); mode === 'spell' ? newSpell() : startQuiz(); });
+    $('#themes').appendChild(b);
+  });
+}
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop(); mode = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  $('#quizBox').hidden = mode === 'spell'; $('#spellBox').hidden = mode !== 'spell';
+  mode === 'spell' ? newSpell() : startQuiz();
+}));
+
+Kids.learn({
+  why: ['Every word is made of letters, and every letter has a sound. When you put the sounds together, you can read the word!',
+    'The more words you can read, the more stories you can enjoy all by yourself. 📚'],
+  imagine: ['Imagine every word is a little train. Each letter is a carriage. c-a-t: three carriages, and the train says "cat"! 🚂'],
+  wow: ['The English alphabet has 26 letters, but they make more than a lakh of words!', 'The word "set" has more meanings than almost any other English word!'],
+  talk: ['Find 3 things at home and say their names. What letter do they start with?', 'Which word was the hardest? Why?', 'Can you think of a word that rhymes with cat?'],
+});
+renderThemes(); startQuiz();
+</script>
+</body>
+</html>
