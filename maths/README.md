@@ -6,6 +6,7 @@
 | [how-long-is-a-second](how-long-is-a-second/) | Feeling seconds and minutes: stopwatch, guess 10 seconds, tap race, filling time jars |
 | [time-ladder](time-ladder/) | Units of time from a second to a millennium, and how they fit together |
 | [my-life-in-numbers](my-life-in-numbers/) | Her age in days, hours, heartbeats, Moon trips and km around the Sun (more/less guessing) |
+| [time-words](time-words/) | Yesterday, day after tomorrow, next week… on a calendar, and in Tamil, Hindi and Kannada |
 | [birthday-calendar](birthday-calendar/) | Days of the week, months, the knuckle trick, a birthday countdown, calendar challenges and quiz |
 | [hands-and-feet](hands-and-feet/) | Measuring with hands, feet and paper clips, and why we need standard units (cm) |
 | [ruler-race](ruler-race/) | cm, m and km: the size ladder and a quiz |

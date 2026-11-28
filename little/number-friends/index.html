@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Friends</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .nums { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .nb { width: 64px; height: 64px; border: none; border-radius: 18px; font-size: 32px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.15); font-family: inherit; }
+  .nb.cur { outline: 5px solid #ffd166; transform: scale(1.08); }
+  .objs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 560px; margin: 8px auto; }
+  .ob { font-size: 54px; background: none; border: none; cursor: pointer; position: relative; padding: 0 2px; }
+  .ob.c { opacity: .5; transform: scale(.85); }
+  .ob .k { position: absolute; top: -4px; right: -4px; background: var(--purple); color: #fff; border-radius: 999px; font-size: 15px; font-weight: 700; padding: 1px 7px; font-family: 'Fredoka', sans-serif; }
+  .word { text-align: center; font-size: 40px; font-weight: 700; color: var(--purple); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔢</span>
+    <div><h1>Number Friends</h1><small>Let's count together, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">🔢 Learn</button>
+  <button class="tab" data-tab="find">👂 Find the Number</button>
+  <button class="tab" data-tab="count">🍎 How Many?</button>
+</nav>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card" id="rangeCard"><div class="pick" id="range"><button data-max="5">1 to 5</button><button data-max="10" class="active">1 to 10</button><button data-max="20">1 to 20</button></div></section>
+
+  <section class="card center" data-panel="learn">
+    <div class="nums" id="nums"></div>
+    <div class="giant" id="nBig" style="margin-top:10px"></div>
+    <div class="word" id="nWord"></div>
+    <div class="objs" id="nObjs"></div>
+    <div class="row">
+      <button class="btn big purple" id="nCount">🔊 Count with me</button>
+      <button class="btn big green saidit" id="nSaid">🎤 I said it!</button>
+      <a class="btn big" id="nTrace" href="../trace-it/index.html?set=nums">✍️ Trace</a>
+    </div>
+  </section>
+
+  <section class="card center" data-panel="find" hidden>
+    <div class="row" style="margin-top:0"><button class="btn big purple" id="fHear">🔊 Listen</button></div>
+    <div class="bigchoices" id="fChoices"></div>
+    <div class="row"><button class="btn big orange" id="fNext" hidden>Next ➡️</button></div>
+  </section>
+
+  <section class="card center" data-panel="count" hidden>
+    <div class="label" style="margin-top:0">Tap each one to count it, then pick the number!</div>
+    <div class="objs" id="cObjs"></div>
+    <div class="bigchoices" id="cChoices"></div>
+    <div class="row"><button class="btn big orange" id="cNext" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/little.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const W = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
+const THINGS = ['🍎','⭐','🐟','🎈','🐥','🚗','🍌','🦋','🐞','🌸'];
+const COLORS = ['#ef476f','#ff9f1c','#06d6a0','#118ab2','#9b5de5','#f15bb5'];
+let max = 10, n = 1;
+const say = t => { $('#bubble').textContent = t; };
+function countObjs(box, k, thing, onEach) {
+  box.innerHTML = ''; let c = 0;
+  for (let j = 0; j < k; j++) {
+    const b = document.createElement('button'); b.className = 'ob'; b.textContent = thing;
+    b.addEventListener('click', () => { if (b.classList.contains('c')) return; c++; b.classList.add('c'); b.insertAdjacentHTML('beforeend', `<span class="k">${c}</span>`); Little.say(W[c], 0.9); Kids.sfx.pop(); onEach && onEach(c); });
+    box.appendChild(b);
+  }
+}
+/* ---------- learn ---------- */
+function showLearn() {
+  $('#nums').innerHTML = '';
+  for (let k = 1; k <= max; k++) { const b = document.createElement('button'); b.className = 'nb' + (k === n ? ' cur' : ''); b.textContent = k; b.style.background = COLORS[k % COLORS.length];
+    b.addEventListener('click', () => { n = k; showLearn(); }); $('#nums').appendChild(b); }
+  const thing = THINGS[n % THINGS.length];
+  $('#nBig').textContent = n; $('#nWord').textContent = W[n];
+  countObjs($('#nObjs'), n, thing);
+  $("#nTrace").href = `../trace-it/index.html?set=nums&c=${String(n)[0]}`;
+  say(`This is ${n}, ${W[n]}! Can you count ${n} ${n === 1 ? 'thing' : 'things'}? Tap each one! 👆`);
+  Little.sayList([`${W[n]}!`, `This is number ${W[n]}.`]);
+}
+$('#nCount').addEventListener('click', () => Little.sayList(Array.from({ length: n }, (_, k) => W[k + 1]).concat(`${W[n]}!`), 0.9));
+Little.saidIt($('#nSaid'), c => { say(`${c} You said ${W[n]}! 🎉`); if (n < max) setTimeout(() => { n++; showLearn(); }, 1500); });
+
+/* ---------- find the number ---------- */
+let target = 1, first = true;
+function newFind() {
+  target = 1 + R(max); first = true;
+  const o = new Set([target]); while (o.size < 3) o.add(1 + R(max));
+  $('#fNext').hidden = true;
+  Little.choose($('#fChoices'), shuffle([...o]).map(x => ({ label: String(x), ok: x === target })), () => {
+    if (first) Kids.addStar(); const c = Little.cheer(); say(`${c} That's ${W[target]}! 🎉`); Little.sayList([c, `That's ${W[target]}!`]); Kids.confetti(); $('#fNext').hidden = false;
+  }, () => { first = false; say('Not that one. Listen again! 👂'); fHear(); });
+  fHear();
+}
+function fHear() { say(`Where is number ${W[target]}? 👆`); Little.say(`Where is number ${W[target]}?`); }
+$('#fHear').addEventListener('click', fHear);
+$('#fNext').addEventListener('click', () => { Kids.sfx.pop(); newFind(); });
+
+/* ---------- how many? ---------- */
+let cnt = 1, cfirst = true;
+function newCount() {
+  cnt = 1 + R(Math.min(max, 10)); cfirst = true;
+  const thing = THINGS[R(THINGS.length)];
+  countObjs($('#cObjs'), cnt, thing, c => { if (c === cnt) say(`You counted them all! How many? Tap the number 👇`); });
+  const o = new Set([cnt]); while (o.size < 3) o.add(Math.max(1, cnt + R(5) - 2));
+  $('#cNext').hidden = true;
+  Little.choose($('#cChoices'), shuffle([...o]).map(x => ({ label: String(x), ok: x === cnt })), () => {
+    if (cfirst) Kids.addStar(); const c = Little.cheer(); say(`${c} There are ${W[cnt]}! 🎉`); Little.sayList([c, `There are ${W[cnt]}!`]); Kids.confetti(); $('#cNext').hidden = false;
+  }, () => { cfirst = false; say('Hmm, let\'s count again, one by one! 👆'); Little.say('Let\'s count again, one by one.'); });
+  say('How many are there? Tap each one to count! 👆'); Little.say('How many are there? Let\'s count!');
+}
+$('#cNext').addEventListener('click', () => { Kids.sfx.pop(); newCount(); });
+
+$('#range').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  max = +b.dataset.max; n = Math.min(n, max); Kids.sfx.pop(); $('#range').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  const t = document.querySelector('.tab.active').dataset.tab; t === 'learn' ? showLearn() : t === 'find' ? newFind() : newCount();
+}));
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'learn') showLearn(); if (b.dataset.tab === 'find') newFind(); if (b.dataset.tab === 'count') newCount();
+}));
+showLearn();
+</script>
+</body>
+</html>

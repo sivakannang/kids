@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Time</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .bk { border: none; border-radius: 22px; padding: 14px 10px; cursor: pointer; font-family: inherit; color: #fff; font-size: 18px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+  .bk .e { display: block; font-size: 54px; }
+  .bk.read::after { content: ' ⭐'; }
+  .book { text-align: center; }
+  .book .art { font-size: 96px; line-height: 1.2; min-height: 130px; letter-spacing: 8px; }
+  .book .art span { display: inline-block; animation: bob 2.4s ease-in-out infinite; }
+  .book .art span:nth-child(2) { animation-delay: .4s; } .book .art span:nth-child(3) { animation-delay: .8s; }
+  .book .txt { font-size: 28px; line-height: 1.5; max-width: 760px; margin: 10px auto; min-height: 120px; }
+  .book .pg { color: var(--muted); font-size: 18px; }
+  .moral { background: #fff3c4; border-radius: 20px; padding: 12px; font-size: 24px; font-weight: 600; margin-top: 10px; }
+  .q { font-size: 28px; font-weight: 600; margin: 10px 0; }
+  .bigchoice small { display: block; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">📚</span>
+    <div><h1>Story Time</h1><small>Snuggle up and listen, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card" id="shelfCard"><div class="shelf" id="shelf"></div></section>
+  <section class="card book" id="bookCard" hidden>
+    <div class="art" id="art"></div>
+    <div class="txt" id="txt"></div>
+    <div class="pg" id="pg"></div>
+    <div id="qBox"></div>
+    <div class="navrow">
+      <button class="btn orange" id="back">⬅️</button>
+      <span><button class="btn purple" id="again">🔊 Read again</button> <button class="btn" id="shelfBtn">📚 All stories</button></span>
+      <button class="btn green" id="next">➡️</button>
+    </div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/little.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const NICK = Kids.nick, HE = Kids.profile.id === 'kavikuyil' ? 'she' : 'he', He = HE[0].toUpperCase() + HE.slice(1);
+const yes = { label: '👍<small>yes</small>' }, no = { label: '👎<small>no</small>' };
+const pick = (label, ok) => ({ label, ok });
+// classic tales retold simply, plus one story starring the child
+const STORIES = [
+  { e: '🐦', t: 'The Thirsty Crow', bg: '#118ab2', pages: [
+    ['☀️🐦🥵', 'It was a very hot day. A crow was flying in the sky. He was so, so thirsty!'],
+    ['🐦🏺', 'He looked everywhere for water. At last, he found a pot!'],
+    ['🏺💧😟', 'But the water was right at the bottom. His beak could not reach it.'],
+    ['🐦🤔💡', 'The crow did not give up. He thought and thought… and then he had an idea!'],
+    ['🪨🪨🏺', 'He picked up little pebbles and dropped them into the pot, one by one. Plop! Plop! Plop!'],
+    ['🏺💧⬆️', 'The water came up, up, up… higher and higher!'],
+    ['🐦💧😊', 'Now he could drink! The clever crow drank the cool water and flew away happily.'],
+  ], moral: 'When something is hard, think, and keep trying! 💡', qs: [
+    ['What was the crow looking for?', [pick('💧<small>water</small>', true), pick('🍌<small>banana</small>'), pick('⚽<small>ball</small>')]],
+    ['What did he drop into the pot?', [pick('🍎<small>apples</small>'), pick('🪨<small>pebbles</small>', true), pick('🧸<small>teddy</small>')]],
+    ['How did the crow feel at the end?', [pick('😢<small>sad</small>'), pick('😠<small>angry</small>'), pick('😊<small>happy</small>', true)]],
+  ] },
+  { e: '🦁', t: 'The Lion and the Mouse', bg: '#ff9f1c', pages: [
+    ['🦁😴🌳', 'A big lion was sleeping in the forest. Zzz… zzz…'],
+    ['🐭🦁😠', 'A tiny mouse ran over his nose by mistake. The lion woke up. "ROAR! I will eat you!"'],
+    ['🐭🙏🦁', '"Please let me go," said the mouse. "One day I will help you." The lion laughed, "You are so small!" But he let the mouse go.'],
+    ['🦁🕸️😟', 'A few days later, the lion got stuck in a hunter\'s net. He roared and roared, but he could not get out.'],
+    ['🐭🦷🕸️', 'The little mouse heard him. She ran to the net and nibbled the ropes with her sharp teeth. Nibble, nibble, nibble!'],
+    ['🦁🐭❤️', 'Snap! The lion was free! "Thank you, little friend," he said. From that day, they were best friends.'],
+  ], moral: 'Even small friends can do big things. Be kind to everyone! ❤️', qs: [
+    ['Who was sleeping?', [pick('🐘<small>elephant</small>'), pick('🦁<small>lion</small>', true), pick('🐶<small>dog</small>')]],
+    ['How did the mouse help the lion?', [pick('🦷<small>bit the net</small>', true), pick('🍕<small>gave food</small>'), pick('🎵<small>sang a song</small>')]],
+    ['Were they friends at the end?', [{ ...yes, ok: true }, no]],
+  ] },
+  { e: '🐢', t: 'The Hare and the Tortoise', bg: '#06d6a0', pages: [
+    ['🐇😆🐢', 'A fast hare laughed at a slow tortoise. "You are SO slow!" The tortoise smiled and said, "Let\'s have a race!"'],
+    ['🏁🐇💨', 'Ready, steady, GO! The hare ran very, very fast and was far ahead.'],
+    ['🐇😴🌳', '"That tortoise is so slow. I\'ll take a little nap," said the hare. And he fell fast asleep under a tree.'],
+    ['🐢👣👣', 'The tortoise kept walking. Slowly, slowly, step by step. He never stopped.'],
+    ['🐢🏁🏆', 'The tortoise walked past the sleeping hare… and crossed the finish line. He won!'],
+    ['🐇😮💨', 'The hare woke up and ran, but it was too late! Everyone cheered for the tortoise.'],
+  ], moral: 'Slow and steady wins the race! 🐢', qs: [
+    ['Who was fast?', [pick('🐇<small>hare</small>', true), pick('🐢<small>tortoise</small>')]],
+    ['What did the hare do in the middle of the race?', [pick('😴<small>slept</small>', true), pick('🏊<small>swam</small>'), pick('🍦<small>ate ice cream</small>')]],
+    ['Who won the race?', [pick('🐇<small>hare</small>'), pick('🐢<small>tortoise</small>', true)]],
+  ] },
+  { e: '🐒', t: 'The Monkey and the Crocodile', bg: '#9b5de5', pages: [
+    ['🐒🌳🐊', 'A kind monkey lived in a jamun tree next to a river. A crocodile lived in the river. They became friends.'],
+    ['🐒🫐🐊', 'Every day, the monkey threw sweet jamun fruits down to the crocodile. Yum, yum!'],
+    ['🐊🌊🐒', 'One day the crocodile said, "Come and visit my home across the river! Sit on my back."'],
+    ['🐊😈🐒', 'In the middle of the river, the crocodile said, "Ha ha! Now I will eat your heart!" The monkey was scared, but he thought fast.'],
+    ['🐒💡🌳', '"Oh no! I left my heart up in my tree!" said the clever monkey. "Take me back, and I will get it for you."'],
+    ['🐒🌳😄', 'The silly crocodile swam back. The monkey jumped up into his tree, safe and sound! "Nobody can take my heart out," he laughed.'],
+  ], moral: 'When you are in trouble, stay calm and think! 🧠', qs: [
+    ['Where did the monkey live?', [pick('🌳<small>tree</small>', true), pick('🏠<small>house</small>'), pick('🚗<small>car</small>')]],
+    ['What fruit did he give the crocodile?', [pick('🫐<small>jamun</small>', true), pick('🍕<small>pizza</small>'), pick('🍦<small>ice cream</small>')]],
+    ['Was the monkey clever?', [{ ...yes, ok: true }, no]],
+  ] },
+  { e: '🪁', t: `${NICK} and the Little Kite`, bg: '#ef476f', pages: [
+    ['🧒🪁😃', `${NICK} got a new red kite. ${He} was so excited!`],
+    ['🪁⬇️😢', `${He} ran and ran, but the kite fell down. Bump! ${NICK} felt sad.`],
+    ['👨🪁💬', `Appa smiled and said, "Let's try again! Hold the string tight, and run against the wind."`],
+    ['🌬️🪁⬆️', 'Whoosh! The wind lifted the kite up, up, up into the big blue sky!'],
+    ['🪁☁️😄', `The kite danced with the clouds. ${NICK} laughed and clapped!`],
+    ['🌟🧒🌟', `${NICK} learned something important: when you fall, try again. You CAN do it!`],
+  ], moral: 'If at first you fall, try again! 💪', qs: [
+    ['What colour was the kite?', [pick('🟥<small>red</small>', true), pick('🟦<small>blue</small>'), pick('🟩<small>green</small>')]],
+    ['Did the kite fly the very first time?', [yes, { ...no, ok: true }]],
+    ['What made the kite fly up high?', [pick('🌬️<small>wind</small>', true), pick('💧<small>water</small>'), pick('🔥<small>fire</small>')]],
+  ] },
+];
+const readSet = new Set(Kids.store.get('little.stories', []));
+let st = null, p = 0;
+const say = t => { $('#bubble').textContent = t; };
+function shelf() {
+  $('#shelfCard').hidden = false; $('#bookCard').hidden = true; st = null;
+  $('#shelf').innerHTML = '';
+  STORIES.forEach((s, k) => { const b = document.createElement('button'); b.className = 'bk' + (readSet.has(s.t) ? ' read' : ''); b.style.background = s.bg;
+    b.innerHTML = `<span class="e">${s.e}</span>${s.t}`; b.addEventListener('click', () => open(k)); $('#shelf').appendChild(b); });
+  say(`Which story shall we read today, ${NICK}? Pick a book! 📚`); Little.say(`Which story shall we read today, ${NICK}?`);
+}
+function open(k) { st = STORIES[k]; p = 0; Kids.sfx.pop(); $('#shelfCard').hidden = true; $('#bookCard').hidden = false; page(); }
+function page() {
+  $('#qBox').innerHTML = '';
+  if (p < st.pages.length) {
+    const [art, txt] = st.pages[p];
+    $('#art').innerHTML = [...art].filter(c => c.trim()).length ? Array.from(art.matchAll(/\p{Extended_Pictographic}(️|‍\p{Extended_Pictographic})*/gu), m => `<span>${m[0]}</span>`).join('') : art;
+    $('#txt').textContent = txt; $('#pg').textContent = `Page ${p + 1} of ${st.pages.length}`;
+    say(p === 0 ? `"${st.t}". Listen carefully! 👂` : 'What do you think happens next? 🤔');
+    Kids.speak(txt, false, 0.85);
+  } else if (p === st.pages.length) {
+    $('#art').textContent = '🌟'; $('#txt').innerHTML = `<div class="moral">${st.moral}</div>`; $('#pg').textContent = 'The End!';
+    say(`The End! Now, can you answer some questions? 🤔`); Kids.speak(`The end! ${st.moral}`, false, 0.85);
+  } else {
+    const qi = p - st.pages.length - 1, [q, choices] = st.qs[qi];
+    $('#art').textContent = '❓'; $('#txt').innerHTML = `<div class="q">${q}</div>`; $('#pg').textContent = `Question ${qi + 1} of ${st.qs.length}`;
+    $('#qBox').innerHTML = '<div class="bigchoices" id="qc"></div>';
+    say(q); Little.say(q);
+    Little.choose($('#qc'), choices.map(c => ({ ...c, pic: true })), () => {
+      Kids.addStar(); const c = Little.cheer(); say(`${c} 🎉`); Little.say(c);
+      setTimeout(() => { if (qi < st.qs.length - 1) { p++; page(); } else finish(); }, 1500);
+    }, () => { say('Hmm, think again! 🤔'); Little.say('Think again!'); });
+  }
+  $('#back').disabled = p === 0;
+  $('#next').hidden = p > st.pages.length;
+}
+function finish() {
+  readSet.add(st.t); Kids.store.set('little.stories', [...readSet]);
+  Kids.confetti(); Kids.banner(`📚 You finished "${st.t}"!`);
+  $('#art').textContent = '🏆'; $('#txt').innerHTML = `<div class="moral">Wonderful listening, ${NICK}! Tell this story to someone tonight! 🌙</div>`;
+  $('#qBox').innerHTML = ''; $('#pg').textContent = '';
+  Little.say(`Wonderful listening, ${NICK}! Tell this story to someone tonight!`);
+}
+$('#next').addEventListener('click', () => { p++; Kids.sfx.pop(); page(); });
+$('#back').addEventListener('click', () => { if (p > 0) { p--; Kids.sfx.pop(); page(); } });
+$('#again').addEventListener('click', () => { if (st && p < st.pages.length) Kids.speak(st.pages[p][1], true, 0.85); });
+$('#shelfBtn').addEventListener('click', () => { try { speechSynthesis.cancel(); } catch {} shelf(); });
+shelf();
+</script>
+</body>
+</html>

@@ -97,3 +97,23 @@ Big ideas (black holes, light years, many universes) come later, but they're bui
 
 ## 🌱 Coming soon (ideas on the home page)
 Story Time · Rhyme Time · Mei Ezhuthukkal · Tamil Animal Words · Shapes Hunt · Number Bonds · Times Tables · Hot & Cold · Weather Watch · How Plants Grow · My Body · Star Patterns · Continents Puzzle · Famous Landmarks · Colour Mixing · Rhythm Game · Feelings Check-in · Kindness Diary
+
+---
+
+## 👧👦 Round 3: two learners (✅ done)
+The games now have **two profiles**: Kavikuyil (PeriyaKutty, 1st std) and Prabanjan (ChinnaKutty, LKG). Each has their own stars and saved work, and the home page shows **3 practice games a day** for each child, with a daily streak.
+
+| For | Game | Where | She/he discovers |
+|---|---|---|---|
+| 👦 Prabanjan | 🔤 Letter Sounds | `little/` | Phonics and vowel friends |
+| 👦 Prabanjan | 🚂 Blend It | `little/` | Blending 2- and 3-letter words |
+| 👦 Prabanjan | ✍️ Trace It | `little/` | Writing letters and numbers |
+| 👦 Prabanjan | 🖼️ Picture Talk | `little/` | New words, listening, describing pictures |
+| 👦 Prabanjan | 🔢 Number Friends | `little/` | Numbers 1–10 |
+| 👦 Prabanjan | 📚 Story Time | `little/` | Stories, morals, questions |
+| 👧 Kavikuyil | 🗣️ Word Explorer | `languages/` | English, Tamil, Hindi, Kannada words |
+| 👧 Kavikuyil | अ Hindi Swar | `hindi/` | Hindi vowels |
+| 👧 Kavikuyil | ಅ Kannada Swaragalu | `kannada/` | Kannada vowels |
+| 👧 Kavikuyil | 🗓️ Time Words | `maths/` | Yesterday, next week… |
+
+**Next ideas:** Hindi Vyanjan, Kannada Vyanjanagalu, Rhyme & Sing, Colours & Shapes, sight words.

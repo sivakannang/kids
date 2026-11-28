@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trace It</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .stage { position: relative; max-width: 520px; margin: 0 auto; }
+  .stage canvas { width: 100%; aspect-ratio: 1; display: block; border-radius: 28px; }
+  #guide { background: #fff; border: 5px solid #e8defe; }
+  #ink { position: absolute; inset: 0; touch-action: none; cursor: crosshair; }
+  .meter { height: 18px; border-radius: 9px; background: #eee; overflow: hidden; max-width: 520px; margin: 10px auto 0; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffd166, #06d6a0); transition: width .3s; }
+  .crayons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+  .crayon { width: 40px; height: 40px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #ddd; cursor: pointer; }
+  .crayon.active { box-shadow: 0 0 0 4px var(--purple); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">✍️</span>
+    <div><h1>Trace It</h1><small>Follow the dotted letter with your finger, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+  <section class="card">
+    <div class="pick" id="sets"><button data-s="caps" class="active">ABC</button><button data-s="small">abc</button><button data-s="nums">123</button></div>
+    <div class="stage" style="margin-top:12px"><canvas id="guide" width="600" height="600"></canvas><canvas id="ink" width="600" height="600"></canvas></div>
+    <div class="meter"><i id="meter"></i></div>
+    <div class="crayons" id="crayons"></div>
+    <div class="navrow"><button class="btn orange" id="prev">⬅️</button>
+      <span><button class="btn" id="clear">🧽 Try again</button> <button class="btn purple" id="hear">🔊</button></span>
+      <button class="btn orange" id="next">➡️</button></div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/little.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const SETS = { caps: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), small: 'abcdefghijklmnopqrstuvwxyz'.split(''), nums: '0123456789'.split('') };
+const NUMW = ['zero','one','two','three','four','five','six','seven','eight','nine'];
+const COLORS = ['#ef476f', '#118ab2', '#06d6a0', '#ff9f1c', '#9b5de5'];
+let set = 'caps', i = 0, color = COLORS[0], guidePts = [], near = new Set(), doneHere = false;
+const g = $('#guide').getContext('2d'), ink = $('#ink').getContext('2d', { willReadFrequently: true });
+const say = t => { $('#bubble').textContent = t; };
+const ch = () => SETS[set][i];
+const spoken = c => set === 'nums' ? NUMW[+c] : (set === 'caps' ? `capital ${c}` : `small ${c}`);
+const FONT = "700 430px 'Fredoka', 'Arial Rounded MT Bold', sans-serif";
+
+function drawGuide() {
+  const c = ch();
+  g.clearRect(0, 0, 600, 600);
+  // writing lines
+  g.strokeStyle = '#e3ddf5'; g.lineWidth = 3;
+  [150, 300, 470].forEach(y => { g.beginPath(); g.moveTo(20, y); g.lineTo(580, y); g.stroke(); });
+  // the letter: light fill + dotted outline
+  g.font = FONT; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#efe9ff'; g.fillText(c, 300, 470);
+  g.setLineDash([10, 14]); g.lineWidth = 5; g.strokeStyle = '#9b8fc7'; g.strokeText(c, 300, 470); g.setLineDash([]);
+  // remember where the letter is, to check the tracing
+  const off = document.createElement('canvas'); off.width = off.height = 600;
+  const o = off.getContext('2d'); o.font = FONT; o.textAlign = 'center'; o.fillText(c, 300, 470);
+  const d = o.getImageData(0, 0, 600, 600).data; guidePts = [];
+  for (let y = 0; y < 600; y += 10) for (let x = 0; x < 600; x += 10) if (d[(y * 600 + x) * 4 + 3] > 128) guidePts.push([x, y]);
+  // the area close to the letter (where tracing ink is allowed)
+  near = new Set();
+  for (const [x, y] of guidePts) for (let dy = -40; dy <= 40; dy += 10) for (let dx = -40; dx <= 40; dx += 10) near.add(`${x + dx},${y + dy}`);
+}
+function clearInk() { ink.clearRect(0, 0, 600, 600); $('#meter').style.width = '0'; doneHere = false; }
+function show() {
+  clearInk(); drawGuide();
+  say(`Trace ${set === 'nums' ? 'the number' : 'the letter'} ${ch()} with your finger! Go slowly, like a snail 🐌`);
+  Little.say(`Let's trace ${spoken(ch())}!`);
+}
+// coverage: how much of the letter has been coloured in
+function coverage() {
+  if (!guidePts.length) return { c: 0, outside: 0 };
+  const d = ink.getImageData(0, 0, 600, 600).data;
+  let hit = 0, inkN = 0, out = 0;
+  for (const [x, y] of guidePts) if (d[(y * 600 + x) * 4 + 3] > 40) hit++;
+  for (let y = 0; y < 600; y += 10) for (let x = 0; x < 600; x += 10) if (d[(y * 600 + x) * 4 + 3] > 40) { inkN++; if (!near.has(`${x},${y}`)) out++; }
+  return { c: hit / guidePts.length, outside: inkN ? out / inkN : 0 };
+}
+const pos = e => { const r = $('#ink').getBoundingClientRect(); return [(e.clientX - r.left) * 600 / r.width, (e.clientY - r.top) * 600 / r.height]; };
+let last = null;
+$('#ink').addEventListener('pointerdown', e => { e.preventDefault(); try { $('#ink').setPointerCapture(e.pointerId); } catch {} last = pos(e); dot(last); });
+$('#ink').addEventListener('pointermove', e => {
+  if (!last) return; const p = pos(e);
+  ink.strokeStyle = color; ink.lineWidth = 46; ink.lineCap = ink.lineJoin = 'round';
+  ink.beginPath(); ink.moveTo(...last); ink.lineTo(...p); ink.stroke(); last = p;
+});
+function dot(p) { ink.fillStyle = color; ink.beginPath(); ink.arc(p[0], p[1], 23, 0, 7); ink.fill(); }
+const up = () => {
+  if (!last) return; last = null;
+  const { c, outside } = coverage(); $('#meter').style.width = Math.min(100, c / 0.75 * 100) + '%';
+  if (outside > 0.35 && !doneHere) { say('Oops, stay on the dotted letter! Press 🧽 Try again and go slowly 🐌'); return; }
+  if (c >= 0.75 && !doneHere) {
+    doneHere = true; Kids.addStar(); Kids.sfx.yay(); Kids.confetti();
+    const cheer = Little.cheer(); say(`${cheer} You wrote ${ch()}! ✍️ Press ➡️ for the next one.`); Little.say(`${cheer} You wrote ${spoken(ch())}!`);
+    const n = Kids.store.get('little.traced', 0) + 1; Kids.store.set('little.traced', n);
+    if (n % 5 === 0) setTimeout(() => Kids.banner(`✍️ ${n} letters written! Amazing, ${Kids.nick}!`), 900);
+  } else if (!doneHere && c > 0.3) say('Good going! Keep colouring the whole letter 🖍️');
+};
+$('#ink').addEventListener('pointerup', up); $('#ink').addEventListener('pointercancel', up);
+COLORS.forEach(c => { const d = document.createElement('div'); d.className = 'crayon' + (c === color ? ' active' : ''); d.style.background = c;
+  d.addEventListener('click', () => { color = c; document.querySelectorAll('.crayon').forEach(x => x.classList.toggle('active', x === d)); }); $('#crayons').appendChild(d); });
+$('#clear').addEventListener('click', () => { clearInk(); Kids.sfx.pop(); });
+$('#hear').addEventListener('click', () => Little.say(spoken(ch())));
+$('#next').addEventListener('click', () => { i = (i + 1) % SETS[set].length; Kids.sfx.pop(); show(); });
+$('#prev').addEventListener('click', () => { i = (i - 1 + SETS[set].length) % SETS[set].length; Kids.sfx.pop(); show(); });
+$('#sets').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  set = b.dataset.s; i = 0; Kids.sfx.pop(); $('#sets').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); show();
+}));
+// start on a letter or number from the link (e.g. ?set=nums&c=5)
+try { const q = new URLSearchParams(location.search); if (SETS[q.get('set')]) { set = q.get('set'); $('#sets').querySelectorAll('button').forEach(x => x.classList.toggle('active', x.dataset.s === set)); }
+  const c = q.get('c'); if (c && SETS[set].includes(c)) i = SETS[set].indexOf(c); } catch {}
+(document.fonts && document.fonts.load ? document.fonts.load(FONT) : Promise.resolve()).then(show, show);
+</script>
+</body>
+</html>

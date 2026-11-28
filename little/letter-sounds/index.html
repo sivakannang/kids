@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Letter Sounds</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .groups { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .letters { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  .lt { width: 74px; height: 74px; border: none; border-radius: 20px; font-size: 44px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 5px 0 rgba(0,0,0,.15); font-family: inherit; }
+  .lt.cur { outline: 5px solid #ffd166; transform: scale(1.08); }
+  .lt.done::after { content: '⭐'; position: absolute; font-size: 18px; transform: translate(-8px, -30px); }
+  .card-big { text-align: center; }
+  .card-big .act { font-size: 22px; color: var(--muted); margin-top: 4px; }
+  .card-big .word { font-size: 40px; font-weight: 700; }
+  .card-big .word b { color: var(--red); }
+  .vowel-friends { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .vf { border: none; border-radius: 26px; padding: 12px 18px; cursor: pointer; font-family: inherit; color: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.15); }
+  .vf .L { font-size: 64px; font-weight: 700; line-height: 1; } .vf .p { font-size: 40px; } .vf .w { font-size: 18px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🔤</span>
+    <div><h1>Letter Sounds</h1><small>Every letter makes a sound! Let's listen, <b data-kid-name>Prabanjan</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="learn">👂 Learn</button>
+  <button class="tab" data-tab="vowels">🌈 Vowel Friends</button>
+  <button class="tab" data-tab="game">🎯 Which Letter?</button>
+</nav>
+
+<main class="page">
+  <section class="card">
+    <div class="mascot"><span class="bird">🐦</span><div class="bubble" id="bubble"></div></div>
+  </section>
+
+  <section class="card" data-panel="learn">
+    <div class="groups pick" id="groups"></div>
+    <div class="letters" id="letters"></div>
+  </section>
+  <section class="card card-big" data-panel="learn">
+    <div class="giant" id="gL"></div>
+    <div class="giant-pic" id="gP"></div>
+    <div class="word" id="gW"></div>
+    <div class="act" id="gA"></div>
+    <div class="row">
+      <button class="btn big purple" id="hear">🔊 Hear it again</button>
+      <button class="btn big green saidit" id="said">🎤 I said it!</button>
+    </div>
+    <div class="navrow"><button class="btn orange" id="prev">⬅️</button><a class="btn" id="traceLink" href="../trace-it/index.html">✍️ Trace it</a><button class="btn orange" id="next">➡️</button></div>
+  </section>
+
+  <section class="card" data-panel="vowels" hidden>
+    <div class="label center" style="margin-top:0">These 5 letters are special: the vowel friends! Tap each one.</div>
+    <div class="vowel-friends" id="vowels"></div>
+  </section>
+
+  <section class="card center" data-panel="game" hidden>
+    <div class="row" style="margin-top:0"><button class="btn big purple" id="gameHear">🔊 Listen</button></div>
+    <div class="bigchoices" id="choices"></div>
+    <div class="row"><button class="btn big orange" id="gameNext" hidden>Next ➡️</button></div>
+  </section>
+</main>
+
+<footer>Made with ❤️ for <span data-kid-name>Prabanjan</span> · ChinnaKutty's Corner 🧸</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script src="../../shared/little.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle, { SOUND, LETTERS } = Little;
+const GROUPS = [['s','a','t','i','p','n'], ['c','k','e','h','r','m','d'], ['g','o','u','l','f','b'], ['j','z','w','v','y','x','q']];
+const COLORS = ['#ef476f','#ff9f1c','#06d6a0','#118ab2','#9b5de5','#f15bb5','#ffb703'];
+const done = new Set(Kids.store.get('little.letters', []));
+let g = 0, i = 0;
+const say = t => { $('#bubble').textContent = t; };
+function letterSay(l) { const [w, , act] = LETTERS[l]; Little.sayList([`${l.toUpperCase()}.`, `${l} says ${SOUND[l]}, ${act}.`, `${SOUND[l]}… ${w}!`]); }
+function renderGroups() {
+  $('#groups').innerHTML = '';
+  GROUPS.forEach((gr, k) => { const b = document.createElement('button'); b.textContent = `${['🐣','🐥','🐤','🦅'][k]} ${gr.join(' ')}`; b.className = k === g ? 'active' : '';
+    b.addEventListener('click', () => { g = k; i = 0; Kids.sfx.pop(); renderGroups(); show(); }); $('#groups').appendChild(b); });
+}
+function tiles() {
+  $('#letters').innerHTML = '';
+  GROUPS[g].forEach((x, k) => { const b = document.createElement('button'); b.className = 'lt' + (k === i ? ' cur' : '') + (done.has(x) ? ' done' : ''); b.textContent = x; b.style.background = COLORS[k % COLORS.length];
+    b.addEventListener('click', () => { i = k; show(); }); $('#letters').appendChild(b); });
+}
+function show() {
+  const l = GROUPS[g][i], [w, pic, act] = LETTERS[l];
+  tiles();
+  $('#gL').innerHTML = `${l.toUpperCase()} <span style="color:var(--purple)">${l}</span>`;
+  $('#gP').textContent = pic;
+  const idx = w.indexOf(l);
+  $('#gW').innerHTML = `${w.slice(0, idx)}<b>${w[idx]}</b>${w.slice(idx + 1)}`;
+  $('#gA').textContent = `"${SOUND[l]}", ${act}`;
+  say(`This is ${l.toUpperCase()}. It says "${SOUND[l]}". Can you say it too? Then tap "I said it!" 🎤`);
+  letterSay(l);
+}
+$('#hear').addEventListener('click', () => letterSay(GROUPS[g][i]));
+$('#prev').addEventListener('click', () => { if (i > 0) i--; else if (g > 0) { g--; i = GROUPS[g].length - 1; renderGroups(); } Kids.sfx.pop(); show(); });
+$('#next').addEventListener('click', () => { if (i < GROUPS[g].length - 1) i++; else if (g < GROUPS.length - 1) { g++; i = 0; renderGroups(); } Kids.sfx.pop(); show(); });
+Little.saidIt($('#said'), c => {
+  const l = GROUPS[g][i]; done.add(l); Kids.store.set('little.letters', [...done]);
+  say(`${c} 🎉 You said ${l.toUpperCase()}! Press ➡️ for the next letter.`);
+  if (GROUPS[g].every(x => done.has(x))) setTimeout(() => { Kids.banner(`🏆 You learned ${GROUPS[g].join(' ')}!`); Kids.confetti(); }, 800);
+  tiles();
+});
+
+/* ---------- vowel friends ---------- */
+['a','e','i','o','u'].forEach((v, k) => {
+  const [w, pic] = LETTERS[v];
+  const b = document.createElement('button'); b.className = 'vf'; b.style.background = COLORS[k];
+  b.innerHTML = `<div class="L">${v}</div><div class="p">${pic}</div><div class="w">${w}</div>`;
+  b.addEventListener('click', () => { Kids.sfx.pop(); Little.sayList([`${v}.`, `${SOUND[v]}, ${SOUND[v]}, ${w}!`]); say(`${v.toUpperCase()} says "${SOUND[v]}" like in ${w} ${pic}. Vowels are in almost every word!`); });
+  $('#vowels').appendChild(b);
+});
+
+/* ---------- which letter? (listening game) ---------- */
+let target = null, first = true;
+function newGame() {
+  const pool = GROUPS.slice(0, g + 1).flat();
+  target = pool[R(pool.length)]; first = true;
+  const o = new Set([target]); while (o.size < 3) o.add(pool[R(pool.length)]);
+  $('#gameNext').hidden = true;
+  Little.choose($('#choices'), shuffle([...o]).map(x => ({ label: x, ok: x === target })), () => {
+    if (first) Kids.addStar();
+    const c = Little.cheer(); say(`${c} That's ${target.toUpperCase()}: "${SOUND[target]}" like ${LETTERS[target][0]} ${LETTERS[target][1]}`); Little.say(c);
+    Kids.confetti(); $('#gameNext').hidden = false;
+  }, () => { first = false; say('Oops, try another one! Listen again 👂'); gameHear(); });
+  gameHear();
+}
+function gameHear() { Little.sayList([`Which letter says ${SOUND[target]}?`, `${SOUND[target]}, like ${LETTERS[target][0]}.`]); say(`Which letter says "${SOUND[target]}"? 👂`); }
+$('#gameHear').addEventListener('click', gameHear);
+$('#gameNext').addEventListener('click', () => { Kids.sfx.pop(); newGame(); });
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'game') newGame();
+  if (b.dataset.tab === 'vowels') say('Meet the vowel friends: a, e, i, o, u! Tap each one to hear it. 🌈');
+  if (b.dataset.tab === 'learn') show();
+}));
+renderGroups(); show();
+</script>
+</body>
+</html>

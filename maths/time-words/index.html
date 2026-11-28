@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Words</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .ta { font-family: 'Tamil Sangam MN', 'Noto Sans Tamil', 'Latha', 'Nirmala UI', sans-serif; }
+  .hi { font-family: 'Kohinoor Devanagari', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif; }
+  .kn { font-family: 'Kannada Sangam MN', 'Noto Sans Kannada', 'Tunga', 'Nirmala UI', sans-serif; }
+  .weeks { display: grid; grid-template-columns: 96px repeat(7, 1fr); gap: 5px; }
+  .weeks .h { text-align: center; font-weight: 700; font-size: 14px; color: var(--muted); padding: 4px 0; }
+  .weeks .wl { font-weight: 700; font-size: 14px; display: flex; align-items: center; color: var(--muted); }
+  .d { border: 3px solid transparent; border-radius: 14px; background: #f6f3ff; min-height: 60px; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2px; color: var(--ink); }
+  .d .n { font-size: 20px; font-weight: 700; }
+  .d .m { font-size: 11px; color: var(--muted); }
+  .d .tag { font-size: 11px; font-weight: 700; color: #fff; background: var(--purple); border-radius: 999px; padding: 0 6px; margin-top: 2px; }
+  .d.today { border-color: var(--orange); background: #fff4e0; }
+  .d.lit { background: #ffd166; transform: scale(1.06); transition: transform .2s; }
+  .d.weekend { background: #ffe9f2; }
+  .d.lit.weekend { background: #ffd166; }
+  .wordcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .wc { border: none; border-radius: 16px; padding: 10px 6px; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700; color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.15); }
+  .wc .e { display: block; font-size: 26px; }
+  .info { font-size: 21px; text-align: center; min-height: 58px; margin-top: 12px; background: #eef6ff; border-radius: 18px; padding: 10px; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 16px; }
+  .tbl th, .tbl td { padding: 8px 6px; border-bottom: 2px solid #f1ecff; text-align: left; vertical-align: top; }
+  .tbl td .w { font-size: 22px; } .tbl td .r { font-size: 13px; color: var(--muted); display: block; }
+  .tbl button { border: none; background: none; cursor: pointer; font-size: 18px; }
+  .fun { background: #fff3c4; border-radius: 14px; padding: 10px; margin-top: 10px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🗓️</span>
+    <div><h1>Time Words</h1><small>Yesterday, tomorrow, day after tomorrow, next week… <b data-kid-name>Kavikuyil</b> can do it!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="cal">🗓️ On the Calendar</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+  <button class="tab" data-tab="langs">🗣️ In Our Languages</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card" data-panel="cal">
+      <div class="weeks" id="weeks"></div>
+      <div class="info" id="info">Tap a time word below, or any day on the calendar!</div>
+      <h3 style="margin:14px 0 8px">Tap a word:</h3>
+      <div class="wordcards" id="wordcards"></div>
+    </section>
+    <section class="card" data-panel="quiz" hidden><div id="quizBox"></div></section>
+    <section class="card" data-panel="langs" hidden>
+      <table class="tbl" id="langTbl"></table>
+      <div class="fun">🤯 Fun fact: in Hindi, <span class="hi">कल</span> (kal) means BOTH yesterday and tomorrow, and <span class="hi">परसों</span> (parson) means both the day before yesterday and the day after tomorrow! You know which one from the sentence.</div>
+    </section>
+  </div>
+  <div>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Time ⏰</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+const DOWS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const t0 = new Date(); const TODAY = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate());
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const fmt = d => `${DOWS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+const weekStart = addDays(TODAY, -TODAY.getDay() - 7);       // the Sunday of last week
+
+// word → which days to light up (as offsets from today)
+const dow = TODAY.getDay();
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+const WORDS = [
+  { id: 'dby', e: '⏪⏪', w: 'day before yesterday', off: [-2], bg: '#8d99ae' },
+  { id: 'yes', e: '⏪', w: 'yesterday', off: [-1], bg: '#118ab2' },
+  { id: 'tod', e: '📍', w: 'today', off: [0], bg: '#ff9f1c' },
+  { id: 'tom', e: '⏩', w: 'tomorrow', off: [1], bg: '#06d6a0' },
+  { id: 'dat', e: '⏩⏩', w: 'day after tomorrow', off: [2], bg: '#04a57c' },
+  { id: 'lw', e: '⬆️', w: 'last week', off: range(-dow - 7, -dow - 1), bg: '#9b5de5' },
+  { id: 'tw', e: '📅', w: 'this week', off: range(-dow, 6 - dow), bg: '#ef476f' },
+  { id: 'nw', e: '⬇️', w: 'next week', off: range(7 - dow, 13 - dow), bg: '#f15bb5' },
+  { id: 'we', e: '🎈', w: 'this weekend', off: dow === 0 ? [0] : [6 - dow, 7 - dow].filter(o => o >= -dow && o <= 13 - dow), bg: '#ffb703' },
+];
+const tagFor = o => ({ '-2': 'day before', '-1': 'yesterday', 0: 'TODAY', 1: 'tomorrow', 2: 'day after' }[o] || '');
+
+function renderWeeks() {
+  const g = $('#weeks');
+  g.innerHTML = '<div></div>' + DOWS.map(d => `<div class="h">${d.slice(0, 3)}</div>`).join('');
+  ['Last week', 'This week', 'Next week'].forEach((label, w) => {
+    g.insertAdjacentHTML('beforeend', `<div class="wl">${label}</div>`);
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(weekStart, w * 7 + i), off = Math.round((d - TODAY) / 86400000);
+      const b = document.createElement('button');
+      b.className = 'd' + (off === 0 ? ' today' : '') + (i === 0 || i === 6 ? ' weekend' : '');
+      b.dataset.off = off;
+      b.innerHTML = `<span class="n">${d.getDate()}</span><span class="m">${MON[d.getMonth()]}</span>${tagFor(off) ? `<span class="tag">${tagFor(off)}</span>` : ''}`;
+      b.addEventListener('click', () => tapDay(off, d));
+      g.appendChild(b);
+    }
+  });
+}
+function light(offs) { document.querySelectorAll('.d').forEach(b => b.classList.toggle('lit', offs.includes(+b.dataset.off))); }
+function describe(off) {
+  const words = { '-2': 'the day before yesterday', '-1': 'yesterday', 0: 'today', 1: 'tomorrow', 2: 'the day after tomorrow' }[off];
+  if (words) return words;
+  const wk = Math.floor((off + dow) / 7);
+  return off < 0 ? `${-off} days ago${wk === -1 ? ', last week' : ''}` : `in ${off} days${wk === 1 ? ', next week' : ''}`;
+}
+function tapDay(off, d) {
+  light([off]); Kids.sfx.pop();
+  const t = off === 0 ? `Today is ${fmt(d)}! 📍` : `${fmt(d)}: that is ${describe(off)}.`;
+  $('#info').textContent = t; Kids.speak(Kids.forSpeech(t));
+  ch.check({ day: off });
+}
+WORDS.forEach(w => {
+  const b = document.createElement('button');
+  b.className = 'wc'; b.style.background = w.bg; b.innerHTML = `<span class="e">${w.e}</span>${w.w}`;
+  b.addEventListener('click', () => {
+    light(w.off); Kids.sfx.pop();
+    let t;
+    if (w.off.length === 1) t = `${w.w[0].toUpperCase() + w.w.slice(1)} ${w.off[0] < 0 ? 'was' : 'is'} ${fmt(addDays(TODAY, w.off[0]))}.`;
+    else t = `${w.w[0].toUpperCase() + w.w.slice(1)}: from ${fmt(addDays(TODAY, w.off[0]))} to ${fmt(addDays(TODAY, w.off[w.off.length - 1]))}.`;
+    $('#info').textContent = t; Kids.speak(Kids.forSpeech(t));
+    ch.check({ word: w.id });
+  });
+  $('#wordcards').appendChild(b);
+});
+
+/* ---------- quiz: a pretend "today" so she practises with every day of the week ---------- */
+const pick4 = (a, pool) => { const o = new Set([a]); while (o.size < 4) o.add(pool[R(pool.length)]); return shuffle([...o]); };
+const Q = [
+  ['yesterday', -1, 'was'], ['tomorrow', 1, 'will be'], ['the day after tomorrow', 2, 'will be'], ['the day before yesterday', -2, 'was'],
+];
+function makeQ() {
+  if (Math.random() < 0.7) {
+    const t = R(7), [word, off, verb] = Q[R(Q.length)], ans = DOWS[(t + off + 7) % 7];
+    return { q: `If today is <b>${DOWS[t]}</b>…<br>what day ${verb} <b>${word}</b>?`, choices: pick4(ans, DOWS).map(x => ({ label: x, ok: x === ans })),
+      yay: `If today is ${DOWS[t]}, ${word} ${verb} ${ans}.`, hint: `Count on your fingers: ${off < 0 ? 'go back' : 'go forward'} ${Math.abs(off)} day${Math.abs(off) > 1 ? 's' : ''}.` };
+  }
+  const opts = [
+    ['Which comes FIRST?', ['yesterday', 'tomorrow'], 'yesterday', 'Yesterday has already happened. Tomorrow is still coming!'],
+    ['How many days are in a week?', ['5', '7', '10'], '7', 'Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday: 7!'],
+    ['If today is Monday, next Monday is…', ['tomorrow', 'next week', 'yesterday'], 'next week', 'One week = 7 days. Next Monday is next week.'],
+    ['The day after tomorrow is how many days from today?', ['1', '2', '3'], '2', 'Tomorrow is 1, the day after tomorrow is 2!'],
+    ['Saturday and Sunday are called the…', ['weekend', 'weekday', 'week'], 'weekend', 'The weekend: no school! 🎈'],
+  ];
+  const [q, c, a, y] = opts[R(opts.length)];
+  return { q, choices: c.map(x => ({ label: x, ok: x === a })), yay: y, hint: 'Look at the calendar to help you.' };
+}
+let quizOn = false;
+
+/* ---------- words in our languages ---------- */
+const LW = [
+  ['day before yesterday', ['நேற்று முன்தினம்', 'netru mundhinam'], ['परसों', 'parson'], ['ಮೊನ್ನೆ', 'monne']],
+  ['yesterday', ['நேற்று', 'netru'], ['कल', 'kal'], ['ನಿನ್ನೆ', 'ninne']],
+  ['today', ['இன்று', 'indru'], ['आज', 'aaj'], ['ಇಂದು', 'indu']],
+  ['tomorrow', ['நாளை', 'naalai'], ['कल', 'kal'], ['ನಾಳೆ', 'naale']],
+  ['day after tomorrow', ['நாளை மறுநாள்', 'naalai marunaal'], ['परसों', 'parson'], ['ನಾಡಿದ್ದು', 'naadiddu']],
+  ['last week', ['போன வாரம்', 'pona vaaram'], ['पिछले हफ़्ते', 'pichhle hafte'], ['ಹಿಂದಿನ ವಾರ', 'hindina vaara']],
+  ['this week', ['இந்த வாரம்', 'indha vaaram'], ['इस हफ़्ते', 'is hafte'], ['ಈ ವಾರ', 'ee vaara']],
+  ['next week', ['அடுத்த வாரம்', 'adutha vaaram'], ['अगले हफ़्ते', 'agle hafte'], ['ಮುಂದಿನ ವಾರ', 'mundina vaara']],
+];
+$('#langTbl').innerHTML = '<tr><th>English</th><th>தமிழ்</th><th>हिंदी</th><th>ಕನ್ನಡ</th></tr>' + LW.map(r => `<tr><td><b>${r[0]}</b></td>` +
+  [['ta', r[1]], ['hi', r[2]], ['kn', r[3]]].map(([l, [w, s]]) => `<td><span class="w ${l}">${w}</span> <button data-l="${l}" data-w="${w}" data-s="${s}">🔊</button><span class="r">${s}</span></td>`).join('') + '</tr>').join('');
+$('#langTbl').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { if (!Kids.speakLang(b.dataset.w, b.dataset.l)) Kids.speak(b.dataset.s, true); ch.check({ lang: true }); }));
+
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) { quizOn = true; Kids.quiz('#quizBox', makeQ, { rounds: 8, onRight: () => ch.check({ quiz: true }) }); }
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Tap YESTERDAY on the calendar ⏪', hint: 'Find today (orange), then go one day back.', ok: c => c.day === -1, yay: `Yesterday was ${DOWS[(dow + 6) % 7]}!` },
+  { ask: 'Tap the DAY AFTER TOMORROW ⏩⏩', hint: 'Today, then tomorrow, then… the next one!', ok: c => c.day === 2, yay: `The day after tomorrow is ${DOWS[(dow + 2) % 7]}!` },
+  { ask: 'Tap the same day NEXT WEEK 📅', hint: 'Look straight down one row from today.', ok: c => c.day === 7, yay: 'Next week, same day: 7 days from today!' },
+  { ask: 'Tap the same day LAST WEEK', hint: 'Look straight up one row from today.', ok: c => c.day === -7, yay: 'Last week, same day: 7 days ago!' },
+  { ask: 'Tap the DAY BEFORE YESTERDAY ⏪⏪', hint: 'Go back two days from today.', ok: c => c.day === -2, yay: 'The day before yesterday: 2 days ago!' },
+  { ask: 'Play the Quiz and get one right ❓', hint: 'Open the Quiz tab.', ok: c => c.quiz, yay: 'You are a time-word champion!' },
+  { ask: 'Listen to the time words in Tamil, Hindi or Kannada 🗣️', hint: 'Open "In Our Languages" and tap a 🔊.', ok: c => c.lang, yay: 'Now you can say it in many languages!' },
+], { title: 'Time Word Champion' });
+
+Kids.learn({
+  why: ['Time words help us talk about WHEN things happen: what we did yesterday, and what we will do tomorrow.',
+    'A week has 7 days, so the same day next week is always 7 days away, exactly one row down on a calendar!'],
+  imagine: ['Imagine time is a long road. 🛣️ Behind you are yesterday and last week. You are standing on today. In front of you are tomorrow, the day after tomorrow, and next week!'],
+  wow: ['In Hindi, one word, "kal", means both yesterday and tomorrow!', 'Every week since long, long ago has had 7 days, without a single break!'],
+  talk: ['What did you do yesterday?', 'What would you like to do the day after tomorrow?', 'What is happening next week? Let\'s look at the calendar together.'],
+});
+renderWeeks();
+</script>
+</body>
+</html>

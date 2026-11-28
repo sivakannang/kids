@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Explorer: 4 Languages</title>
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
+<style>
+  .ta { font-family: 'Tamil Sangam MN', 'Noto Sans Tamil', 'Latha', 'Nirmala UI', sans-serif; }
+  .hi { font-family: 'Kohinoor Devanagari', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif; }
+  .kn { font-family: 'Kannada Sangam MN', 'Noto Sans Kannada', 'Tunga', 'Nirmala UI', sans-serif; }
+  .pics { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+  .pic { border: 3px solid #eee; background: #fff; border-radius: 18px; padding: 8px 4px; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .pic .e { display: block; font-size: 44px; line-height: 1.15; }
+  .pic.active { border-color: var(--purple); background: #f1e9ff; }
+  .pic.seen { box-shadow: 0 0 0 3px #ffd166; }
+  .words { display: flex; flex-direction: column; gap: 10px; }
+  .wrow { display: grid; grid-template-columns: 104px 1fr auto; align-items: center; gap: 10px; border-radius: 18px; padding: 10px 12px; }
+  .wrow .lang { font-weight: 700; font-size: 15px; }
+  .wrow .w { font-size: 30px; line-height: 1.2; }
+  .wrow .r { font-size: 16px; color: var(--muted); }
+  .wrow .say { border: none; background: #fff; border-radius: 999px; width: 46px; height: 46px; font-size: 22px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.1); }
+  .en { background: #e3f2ff; } .tar { background: #ffe1ec; } .hir { background: #fff3c4; } .knr { background: #d3f8e2; }
+  .big-e { font-size: 90px; text-align: center; line-height: 1.1; }
+  .noVoice { font-size: 13px; color: var(--muted); }
+  .choice .ta, .choice .hi, .choice .kn { font-size: 26px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="big">🗣️</span>
+    <div><h1>Word Explorer</h1><small>One picture, four languages: English, தமிழ், हिंदी, ಕನ್ನಡ. Let's go, <b data-kid-name>Kavikuyil</b>!</small></div>
+  </div>
+  <div class="badges" data-kids-badges data-home="../../index.html"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="explore">🔍 Explore</button>
+  <button class="tab" data-tab="quiz">❓ Quiz</button>
+</nav>
+
+<main class="split">
+  <div>
+    <section class="card">
+      <div class="pick" id="cats"></div>
+    </section>
+    <section class="card" data-panel="explore"><div class="pics" id="pics"></div></section>
+    <section class="card" data-panel="quiz" hidden>
+      <div class="label center" style="margin-top:0">Quiz me in…</div>
+      <div class="pick" id="qlang"></div>
+      <div id="quizBox" style="margin-top:12px"></div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <div class="big-e" id="bigE"></div>
+      <div class="words" id="words"></div>
+      <div class="row"><button class="btn big purple" id="allBtn">🔊 Hear all 4</button></div>
+    </section>
+    <section class="card" data-kuyil></section>
+  </div>
+</main>
+
+<section data-learn></section>
+<footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Languages 🗣️</footer>
+
+<script src="../../shared/kids.js?v=3"></script>
+<script>
+const $ = s => document.querySelector(s);
+const R = Kids.rand, shuffle = Kids.shuffle;
+// [picture, English, [Tamil, sound], [Hindi, sound], [Kannada, sound]]
+const CATS = {
+  '🏠 Home': [
+    ['👩', 'mother', ['அம்மா', 'amma'], ['माँ', 'maa'], ['ಅಮ್ಮ', 'amma']],
+    ['👨', 'father', ['அப்பா', 'appa'], ['पापा', 'papa'], ['ಅಪ್ಪ', 'appa']],
+    ['🏠', 'house', ['வீடு', 'veedu'], ['घर', 'ghar'], ['ಮನೆ', 'mane']],
+    ['💧', 'water', ['தண்ணீர்', 'thanneer'], ['पानी', 'paani'], ['ನೀರು', 'neeru']],
+    ['🥛', 'milk', ['பால்', 'paal'], ['दूध', 'doodh'], ['ಹಾಲು', 'haalu']],
+    ['🍚', 'rice', ['சோறு', 'soru'], ['चावल', 'chaaval'], ['ಅನ್ನ', 'anna']],
+    ['📕', 'book', ['புத்தகம்', 'puththagam'], ['किताब', 'kitaab'], ['ಪುಸ್ತಕ', 'pustaka']],
+  ],
+  '🐾 Animals': [
+    ['🐱', 'cat', ['பூனை', 'poonai'], ['बिल्ली', 'billi'], ['ಬೆಕ್ಕು', 'bekku']],
+    ['🐶', 'dog', ['நாய்', 'naai'], ['कुत्ता', 'kutta'], ['ನಾಯಿ', 'naayi']],
+    ['🐄', 'cow', ['பசு', 'pasu'], ['गाय', 'gaay'], ['ಹಸು', 'hasu']],
+    ['🐘', 'elephant', ['யானை', 'yaanai'], ['हाथी', 'haathi'], ['ಆನೆ', 'aane']],
+    ['🐟', 'fish', ['மீன்', 'meen'], ['मछली', 'machhli'], ['ಮೀನು', 'meenu']],
+    ['🐦', 'bird', ['பறவை', 'paravai'], ['चिड़िया', 'chidiya'], ['ಹಕ್ಕಿ', 'hakki']],
+    ['🐒', 'monkey', ['குரங்கு', 'kurangu'], ['बंदर', 'bandar'], ['ಕೋತಿ', 'kothi']],
+  ],
+  '🌳 Nature': [
+    ['☀️', 'sun', ['சூரியன்', 'sooriyan'], ['सूरज', 'sooraj'], ['ಸೂರ್ಯ', 'soorya']],
+    ['🌙', 'moon', ['நிலா', 'nilaa'], ['चाँद', 'chaand'], ['ಚಂದ್ರ', 'chandra']],
+    ['⭐', 'star', ['நட்சத்திரம்', 'natchathiram'], ['तारा', 'taara'], ['ನಕ್ಷತ್ರ', 'nakshatra']],
+    ['🌳', 'tree', ['மரம்', 'maram'], ['पेड़', 'ped'], ['ಮರ', 'mara']],
+    ['🌸', 'flower', ['பூ', 'poo'], ['फूल', 'phool'], ['ಹೂವು', 'hoovu']],
+    ['🌧️', 'rain', ['மழை', 'mazhai'], ['बारिश', 'baarish'], ['ಮಳೆ', 'male']],
+  ],
+  '🍎 Fruits': [
+    ['🥭', 'mango', ['மாம்பழம்', 'maambazham'], ['आम', 'aam'], ['ಮಾವಿನಹಣ್ಣು', 'maavinahannu']],
+    ['🍌', 'banana', ['வாழைப்பழம்', 'vaazhaippazham'], ['केला', 'kela'], ['ಬಾಳೆಹಣ್ಣು', 'baalehannu']],
+    ['🍎', 'apple', ['ஆப்பிள்', 'aappil'], ['सेब', 'seb'], ['ಸೇಬು', 'sebu']],
+    ['🍇', 'grapes', ['திராட்சை', 'thiraatchai'], ['अंगूर', 'angoor'], ['ದ್ರಾಕ್ಷಿ', 'draakshi']],
+    ['🥥', 'coconut', ['தேங்காய்', 'thengaai'], ['नारियल', 'naariyal'], ['ತೆಂಗಿನಕಾಯಿ', 'tenginakaayi']],
+  ],
+  '🔢 Numbers': [
+    ['1️⃣', 'one', ['ஒன்று', 'onru'], ['एक', 'ek'], ['ಒಂದು', 'ondu']],
+    ['2️⃣', 'two', ['இரண்டு', 'irandu'], ['दो', 'do'], ['ಎರಡು', 'eradu']],
+    ['3️⃣', 'three', ['மூன்று', 'moonru'], ['तीन', 'teen'], ['ಮೂರು', 'mooru']],
+    ['4️⃣', 'four', ['நான்கு', 'naangu'], ['चार', 'chaar'], ['ನಾಲ್ಕು', 'naalku']],
+    ['5️⃣', 'five', ['ஐந்து', 'aindhu'], ['पाँच', 'paanch'], ['ಐದು', 'aidu']],
+    ['6️⃣', 'six', ['ஆறு', 'aaru'], ['छह', 'chhah'], ['ಆರು', 'aaru']],
+    ['7️⃣', 'seven', ['ஏழு', 'ezhu'], ['सात', 'saat'], ['ಏಳು', 'elu']],
+    ['8️⃣', 'eight', ['எட்டு', 'ettu'], ['आठ', 'aath'], ['ಎಂಟು', 'entu']],
+    ['9️⃣', 'nine', ['ஒன்பது', 'onbadhu'], ['नौ', 'nau'], ['ಒಂಬತ್ತು', 'ombattu']],
+    ['🔟', 'ten', ['பத்து', 'pathu'], ['दस', 'das'], ['ಹತ್ತು', 'hattu']],
+  ],
+  '🎨 Colours': [
+    ['🟥', 'red', ['சிவப்பு', 'sivappu'], ['लाल', 'laal'], ['ಕೆಂಪು', 'kempu']],
+    ['🟦', 'blue', ['நீலம்', 'neelam'], ['नीला', 'neela'], ['ನೀಲಿ', 'neeli']],
+    ['🟩', 'green', ['பச்சை', 'pachai'], ['हरा', 'hara'], ['ಹಸಿರು', 'hasiru']],
+    ['🟨', 'yellow', ['மஞ்சள்', 'manjal'], ['पीला', 'peela'], ['ಹಳದಿ', 'haladi']],
+    ['⬛', 'black', ['கருப்பு', 'karuppu'], ['काला', 'kaala'], ['ಕಪ್ಪು', 'kappu']],
+    ['⬜', 'white', ['வெள்ளை', 'vellai'], ['सफ़ेद', 'safed'], ['ಬಿಳಿ', 'bili']],
+    ['🟧', 'orange', ['ஆரஞ்சு', 'aaranju'], ['नारंगी', 'naarangi'], ['ಕಿತ್ತಳೆ', 'kittale']],
+    ['🟪', 'purple', ['ஊதா', 'oodhaa'], ['बैंगनी', 'baingani'], ['ನೇರಳೆ', 'nerale']],
+  ],
+  '📅 Days': [
+    ['☀️', 'Sunday', ['ஞாயிறு', 'nyaayiru'], ['रविवार', 'ravivaar'], ['ಭಾನುವಾರ', 'bhaanuvaara']],
+    ['🌙', 'Monday', ['திங்கள்', 'thingal'], ['सोमवार', 'somvaar'], ['ಸೋಮವಾರ', 'somavaara']],
+    ['🔴', 'Tuesday', ['செவ்வாய்', 'sevvaai'], ['मंगलवार', 'mangalvaar'], ['ಮಂಗಳವಾರ', 'mangalavaara']],
+    ['🟢', 'Wednesday', ['புதன்', 'budhan'], ['बुधवार', 'budhvaar'], ['ಬುಧವಾರ', 'budhavaara']],
+    ['🟡', 'Thursday', ['வியாழன்', 'viyaazhan'], ['गुरुवार', 'guruvaar'], ['ಗುರುವಾರ', 'guruvaara']],
+    ['⚪', 'Friday', ['வெள்ளி', 'velli'], ['शुक्रवार', 'shukravaar'], ['ಶುಕ್ರವಾರ', 'shukravaara']],
+    ['🪐', 'Saturday', ['சனி', 'sani'], ['शनिवार', 'shanivaar'], ['ಶನಿವಾರ', 'shanivaara']],
+  ],
+};
+const LANGS = [['ta', 'தமிழ் Tamil', 2, 'tar'], ['hi', 'हिंदी Hindi', 3, 'hir'], ['kn', 'ಕನ್ನಡ Kannada', 4, 'knr']];
+let cat = Object.keys(CATS)[0], cur = CATS[cat][0], qlang = 'ta';
+const seen = new Set();
+const allWords = () => Object.values(CATS).flat();
+
+function sayIn(lang, text, sound) {
+  if (lang === 'en') { Kids.speak(text, true); return; }
+  if (!Kids.speakLang(text, lang)) Kids.speak(sound, true);   // no voice for that language: read the English-letter sound
+}
+function show(w) {
+  cur = w;
+  $('#bigE').textContent = w[0];
+  const rows = [['en', 'English', 'en', w[1], ''], ...LANGS.map(([l, name, i, cls]) => [l, name, cls, w[i][0], w[i][1]])];
+  $('#words').innerHTML = rows.map(([l, name, cls, word, sound]) => `
+    <div class="wrow ${cls}"><span class="lang">${name}</span>
+      <div><div class="w ${l === 'en' ? '' : l}">${word}</div>${sound ? `<div class="r">${sound}${l !== 'en' && !Kids.voiceFor(l) ? ' <span class="noVoice">(no voice on this device: read it together)</span>' : ''}</div>` : ''}</div>
+      <button class="say" data-l="${l}" data-w="${word}" data-s="${sound || word}">🔊</button></div>`).join('');
+  $('#words').querySelectorAll('.say').forEach(b => b.addEventListener('click', () => sayIn(b.dataset.l, b.dataset.w, b.dataset.s)));
+}
+$('#allBtn').addEventListener('click', () => {
+  const w = cur, seq = [['en', w[1], w[1]], ['ta', ...w[2]], ['hi', ...w[3]], ['kn', ...w[4]]];
+  seq.forEach(([l, t, s], i) => setTimeout(() => sayIn(l, t, s), i * 1800));
+  ch.check({ all: true });
+});
+function renderCats() {
+  $('#cats').innerHTML = '';
+  Object.keys(CATS).forEach(c => { const b = document.createElement('button'); b.textContent = c; b.className = c === cat ? 'active' : '';
+    b.addEventListener('click', () => { cat = c; Kids.sfx.pop(); renderCats(); renderPics(); if (quizOn) startQuiz(); }); $('#cats').appendChild(b); });
+}
+function renderPics() {
+  $('#pics').innerHTML = '';
+  CATS[cat].forEach(w => { const b = document.createElement('button'); b.className = 'pic' + (w === cur ? ' active' : '') + (seen.has(w[1]) ? ' seen' : '');
+    b.innerHTML = `<span class="e">${w[0]}</span>${w[1]}`;
+    b.addEventListener('click', () => { show(w); seen.add(w[1]); Kids.sfx.pop(); sayIn('en', w[1]); renderPics(); ch.check({ word: w[1], cat, seen: seen.size }); });
+    $('#pics').appendChild(b); });
+}
+
+/* ---------- quiz in one language ---------- */
+let quizOn = false;
+function makeQ() {
+  const list = CATS[cat], a = list[R(list.length)], [l, name, i] = LANGS.find(x => x[0] === qlang);
+  const o = new Set([a]); while (o.size < Math.min(4, list.length)) o.add(list[R(list.length)]);
+  return { q: `<div style="font-size:80px">${a[0]}</div>How do you say <b>${a[1]}</b> in ${name}?`,
+    choices: shuffle([...o]).map(x => ({ label: `<span class="${l}">${x[i][0]}</span><br><small>${x[i][1]}</small>`, ok: x === a })),
+    yay: `${a[1]} = ${a[i][0]} (${a[i][1]})!`, hint: 'Go back to Explore and tap the picture to check.' };
+}
+function startQuiz() { quizOn = true; Kids.quiz('#quizBox', makeQ, { rounds: 8, onRight: () => ch.check({ quiz: qlang }) }); }
+LANGS.forEach(([l, name]) => { const b = document.createElement('button'); b.textContent = name; b.className = l === qlang ? 'active' : '';
+  b.addEventListener('click', () => { qlang = l; Kids.sfx.pop(); $('#qlang').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b)); startQuiz(); }); $('#qlang').appendChild(b); });
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  Kids.sfx.pop();
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab);
+  if (b.dataset.tab === 'quiz' && !quizOn) startQuiz();
+}));
+
+const ch = Kids.challenges([
+  { ask: 'Tap a picture and press "Hear all 4" 🔊', hint: 'Tap any picture, then the purple button.', ok: c => c.all, yay: 'Four languages for one word!' },
+  { ask: 'Find "mango" 🥭 in the Fruits topic', hint: 'Pick 🍎 Fruits.', ok: c => c.word === 'mango', yay: 'மாம்பழம், आम, ಮಾವಿನಹಣ್ಣು: same yummy mango! 🥭' },
+  { ask: 'Count to 5 in all four languages 🔢', hint: 'Pick 🔢 Numbers and tap 1 to 5.', start: d => { d.n = new Set(); }, ok: (c, d) => { if (c.cat === '🔢 Numbers' && ['one','two','three','four','five'].includes(c.word)) d.n.add(c.word); return d.n.size >= 5; }, yay: 'You counted to five in four languages!' },
+  { ask: 'Learn the days of the week 📅', hint: 'Pick 📅 Days and tap all 7.', start: d => { d.n = new Set(); }, ok: (c, d) => { if (c.cat === '📅 Days') d.n.add(c.word); return d.n.size >= 7; }, yay: 'Seven days, four languages!' },
+  { ask: 'Play the Quiz in Kannada ಕನ್ನಡ', hint: 'Open Quiz and pick Kannada.', ok: c => c.quiz === 'kn', yay: 'ಶಭಾಷ್ (shabhaash): well done in Kannada!' },
+  { ask: 'Play the Quiz in Hindi हिंदी', hint: 'Open Quiz and pick Hindi.', ok: c => c.quiz === 'hi', yay: 'शाबाश (shaabaash): well done in Hindi!' },
+], { title: 'Language Explorer' });
+
+Kids.learn({
+  why: ['In India, many people speak two, three or even four languages! Every language is a new way to talk to people and make friends.',
+    'Some words sound almost the same: amma means mother in Tamil AND Kannada! Languages that are neighbours often share words.'],
+  imagine: ['Imagine a mango tree 🥭 in a garden where four friends meet. One says மாம்பழம், one says आम, one says ಮಾವಿನಹಣ್ಣು, and one says mango. They all laugh, because they all love the same fruit!'],
+  wow: ['India has 22 official languages, and hundreds more are spoken across the country!', 'Kids who learn many languages become great at solving puzzles, because their brains love switching!'],
+  talk: ['Which language do we speak at home? At school? With friends?', 'Teach a grown-up a word you learned today!', 'Which word sounds the funniest to you?'],
+});
+renderCats(); renderPics(); show(cur);
+</script>
+</body>
+</html>

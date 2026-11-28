@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Phonics Fun</title>
-<link rel="stylesheet" href="../../shared/kids.css">
+<link rel="stylesheet" href="../../shared/kids.css?v=3">
 <style>
   .abc { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
   .tile { border: none; border-radius: 18px; padding: 8px 4px; cursor: pointer; font-family: inherit; color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.15); transition: transform .12s; }
@@ -62,7 +62,7 @@
 <section data-learn></section>
 <footer>Made with ❤️ for <span data-kid-name>Kavikuyil</span> · Class 1 English 📖</footer>
 
-<script src="../../shared/kids.js"></script>
+<script src="../../shared/kids.js?v=3"></script>
 <script>
 const $ = s => document.querySelector(s);
 const R = Kids.rand, shuffle = Kids.shuffle;
@@ -135,7 +135,7 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 }));
 
 const ch = Kids.challenges([
-  { ask: 'Tap the FIRST letter of your name: K!', hint: 'Find K. It has a kite 🪁.', ok: c => c.tap === 'K', yay: 'K is for Kavikuyil… and kite! 🪁' },
+  { ask: `Tap the FIRST letter of your name: ${Kids.name[0]}!`, hint: `Find ${Kids.name[0]}.`, ok: c => c.tap === Kids.name[0], yay: `${Kids.name[0]} is for ${Kids.name}! 🌟` },
   { ask: 'Tap 10 different letters and listen to them 🔤', hint: 'Tap any letters on the alphabet board.', ok: c => c.seen >= 10, yay: 'Ten letters, ten sounds!' },
   { ask: 'Tap ALL 26 letters, from A to Z! 🏆', hint: 'Keep going until every letter has a yellow ring.', ok: c => c.seen >= 26, yay: 'You heard the whole alphabet!' },
   { ask: 'Play First Sound and get one right 🍎', hint: 'Open the First Sound tab.', ok: c => c.quiz, yay: 'You can hear the first sound in a word!' },
